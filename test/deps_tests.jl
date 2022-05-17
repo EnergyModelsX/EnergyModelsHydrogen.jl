@@ -1,3 +1,4 @@
+# This file copies the tests from the TImeStructures and the EnergyModelsBase modules which are dependencies.
 using Hydrogen
 using EnergyModelsBase
 using TimeStructures
@@ -8,30 +9,8 @@ const TS = TimeStructures
 const EMB = EnergyModelsBase
 
 
-m, case = EMB.run_model("",GLPK.Optimizer)
-
-
-@testset "User interface" begin
-    # Check for the objective value
-    @test objective_value(m) ≈ 129056.305
-
-    # Check for the total number of variables
-    @test size(all_variables(m))[1] == 7160
-
-    # Check for total emissions of both methane and CO2
-    global_data = case[:global_data]
-    CH4         = case[:products][1]
-    CO2         = case[:products][4]
-    𝒯ᴵⁿᵛ        = strategic_periods(case[:T])
-    for t_inv ∈ 𝒯ᴵⁿᵛ
-        @test value.(m[:emissions_strategic])[t_inv,CO2] <= global_data.Emission_limit[CO2][t_inv]
-        @test value.(m[:emissions_strategic])[t_inv,CH4] <= global_data.Emission_limit[CH4][t_inv]
-    end
-end
-
-
 # These tests have been copied from timestructures
-@testset "Uniform Times" begin
+@testset "TimeStructures - Uniform Times" begin
     uniform_day = UniformTimes(1,24,1)
     uniform_year = UniformTwoLevel(1,365,1,uniform_day)
     
@@ -66,7 +45,7 @@ end
     @test T_ops[2][1] == OperationalPeriod(2,1)
 end
 
-@testset "Two level time structures" begin
+@testset "TimeStructures - Two level time structures" begin
     spring = UniformTimes(1,72,2)
     summer = UniformTimes(1,144,2)
     autumn = UniformTimes(1,72,2)
@@ -96,14 +75,14 @@ end
 
 end
 
-@testset "Dynamic Times" begin
+@testset "TimeStructures - Dynamic Times" begin
     dynamic_day = DynamicTimes(1,6,[12,4,1,1,2,4])
     @test length(dynamic_day) == 6
     @test sum([t.duration for t in dynamic_day]) == 24
     @test collect(dynamic_day)[2] == TS.DynamicPeriod(2,4)
 end
 
-@testset "Time Profiles" begin
+@testset "TimeStructures - Time Profiles" begin
     
     fp = FixedProfile(12.0)
     @test fp[1] == 12.0
@@ -117,11 +96,32 @@ end
 
 end
 
-@testset "Iteration Utils" begin
+@testset "TimeStructures - Iteration Utils" begin
     uniform_day = UniformTimes(1,24,1)    
     uniform_week = UniformTwoLevel(1,7,1,uniform_day)
 
     @test first(withprev(uniform_day))[1] === nothing
     @test collect(withprev(uniform_week))[25] == (nothing, TS.OperationalPeriod(2,1))
 
+end
+
+# Test runs the case defined in the user_interface file of EnergyModelsBase
+@testset "EnergyModelsBase " begin
+    m, case = EMB.run_model("",GLPK.Optimizer)
+
+    # Check for the objective value
+    @test objective_value(m) ≈ 129056.305
+
+    # Check for the total number of variables
+    @test size(all_variables(m))[1] == 7160
+
+    # Check for total emissions of both methane and CO2
+    global_data = case[:global_data]
+    CH4         = case[:products][1]
+    CO2         = case[:products][4]
+    𝒯ᴵⁿᵛ        = strategic_periods(case[:T])
+    for t_inv ∈ 𝒯ᴵⁿᵛ
+        @test value.(m[:emissions_strategic])[t_inv,CO2] <= global_data.Emission_limit[CO2][t_inv]
+        @test value.(m[:emissions_strategic])[t_inv,CH4] <= global_data.Emission_limit[CH4][t_inv]
+    end
 end
