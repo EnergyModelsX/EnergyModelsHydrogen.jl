@@ -81,7 +81,7 @@ function build_run_model(Deficit_cost, Num_hours, degradation_rate, verbose)
         println("flow_in ", value.(m[:flow_in]))
         println("flow_out ", value.(m[:flow_out]))
         println("elect_on ", value.(m[:elect_on]))
-        println("total_op ", value.(m[:total_op]))
+        println("previous_usage ", value.(m[:previous_usage]))
         #println("link_in ", value.(m[:link_in]))
         #println("link_out ", value.(m[:link_out]))
     end
