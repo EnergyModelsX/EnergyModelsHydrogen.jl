@@ -4,11 +4,13 @@
 Creates the following additional variables for all electrolyzer nodes:
 1) elect_on[n,t] - Binary variable which is 1 if electrolyzer n is running in time step t. 
 2) previous_usage[n,t] - Integer variable denoting number of previous operation periods until time t in which the electrolyzer n has been switched on.
+3) efficiency_penalty[n,t] - Coefficient that accounts for drop in efficiency at time t due to degradation in electrolyzer n. Drops from 1 at start. 
 """
 function EMB.variables_node(m, 𝒩, 𝒯, node::Electrolyzer, modeltype)
     𝒩ᴴ = EMB.node_sub(𝒩, Electrolyzer)
     @variable(m, elect_on[𝒩ᴴ, 𝒯], Bin)
     @variable(m, previous_usage[𝒩ᴴ,𝒯] >= 0, Int)
+    @variable(m, 0.0 <= efficiency_penalty[𝒩ᴴ,𝒯] <= 1.0)
 end
 
 """
@@ -54,6 +56,10 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     @constraint(m, [t ∈ 𝒯],
         m[:previous_usage][n,t] <= n.Equipment_lifetime)
 
+    # Determine the efficiency penalty at current timestep due to degradation 
+    @constraint(m, [t ∈ 𝒯],
+        m[:efficiency_penalty][n,t] == (1 - (n.Degradation_rate/100)*m[:previous_usage][n,t]))
+
     # Modified the else case to include a big-M constraint with binary variable
     # [IS THE BILINEAR TERM UNAVOIDABLE FOR DEGRADATION?]
     for p ∈ 𝒫ᵒᵘᵗ
@@ -63,7 +69,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
         else
             #@constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p])
             @constraint(m, [t ∈ 𝒯], 
-                m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*(1 - (n.Degradation_rate/100)*m[:previous_usage][n,t]))
+                m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:efficiency_penalty][n,t])
             @constraint(m, [t ∈ 𝒯], 
                 m[:flow_out][n, t, p] <= n.Cap[t]*m[:elect_on][n,t]) # Note that big M = n.Cap not cap_inst to avoid another bilinear term
         end

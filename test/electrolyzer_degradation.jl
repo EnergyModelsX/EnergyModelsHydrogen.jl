@@ -8,17 +8,16 @@ using JuMP
 using GLPK
 using SCIP
 
-
 const TS = TimeStructures
 const EMB = EnergyModelsBase
 const Geo = Geography
 
-function build_run_model(Deficit_cost, Num_hours, degradation_rate, verbose)
+function build_run_model(Params::Dict{Symbol, Int64})
     @info "Area 1: Wind power to electrolysis with one hydrogen consumer. Electrolyzer model with degradation"
     # A. Inputting the case data
     # Step 1: Defining the overall time structure.
-    # Project life time = 10 hours, strategic decisions made at start of day, operational decisions made every hour.
-    overall_time_structure = UniformTwoLevel(1,1,1,UniformTimes(1,Num_hours,1))
+    # Project life time = Num_hours hours, strategic decisions made at start of day, operational decisions made every hour.
+    overall_time_structure = UniformTwoLevel(1,1,1,UniformTimes(1,Params[:Num_hours],1))
 
     # Step 2: Define all the arc flow streams for all areas which are structs in {ResourceEmit, ResourceCarrier} <: Resource
     Power    = EMB.ResourceCarrier("Power", 0.0)
@@ -32,8 +31,8 @@ function build_run_model(Deficit_cost, Num_hours, degradation_rate, verbose)
     # 3b: Defining nodes (conversion units)
     Central_node_A1 = Geo.GeoAvailability("CN", 𝒫_area_1, 𝒫_area_1)
     Wind_turbine = EMB.RefSource("WT", FixedProfile(100), FixedProfile(0), FixedProfile(0), Dict(Power => 1), Dict(), Dict())
-    PEM_electrolyzer = Hydrogen.Electrolyzer("El", FixedProfile(100), FixedProfile(10), FixedProfile(0), Dict(Power => 1), Dict(H2 => 0.62), Dict(), 0.0, Dict(), 5/60, 0, 160, 85000, degradation_rate) 
-    End_hydrogen_consumer = EMB.RefSink("Con",FixedProfile(50),Dict(:Surplus => 0, :Deficit => Deficit_cost), Dict(H2 => 1), Dict())
+    PEM_electrolyzer = Hydrogen.Electrolyzer("El", FixedProfile(100), FixedProfile(10), FixedProfile(0), Dict(Power => 1), Dict(H2 => 0.62), Dict(), 0.0, Dict(), 5/60, 0, 160, Params[:Equipment_lifetime], Params[:Degradation_rate]) 
+    End_hydrogen_consumer = EMB.RefSink("Con",FixedProfile(50),Dict(:Surplus => 0, :Deficit => Params[:Deficit_cost]), Dict(H2 => 1), Dict())
     nodes_area_1 = [Central_node_A1, Wind_turbine, PEM_electrolyzer, End_hydrogen_consumer]
 
     # Step 3c: Defining the links (graph connections). Using the GeoAvailability node for convenience.
@@ -65,42 +64,57 @@ function build_run_model(Deficit_cost, Num_hours, degradation_rate, verbose)
     # B Formulating and running the optimization problem
     modeltype = EMB.OperationalModel()
     m = Geo.create_model(data, modeltype)
-    if verbose
-        print(m)
-    end
+    @debug "Optimization model: $(m)"
     
     JuMP.set_optimizer(m, SCIP.Optimizer)
     optimize!(m)
     
-    if (JuMP.termination_status(m) == OPTIMAL && verbose)
-        println("objective value ", objective_value(m))
-        println("cap_inst ", value.(m[:cap_inst]))
-        println("cap_use ", value.(m[:cap_use]))
-        println("sink_surplus ", value.(m[:sink_surplus]))
-        println("sink_deficit ", value.(m[:sink_deficit]))
-        println("flow_in ", value.(m[:flow_in]))
-        println("flow_out ", value.(m[:flow_out]))
-        println("elect_on ", value.(m[:elect_on]))
-        println("previous_usage ", value.(m[:previous_usage]))
-        #println("link_in ", value.(m[:link_in]))
-        #println("link_out ", value.(m[:link_out]))
+    if (JuMP.termination_status(m) == OPTIMAL)
+        @debug "Solution found"
+        @debug "objective value $(objective_value(m))"
+        @debug "cap_inst $(value.(m[:cap_inst]))"
+        @debug "cap_use $(value.(m[:cap_use]))"
+        @debug "sink_surplus $(value.(m[:sink_surplus]))"
+        @debug "sink_deficit $(value.(m[:sink_deficit]))"
+        @debug "flow_in $(value.(m[:flow_in]))"
+        @debug "flow_out $(value.(m[:flow_out]))"
+        @debug "elect_on $(value.(m[:elect_on]))"
+        @debug "previous_usage $(value.(m[:previous_usage]))"
+        @debug "efficiency_penalty $(value.(m[:efficiency_penalty]))"
     end
     return (m, data)
 end
 
 @testset "Electrolyzer degradation model" begin
-    verbose = false
-    #(m0, d0) = build_run_model(0, 2, verbose)
-    #(m1, d1) = build_run_model(15, 2, verbose)
-    (m2, d2) = build_run_model(100, 2, 40, true)
-    #=
-    print(d0[:nodes])
+    # The optimization model expects these default keys
+    params_dict = Dict(:Deficit_cost => 0, :Num_hours => 2, :Degradation_rate => 10, :Equipment_lifetime => 85000)
+    # Test case m1
+    (m0, d0) = build_run_model(params_dict)
     @test objective_value(m0) ≈ 0
     n = d0[:nodes][3]
-    @test value.(m0[:elect_on][n, t] for t ∈ d0[:T]) ≈ [0.0, 0.0] 
-    @test JuMP.termination_status(m1) == OPTIMAL
-    @test objective_value(m1) <= objective_value(m2)
-    =#
+    @test value.(m0[:elect_on][n, t] for t ∈ d0[:T]) ≈ [0.0, 0.0]
+    
+    # Test case m1
+    m1_dict = params_dict
+    m1_dict[:Deficit_cost] = 15
+    (m1, d1) = build_run_model(m1_dict)
+    @test (objective_value(m0) <= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
+
+    # Test case m2
+    m2_dict = params_dict
+    m2_dict[:Num_hours] = 10
+    m2_dict[:Deficit_cost] = 100
+    m2_dict[:Degradation_rate] = 5
+    m2_dict[:Equipment_lifetime] = 7
+    (m2, d2) = build_run_model(m2_dict)
+    n = d2[:nodes][3]
+    for t in d2[:T]
+        t_prev = TS.previous(t,d2[:T])
+        if (t_prev != nothing)
+            @test (value.(m2[:efficiency_penalty][n, t]) <= value.(m2[:efficiency_penalty][n, t_prev]) || value.(m2[:efficiency_penalty][n, t]) ≈ value.(m2[:efficiency_penalty][n, t_prev]))
+            @test value.(m2[:previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
+        end
+    end
 end
 
 
