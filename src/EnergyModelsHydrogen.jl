@@ -1,4 +1,4 @@
-module Hydrogen
+module EnergyModelsHydrogen
 
 using Revise
 using EnergyModelsBase

@@ -1,5 +1,5 @@
 #=
-This file contains the additional data structures required for the hydrogen package. The new structure members are added after listing all the original members.
+This file contains the additional data structures required for the EnergyModelsHydrogen package. The new structure members are added after listing all the original members.
 =#
 "Electrolyzer with degradation, load ranges and equipment lifetime"
 struct Electrolyzer <: EMB.Network

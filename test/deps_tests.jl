@@ -1,5 +1,5 @@
 # This file copies the tests from the TImeStructures and the EnergyModelsBase modules which are dependencies.
-using Hydrogen
+using EnergyModelsHydrogen
 using EnergyModelsBase
 using TimeStructures
 using Test

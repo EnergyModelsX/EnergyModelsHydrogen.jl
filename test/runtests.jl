@@ -1,6 +1,6 @@
 using Revise
 using Test
-using Hydrogen
+using EnergyModelsHydrogen
 using GLPK
 using JuMP
 

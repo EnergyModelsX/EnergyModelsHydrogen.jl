@@ -1,5 +1,5 @@
 # This file builds a Wind Turbine -> Electrolyzer -> End Hydrogen Consumer model. The electrolyzer model includes degradation of efficiency.
-using Hydrogen
+using EnergyModelsHydrogen
 using EnergyModelsBase
 using TimeStructures
 using Geography
@@ -31,7 +31,7 @@ function build_run_model(Params::Dict{Symbol, Int64})
     # 3b: Defining nodes (conversion units)
     Central_node_A1 = Geo.GeoAvailability("CN", 𝒫_area_1, 𝒫_area_1)
     Wind_turbine = EMB.RefSource("WT", FixedProfile(100), FixedProfile(0), FixedProfile(0), Dict(Power => 1), Dict(), Dict())
-    PEM_electrolyzer = Hydrogen.Electrolyzer("El", FixedProfile(100), FixedProfile(10), FixedProfile(0), Dict(Power => 1), Dict(H2 => 0.62), Dict(), 0.0, Dict(), 5/60, 0, 160, Params[:Equipment_lifetime], Params[:Degradation_rate]) 
+    PEM_electrolyzer = EnergyModelsHydrogen.Electrolyzer("El", FixedProfile(100), FixedProfile(10), FixedProfile(0), Dict(Power => 1), Dict(H2 => 0.62), Dict(), 0.0, Dict(), 5/60, 0, 160, Params[:Equipment_lifetime], Params[:Degradation_rate]) 
     End_hydrogen_consumer = EMB.RefSink("Con",FixedProfile(50),Dict(:Surplus => 0, :Deficit => Params[:Deficit_cost]), Dict(H2 => 1), Dict())
     nodes_area_1 = [Central_node_A1, Wind_turbine, PEM_electrolyzer, End_hydrogen_consumer]
 

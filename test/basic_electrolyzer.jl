@@ -1,5 +1,5 @@
 # This file builds a simple wind power to electrolyzer model using the basic functionality in EnergyModelsBase
-using Hydrogen
+using EnergyModelsHydrogen
 using EnergyModelsBase
 using TimeStructures
 using Geography
