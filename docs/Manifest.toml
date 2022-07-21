@@ -118,11 +118,15 @@ uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
 [[EnergyModelsBase]]
 deps = ["JuMP", "TimeStructures"]
-git-tree-sha1 = "561b5fdc6f3c9504c587d9fde7ff1130a655618a"
-repo-rev = "master"
-repo-url = "../../energymodelsbase.jl"
+path = "../../energymodelsbase.jl"
 uuid = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
 version = "0.2.4"
+
+[[EnergyModelsHydrogen]]
+deps = ["EnergyModelsBase", "GLPK", "Geography", "JuMP", "SCIP", "TimeStructures"]
+path = ".."
+uuid = "44855f8b-b147-4985-ac18-48817d03c548"
+version = "0.1.0"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions", "StaticArrays"]
@@ -148,9 +152,7 @@ uuid = "781609d7-10c4-51f6-84f2-b8444358ff6d"
 
 [[Geography]]
 deps = ["EnergyModelsBase", "JuMP", "TimeStructures"]
-git-tree-sha1 = "5cdb4f8f89b297ed189a167f10393ca0ba7aee58"
-repo-rev = "master"
-repo-url = "../../geography.jl"
+path = "../../geography.jl"
 uuid = "3f775d88-a4da-46c4-a2cc-aa9f16db6708"
 version = "0.2.1"
 
@@ -221,6 +223,12 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 [[LinearAlgebra]]
 deps = ["Libdl"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[Literate]]
+deps = ["Base64", "IOCapture", "JSON", "REPL"]
+git-tree-sha1 = "5b5ec7696d40868945c407f28a6672a230448b70"
+uuid = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+version = "2.13.4"
 
 [[LogExpFunctions]]
 deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
@@ -414,9 +422,7 @@ deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[TimeStructures]]
-git-tree-sha1 = "6d681105a99bf88def8c8f4481f076db93f60753"
-repo-rev = "master"
-repo-url = "../../timestructures.jl"
+path = "../../timestructures.jl"
 uuid = "260f4295-b40d-47c0-843b-64f3de373d90"
 version = "0.1.9"
 

@@ -1,4 +1,4 @@
-push!(LOAD_PATH,"../src/")
+using EnergyModelsHydrogen
 
 try
     using Documenter
@@ -9,7 +9,7 @@ catch
     
     using Documenter
 end
-using EnergyModelsHydrogen
+
 
 makedocs(
     sitename = "EnergyModelsHydrogen",
@@ -20,7 +20,10 @@ makedocs(
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
             "Philosophy" => "manual/philosophy.md",
-            "Example" => "manual/simple-example.md",
+            "Examples" => "manual/simple-example.md",
+        ],
+        "Examples" => Any[
+            "Simple Electrolyzer" => "examples/simple-electrolyzer-1-area.md",
         ],
         "Library" => Any[
             "Public" => "library/public.md",

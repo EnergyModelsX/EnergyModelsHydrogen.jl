@@ -1,6 +1,5 @@
 module EnergyModelsHydrogen
 
-using Revise
 using EnergyModelsBase
 using JuMP
 using TimeStructures
