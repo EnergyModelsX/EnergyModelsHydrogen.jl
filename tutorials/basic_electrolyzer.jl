@@ -1,7 +1,6 @@
 # This file builds a simple wind power to electrolyzer model using the basic functionality in EnergyModelsBase
 using EnergyModelsBase
 using TimeStructures
-using Geography
 using Test
 using JuMP
 using GLPK
@@ -9,7 +8,6 @@ using GLPK
 
 const TS = TimeStructures
 const EMB = EnergyModelsBase
-const Geo = Geography
 
 @testset "Electrolyzer basic RefGeneration model" begin
     @info "Area 1: Wind power to electrolysis with one hydrogen consumer. Basic electrolyzer model"

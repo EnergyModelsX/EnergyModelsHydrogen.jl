@@ -2,7 +2,6 @@
 using EnergyModelsHydrogen
 using EnergyModelsBase
 using TimeStructures
-using Geography
 using Test
 using JuMP
 using GLPK
