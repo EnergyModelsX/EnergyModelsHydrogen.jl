@@ -107,6 +107,12 @@ repo-url = "../../energymodelsbase.jl"
 uuid = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
 version = "0.2.4"
 
+[[EnergyModelsHydrogen]]
+deps = ["EnergyModelsBase", "JuMP", "TimeStructures"]
+path = "/home/CLEANEXPORT/2022_CLEANEXPORT_LINKED/energymodelshydrogen.jl"
+uuid = "44855f8b-b147-4985-ac18-48817d03c548"
+version = "0.1.0"
+
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions", "StaticArrays"]
 git-tree-sha1 = "187198a4ed8ccd7b5d99c41b69c679269ea2b2d4"
