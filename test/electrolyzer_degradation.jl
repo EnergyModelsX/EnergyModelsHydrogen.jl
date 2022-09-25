@@ -1,5 +1,4 @@
 # This file builds a Wind Turbine -> Electrolyzer -> End Hydrogen Consumer model. The electrolyzer model includes degradation of efficiency.
-using EnergyModelsHydrogen
 using EnergyModelsBase
 using TimeStructures
 using Test
