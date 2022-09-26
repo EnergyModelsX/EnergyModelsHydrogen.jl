@@ -4,7 +4,7 @@ using JuMP
 using SCIP
 
 # TO SET LOGGING LEVEL
-ENV["JULIA_DEBUG"] = all
+#ENV["JULIA_DEBUG"] = all
 
 #using Logging # Use for tailored logging.
 #logger = Logging.SimpleLogger(stdout, Logging.Debug)
@@ -204,7 +204,9 @@ end
 
 
 # The optimization model expects these default keys
+
 params_dict = Dict(:Deficit_cost => 0, :Num_hours => 2, :Degradation_rate => 10, :Equipment_lifetime => 85000)
+#=
 @testset "RefGen - Should all be zero" begin
     (m0_def, d0) = build_run_default_EMB_model(params_dict)
     @test objective_value(m0) ≈ 0
@@ -213,7 +215,7 @@ params_dict = Dict(:Deficit_cost => 0, :Num_hours => 2, :Degradation_rate => 10,
     (m1, d1) = build_run_default_EMB_model(m1_dict)
     @test (objective_value(m0) <= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
 end
-
+=#
 # Test case m1
 m1_dict = params_dict
 m1_dict[:Deficit_cost] = 15
@@ -221,7 +223,7 @@ m1_dict[:Deficit_cost] = 15
 
 
 
-
+#=
 
 
 @test objective_value(m0) ≈ 0
@@ -251,3 +253,4 @@ for t in d2[:T]
 end
 
 @test 1 == 1
+=#
