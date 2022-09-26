@@ -14,7 +14,7 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Equipment_lifetime`
 - **`Emissions::Dict{EMB.ResourceEmit, Real}`** : Map of emitting outputs to characteristic flow
 - **`CO2_capture::Real`** : CO2 capture rate
 - **`Data::Dict{String,EMB.Data}`** : Additional data (e.g., for investments)
-- **`Startup_time::Real`** : Startup time of the electrolyzer as a fraction of the operational period (time step)
+- **`Startup_time::Real`** : [WIP - Not implemented] Startup time of the electrolyzer as a fraction of the operational period (time step)
 - **`Minimum_load::Real`** : Minimum load as a fraction of the nominal installed capacity `Cap` above
 - **`Maximum_load::Real`** : Maximum load as a fraction of the nominal installed capacity `Cap` above
 - **`Equipment_lifetime::Real`** :Total operational equipment life time as multiple of operational period (time step)
@@ -24,16 +24,16 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Equipment_lifetime`
 - The nominal electrolyzer efficiency is captured in one of the values in "Input" or "Output".
 
 """
-struct Electrolyzer <: EMB.Network
+struct Electrolyzer <: EnergyModelsBase.Network
     id
     Cap::TimeProfile
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
-    Input::Dict{EMB.Resource, Real} 
-    Output::Dict{EMB.Resource, Real}
-    Emissions::Dict{EMB.ResourceEmit, Real} 
+    Input::Dict{EnergyModelsBase.Resource, Real} 
+    Output::Dict{EnergyModelsBase.Resource, Real}
+    Emissions::Dict{EnergyModelsBase.ResourceEmit, Real} 
     CO2_capture::Real 
-    Data::Dict{String,EMB.Data}
+    Data::Dict{String, EnergyModelsBase.Data}
     Startup_time::Real 
     Minimum_load::Real
     Maximum_load::Real
