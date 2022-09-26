@@ -14,6 +14,7 @@ function EnergyModelsBase.variables_node(m, 𝒩, 𝒯, node::Electrolyzer, mode
     @variable(m, 0.0 <= efficiency_penalty[𝒩ᴴ,𝒯] <= 1.0)
 end
 
+#= DEPRECATED CODE, replaced with logic involving previous()
 """
     is_prior(t_prev::TimeStructures.OperationalPeriod, t::TimeStructures.OperationalPeriod, 𝒯::UniformTwoLevel)
 Returns true if the t_prev timestep occurs chronologically before or at the same time as the t timestep.
@@ -32,6 +33,7 @@ function is_prior(t_prev::TimeStructures.OperationalPeriod, t::TimeStructures.Op
         return false
     end
 end
+=#
 
 
 """
@@ -43,6 +45,7 @@ First, the `previous_usage[n,t]` is used to keep track of the total previous usa
     
 """
 function EnergyModelsBase.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
+
 
     # Declaration of the required subsets
     𝒫ⁱⁿ  = keys(n.Input)
@@ -57,51 +60,63 @@ function EnergyModelsBase.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
             m[:flow_in][n, t, p] == m[:cap_use][n, t]*n.Input[p])
     end
 
-    # Previous usage:
-    # Define the total previous usage of the electrolyzer prior to the current timestep
-    @constraint(m, [t ∈ 𝒯],
-        m[:previous_usage][n,t] == sum(m[:elect_on][n, t_prev] for t_prev ∈ 𝒯 if is_prior(t_prev,t,𝒯)))
+    # Previous usage, logic:
+    # Within all the years (in `sp.duration`) we assume the degradation is the same as it is in the 1st year of that strategic period (optimistic assumption). 
+    # However, when we move to the next strategic period, we multiply the final usage after its `last_operational` period by the `sp.duration` (number of years).
+    # This ensures that the next strategic period starts after accounting for all prior usage. 
 
-    # Constrain total previous usage of the electrolyzer (including usage at current time step). 
+    for t ∈ 𝒯 # Returns all `OperationalPeriod` items in any type of 𝒯.
+        if (TimeStructures.isfirst(t))
+            if t.sp == 1 # This deals with the case where `nothing` is returned from `previous(sp::StrategicPeriod, .)`
+                @constraint(m,
+                m[:previous_usage][n,t] == 0.0 # First time-step of overall time structure. New electrolyzer.  
+                )
+            else 
+                @constraint(m,
+                m[:previous_usage][n,t] == (m[:previous_usage][n, last_operational(previous(t.sp, 𝒯))] + last_operational(previous(t.sp, 𝒯)).duration*m[:elect_on][n, last_operational(previous(t.sp, 𝒯))])*previous(t.sp, 𝒯).duration
+                )
+            end
+        else
+            @constraint(m,
+                m[:previous_usage][n,t] == m[:previous_usage][n, previous(t, 𝒯)] + previous(t, 𝒯).duration*m[:elect_on][n, previous(t, 𝒯)]
+                )
+        end
+    end
+
+    # Constrain total usage of the electrolyzer including at the current time step. This ensures that the last time step is appropriately constrained. 
     @constraint(m, [t ∈ 𝒯],
-        m[:previous_usage][n,t] <= n.Equipment_lifetime)
+        m[:previous_usage][n,t] + t.duration*m[:elect_on][n, t] <= n.Equipment_lifetime
+        )
 
     # Determine the efficiency penalty at current timestep due to degradation 
     @constraint(m, [t ∈ 𝒯],
-        m[:efficiency_penalty][n,t] == (1 - (n.Degradation_rate/100)*m[:previous_usage][n,t]))
+        m[:efficiency_penalty][n,t] == (1 - (n.Degradation_rate/100)*m[:previous_usage][n,t])
+        )
 
-    # Modified the else case to include a big-M constraint with binary variable
-    # [IS THE BILINEAR TERM UNAVOIDABLE FOR DEGRADATION?]
+    # Additional big-M constraint with binary variable: `flow_out[n, t, p]` is > 0 only if `elect_on[n,t]` is 1. 
     for p ∈ 𝒫ᵒᵘᵗ
-        if p.id == "CO2"
-            @constraint(m, [t ∈ 𝒯], 
-                m[:flow_out][n, t, p]  == n.CO2_capture*sum(p_in.CO2Int*m[:flow_in][n, t, p_in] for p_in ∈ 𝒫ⁱⁿ))
-        else
-            #@constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p])
-            @constraint(m, [t ∈ 𝒯], 
-                m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:efficiency_penalty][n,t])
-            @constraint(m, [t ∈ 𝒯], 
-                m[:flow_out][n, t, p] <= n.Cap[t]*m[:elect_on][n,t]) # Note that big M = n.Cap not cap_inst to avoid another bilinear term
-        end
-        
+        @constraint(m, [t ∈ 𝒯], 
+            m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:efficiency_penalty][n,t] # Accounts for degradation
+            )
+
+        @constraint(m, [t ∈ 𝒯], 
+            m[:flow_out][n, t, p] <= 1000*n.Cap[t]*m[:elect_on][n,t] # Take Big-M to be 1000 times the n.Cap[t]
+            )
     end
 
     # Changed from EnergyModelsBase.Network to new Minimum_load and Maximum_load: Constraint for the maximum throughput
     @constraint(m, [t ∈ 𝒯],
-        n.Minimum_load*n.Cap[t] <= m[:cap_use][n, t] <= n.Maximum_load*n.Cap[t])
+        n.Minimum_load*m[:cap_inst][n, t] <= m[:cap_use][n, t]
+    )
+        
+    @constraint(m, [t ∈ 𝒯],
+        m[:cap_use][n, t]<= n.Maximum_load*m[:cap_inst][n, t]
+    )
     
     # Unchanged from EnergyModelsBase.Network: Constraints on nodal emissions.
     for p_em ∈ 𝒫ᵉᵐ
-        if p_em.id == "CO2"
-            @constraint(m, [t ∈ 𝒯],
-                m[:emissions_node][n, t, p_em] == 
-                    (1-n.CO2_capture)*sum(p_in.CO2Int*m[:flow_in][n, t, p_in] for p_in ∈ 𝒫ⁱⁿ) + 
-                    m[:cap_use][n, t]*n.Emissions[p_em])
-        else
-            @constraint(m, [t ∈ 𝒯],
-                m[:emissions_node][n, t, p_em] == 
-                    m[:cap_use][n, t]*n.Emissions[p_em])
-        end
+        @constraint(m, [t ∈ 𝒯],
+            m[:emissions_node][n, t, p_em] == m[:cap_use][n, t]*n.Emissions[p_em])
     end
             
     # Unchanged from EnergyModelsBase.Network: Constraint for the Opex contributions
