@@ -24,16 +24,16 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Equipment_lifetime`
 - The nominal electrolyzer efficiency is captured in one of the values in "Input" or "Output".
 
 """
-struct Electrolyzer <: EnergyModelsBase.Network
+struct Electrolyzer <: Network
     id
     Cap::TimeProfile
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
-    Input::Dict{EnergyModelsBase.Resource, Real} 
-    Output::Dict{EnergyModelsBase.Resource, Real}
-    Emissions::Dict{EnergyModelsBase.ResourceEmit, Real} 
+    Input::Dict{Resource, Real} 
+    Output::Dict{Resource, Real}
+    Emissions::Dict{ResourceEmit, Real} 
     CO2_capture::Real 
-    Data::Dict{String, EnergyModelsBase.Data}
+    Data::Dict{String, Data}
     Startup_time::Real 
     Minimum_load::Real
     Maximum_load::Real
