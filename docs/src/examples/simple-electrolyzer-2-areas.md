@@ -1,12 +1,17 @@
-#=
-# This function sets the data of the optimization problem instance
+# Model over 2 geographical areas: 
+- `Area 1`: Wind Power turbine to Electrolysis converter to produce hydrogen that can be exported to another `Area`. One power end consumer. 
+- `Area 2`: Hydrogen end consumer 
+  
+**Note**  : This simple example only relies on the functionality of `EnergyModelsBase`, `TimeStructures` and `Geography`. It provides a reference for the basic functionality which will then be extended by `EnergyModelsHydrogen`. 
+
+This function sets the data of the optimization problem instance
 function read_data(fn)
     @debug "Read data"
     @info "Hard coded toy example: Area 1: Wind power to electrolysis with one power end consumer. Area 2: End power hydrogen consumer"
 
     # Step 1: Defining the overall time structure.
     # Project life time = 7 days, strategic decisions made at start of each day, operational decisions made every hour.
-    overall_time_structure = UniformTwoLevel(1,1,1,UniformTimes(1,10,1))
+    overall_time_structure = **UniformTwoLevel**(1,1,1,UniformTimes(1,10,1))
     #overall_time_structure = UniformTwoLevel(1,7,1,UniformTimes(1,24,1))
 
     # Step 2: Define all the arc flow streams for all areas which are structs in {ResourceEmit, ResourceCarrier} <: Resource
@@ -108,4 +113,3 @@ function run_model(fn, optimizer=nothing)
      end
      return m, data
  end
- =#

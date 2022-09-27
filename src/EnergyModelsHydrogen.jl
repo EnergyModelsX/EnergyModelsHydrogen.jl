@@ -1,18 +1,17 @@
-module Hydrogen
+module EnergyModelsHydrogen
 
-using Revise
-using EnergyModelsBase
 using JuMP
 using TimeStructures
-using Geography
+using EnergyModelsBase
 
 const EMB = EnergyModelsBase
 const TS  = TimeStructures
-const Geo = Geography
 
 include("datastructures.jl")
 include("model.jl")
 include("user_interface.jl")
 include("checks.jl")
+
+export Electrolyzer
 
 end

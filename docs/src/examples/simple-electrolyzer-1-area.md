@@ -1,17 +1,31 @@
-# This file builds a simple wind power to electrolyzer model using the basic functionality in EnergyModelsBase
-using Hydrogen
+# Model over only 1 geographical area.
+- `Area 1`: Wind Power turbine to Electrolysis converter to produce hydrogen. One hydrogen end consumer. 
+  
+**Note**  : This simple example only relies on the functionality of `EnergyModelsBase`, `TimeStructures`. The `Geography` is not required since only 1 local area is considered. It provides a reference for the basic functionality which will then be extended by `EnergyModelsHydrogen`.
+
+**1.** First, import the necessary packages:
+```@example
 using EnergyModelsBase
 using TimeStructures
-using Geography
 using Test
 using JuMP
 using GLPK
+```
+
+```@setup elec-a1-load-packages 
+```
+**2.** Next, the problem data is input by specifying the following in turn: the time structure `T`, `products`, `nodes`, `links`, and `global_data`.
+
+**a.** `T` which defines the overall `TimeStructure`. Let's consider an operational decision-making problem with a project life time of 4 hours with operational decisions made every 1 hour.  
+
+```@example
+using EnergyModelsBase, TimeStructures, Test, JuMP, GLPK # hide
+overall_time_structure = UniformTwoLevel(1,1,1,UniformTimes(1,4,1))
+```
 
 
-const TS = TimeStructures
-const EMB = EnergyModelsBase
-const Geo = Geography
 
+<!--
 @testset "Electrolyzer basic RefGeneration model" begin
     @info "Area 1: Wind power to electrolysis with one hydrogen consumer. Basic electrolyzer model"
     # A. Inputting the case data
@@ -82,3 +96,4 @@ const Geo = Geography
 
     
 end
+-->

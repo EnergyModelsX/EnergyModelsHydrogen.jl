@@ -1,17 +1,22 @@
 using Revise
 using Test
-using Hydrogen
-using GLPK
 using JuMP
+using TimeStructures
+using EnergyModelsBase
+using EnergyModelsHydrogen
 
-#=
-m, case = Hydrogen.run_model("",GLPK.Optimizer)
-println(objective_value(m))
-value.(m[:cap_use])
+const TS = TimeStructures
+const EMB = EnergyModelsBase
+const EMH = EnergyModelsHydrogen
 
-@testset "Hydrogen module electrolyzer" begin
-    println(objective_value(m))
-    @test 0 == 0
-    # Write your tests here.in
+# using SCIP
+# optim = SCIP.Optimizer
+
+using Gurobi
+const env = Gurobi.Env()
+optim = () -> Gurobi.Optimizer(env)
+
+@testset "Wind Turbine -> Electrolyzer -> H2-consumer" begin
+    include("test_electrolyzer_degradation.jl")
 end
-=#
+finalize(env)
