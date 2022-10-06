@@ -199,9 +199,10 @@ function build_run_electrolyzer_model(Params)
         @debug "sink_deficit $(value.(m[:sink_deficit]))"
         @debug "flow_in $(value.(m[:flow_in]))"
         @debug "flow_out $(value.(m[:flow_out]))"
-        @debug "elect_on $(value.(m[:elect_on]))"
-        @debug "previous_usage $(value.(m[:previous_usage]))"
-        @debug "efficiency_penalty $(value.(m[:efficiency_penalty]))"
+        @debug "elect_on_b $(value.(m[:elect_on_b]))"
+        @debug "elect_previous_usage $(value.(m[:elect_previous_usage]))"
+        @debug "elect_usage_in_sp $(value.(m[:elect_usage_in_sp]))"
+        @debug "elect_efficiency_penalty $(value.(m[:elect_efficiency_penalty]))"
     end
     return (m, data)
 end
@@ -244,8 +245,8 @@ end
     for t ∈ d2[:T]
         t_prev = TS.previous(t,d2[:T])
         if (t_prev != nothing)
-            @test (value.(m2[:efficiency_penalty][n, t]) <= value.(m2[:efficiency_penalty][n, t_prev]) || value.(m2[:efficiency_penalty][n, t]) ≈ value.(m2[:efficiency_penalty][n, t_prev]))
-            @test value.(m2[:previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
+            @test (value.(m2[:elect_efficiency_penalty][n, t]) <= value.(m2[:elect_efficiency_penalty][n, t_prev]) || value.(m2[:elect_efficiency_penalty][n, t]) ≈ value.(m2[:elect_efficiency_penalty][n, t_prev]))
+            @test value.(m2[:elect_previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
         end
     end
     finalize(backend(m2).optimizer.model)
