@@ -30,7 +30,7 @@ struct Electrolyzer <: Network
     Cap::TimeProfile
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
-    Stack_replacement_cost::TimeProfile
+    Stack_replacement_cost::TimeProfile # Question: indexed by t_inv?
     Input::Dict{Resource, Real} 
     Output::Dict{Resource, Real}
     Emissions::Dict{ResourceEmit, Real} 

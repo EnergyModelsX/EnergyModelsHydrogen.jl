@@ -8,7 +8,8 @@ Creates the following additional variables for **ALL** electrolyzer nodes:
     TODO: `elect_previous_usage[n,t]` can potentially be left as a continuous variable. Test if the
     computational performance with SCIP/Gurobi is better or worse.
 3) `elect_usage_in_sp[n, t_in]`: Amount of electrolyzer usage in strategic period.
-4) `elect_efficiency_penalty[n,t]` - Coefficient that accounts for drop in efficiency at time t due
+4 `elect_stack_replacement_sp_b[n, t_in]`: Binary variable, 1 if stack is replaced at first op of strategic period.
+5) `elect_efficiency_penalty[n,t]` - Coefficient that accounts for drop in efficiency at time t due
 to degradation in electrolyzer n. Drops from 1 at start. 
 """
 function EMB.variables_node(m, 𝒩, 𝒯, node::Electrolyzer, modeltype::EnergyModel)
@@ -21,6 +22,7 @@ function EMB.variables_node(m, 𝒩, 𝒯, node::Electrolyzer, modeltype::Energy
     @variable(m, elect_on_b[𝒩ᴴ, 𝒯], Bin)
     @variable(m, elect_previous_usage[𝒩ᴴ, 𝒯] >= 0, Int)
     @variable(m, elect_usage_in_sp[𝒩ᴴ, 𝒯ᴵⁿᵛ] >= 0, Int)
+    @variable(m, elect_stack_replacement_sp_b[𝒩ᴴ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, 0.0 <= elect_efficiency_penalty[𝒩ᴴ, 𝒯] <= 1.0)
 end
 
@@ -77,7 +79,8 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
             if (TS.isfirst(t))
                 @constraint(m,
                     m[:elect_previous_usage][n, t] ==
-                        sum(m[:elect_usage_in_sp][n, t_inv_prev] for t_inv_prev ∈ 𝒯ᴵⁿᵛ if is_prior(t_inv_prev, t_inv))
+                        (sum(m[:elect_usage_in_sp][n, t_inv_prev] for t_inv_prev ∈ 𝒯ᴵⁿᵛ if is_prior(t_inv_prev, t_inv)))*
+                        (1 - m[:elect_stack_replacement_sp_b][n, t_inv])
                 )
             else
                 @constraint(m,
@@ -135,7 +138,8 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     # Unchanged from EnergyModelsBase.Network: Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == 
-            sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
+            sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv)
+            + n.Stack_replacement_cost[t_inv]/t_inv.duration)
 end
 
 

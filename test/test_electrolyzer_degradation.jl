@@ -1,6 +1,6 @@
 
 # TO SET LOGGING LEVEL
-# ENV["JULIA_DEBUG"] = all
+ENV["JULIA_DEBUG"] = all
 
 #using Logging # Use for tailored logging.
 #logger = Logging.SimpleLogger(stdout, Logging.Debug)
@@ -82,7 +82,7 @@ function build_run_default_EMB_model(Params)
     @debug "Optimization model: $(m)"
 
     set_optimizer(m, optim)
-    set_optimizer_attribute(m, "OutputFlag", 0)
+    #set_optimizer_attribute(m, "OutputFlag", 0)
     optimize!(m)
     
     if (JuMP.termination_status(m) == OPTIMAL)
@@ -184,9 +184,9 @@ function build_run_electrolyzer_model(Params)
     @debug "Optimization model: $(m)"
 
     set_optimizer(m, optim)
-    set_optimizer_attribute(m, "NonConvex", 2)
-    set_optimizer_attribute(m, "MIPGap", 1e-3)
-    set_optimizer_attribute(m, "OutputFlag", 0)
+    #set_optimizer_attribute(m, "NonConvex", 2)
+    #set_optimizer_attribute(m, "MIPGap", 1e-3)
+    #set_optimizer_attribute(m, "OutputFlag", 0)
 
     optimize!(m)
     
@@ -218,8 +218,8 @@ params_dict = Dict(:Deficit_cost => FixedProfile(0), :Num_hours => 2, :Degradati
     m1_dict[:Deficit_cost] = FixedProfile(17)
     (m1, d1) = build_run_default_EMB_model(m1_dict)
     @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
-    finalize(backend(m0).optimizer.model)
-    finalize(backend(m1).optimizer.model)
+    #finalize(backend(m0).optimizer.model)
+    #finalize(backend(m1).optimizer.model)
 end
 
 @testset "Electrolyzer - Basic sanity tests" begin
@@ -229,8 +229,8 @@ end
     m1_dict[:Deficit_cost] = FixedProfile(17)
     (m1, d1) = build_run_electrolyzer_model(m1_dict)
     @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
-    finalize(backend(m0).optimizer.model)
-    finalize(backend(m1).optimizer.model)
+    #finalize(backend(m0).optimizer.model)
+    #finalize(backend(m1).optimizer.model)
 end
 
 
@@ -249,5 +249,5 @@ end
             @test value.(m2[:elect_previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
         end
     end
-    finalize(backend(m2).optimizer.model)
+    #finalize(backend(m2).optimizer.model)
 end
