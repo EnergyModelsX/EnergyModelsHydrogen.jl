@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.12
 
 using Markdown
 using InteractiveUtils
@@ -237,6 +237,60 @@ md"**`constraints_link`**: Sets mass balance constraints for every link.
 
 `link_out[l, t, p] == link_in[l, t, p]`"
 
+# ╔═╡ 2272b29c-3a60-43cb-b07e-bf7870eed888
+md" ## GEOGRAPHY PACKAGE"
+
+# ╔═╡ 8812825a-139b-4a0d-9196-c3ba938c3cbc
+md" The organization is as follows:
+- An an `Area` Node is set up to represent each geographically distinct area. 
+``` 
+struct Area
+	id
+    Name
+	Lon::Real
+	Lat::Real
+	An::EMB.Availability
+end
+```
+- For the last field of this node, instead of using a `GenAvailability` node as the central nodel. We instead use a `GeoAvailability` node. Both are subtypes of `EMB.Availability`. Thus, all geographical areas are combined together to set up overall mass balance constraints, over all the areas of the model. 
+- An abstract type `TransmissionMode` is set up that holds a struct of the method of transportation of a resource from one area to the next. A few options are `RefStatic`, `RefDynamic`, `PipelineMode`.
+- Lastly a `Transmission` object analogous to a link is defined which describes which `TransmissionMode`options are available between any two areas.  "
+
+# ╔═╡ d1091c8b-e51c-46da-b331-02bf17406ff6
+md" ### USER INTERFACE - GEOGRAPHY"
+
+# ╔═╡ 0ac93160-05c5-4910-87fa-0775312863dd
+md" Formulating the problem basically involves filling out a dictionary of the following form:  
+```
+case = Dict(
+			:areas          => Array{Area}(areas),
+			:transmission   => Array{Transmission}(transmission),
+			:nodes          => Array{EMB.Node}(nodes),
+			:links          => Array{EMB.Link}(links),
+			:products       => products,
+			:T              => T,
+			:global_data    => global_data,
+            )
+```
+It is somewhat laborious to fill in the `links` and the `nodes` keys since these need to be extracted for each area.
+"
+
+# ╔═╡ ba507faa-b841-4768-adcc-64f1899d77b3
+md" ### Internals of Problem Formulation with Geography"
+
+# ╔═╡ 8554fb37-2012-46c5-92f5-bf6486ceb880
+md" 
+1. First, all the steps discussed above are invoked since **`EMB.create_model()`** is called. 
+2. **`variables_area`**: Creates an `area_exchange[a, t, p]`. This is amount of resoruce `p` exchanged by area `a`
+3. **`variables_transmission`**: `trans_in[l, t, cm]` l is the `Transmission` object between two areas, and cm is the `TransmissionMode` in that object. `trans_out[l, t, cm]`, `trans_loss[l, t, cm]`, `trans_cap[l, t, cm]`. It also sets the `trans_cap[l, t, cm]` to be equal to the `Trans_cap`. 
+4. **`constraints_area()`**:  
+- If resource `p` is exchanged by area `a`, then replace the mass balance of its availability node with: `flow_in[n, t, p] == flow_out[n,t,p] - area_exchange[a, t, p]`. 
+- If resource `p` is not then the vanilla `flow_in[n, t, p] == flow_out[n, t, p]` method is used as before.
+- Also:
+`area_exchange[a, t, p] = sum(sum(compute_trans_out)) - sum(sum(compute_trans_in))`
+- Lastly, `create_transmission_mode(m, 𝒯, l, cm)` is called which dispatches in cm. 
+"
+
 # ╔═╡ Cell order:
 # ╟─f1e88e7c-09bd-11ed-2d4e-ababaa4234ba
 # ╟─5789f16f-29b8-481d-8957-b02c0f1e2d99
@@ -245,10 +299,10 @@ md"**`constraints_link`**: Sets mass balance constraints for every link.
 # ╟─fa10c704-73ea-4a67-98ff-d471ec32f72a
 # ╟─1499f20b-4280-4b4b-9cb2-e2249f4dfcf2
 # ╟─58e907a2-26f4-479f-a01d-8b59c7b31698
-# ╠═530dedd7-b3f0-4151-a5f3-9c6ab3dcff4c
+# ╟─530dedd7-b3f0-4151-a5f3-9c6ab3dcff4c
 # ╟─71a23c39-473d-4193-b33a-184eae7d2878
-# ╠═7d98ac6f-d04f-420c-9174-68a02eba3d65
-# ╠═fab54a9c-95cf-4e97-aa4a-c7bd07250bc7
+# ╟─7d98ac6f-d04f-420c-9174-68a02eba3d65
+# ╟─fab54a9c-95cf-4e97-aa4a-c7bd07250bc7
 # ╟─27be7592-765d-491a-921b-211b5f81d992
 # ╟─95ad0c8c-e317-46d2-a758-8914a08fb01b
 # ╟─1cf75d4a-7043-4ea7-abc1-bf9e9c65299e
@@ -258,7 +312,7 @@ md"**`constraints_link`**: Sets mass balance constraints for every link.
 # ╟─cfaa1d02-ec30-442e-8fe2-6dbfee41c252
 # ╟─09161362-53e6-47bf-9658-80f9b83992d7
 # ╟─3120a539-0bcb-4baa-a77a-9707b1b4fd3d
-# ╠═67743202-d571-437c-9bad-cdbf6003bfa0
+# ╟─67743202-d571-437c-9bad-cdbf6003bfa0
 # ╟─687ef3f7-122c-40a6-a2f2-455c71655627
 # ╟─a9c15d96-a666-4671-b523-afe8a4e499f7
 # ╟─a9537c72-5d65-4b09-9312-ba7a22bbc4ec
@@ -266,3 +320,9 @@ md"**`constraints_link`**: Sets mass balance constraints for every link.
 # ╟─86da1dea-0a4a-4fea-8496-d4eecec731d4
 # ╟─ccb5dbb2-8a15-413c-a436-21e13a9fde5d
 # ╟─41998aea-d15b-498d-b6ad-f3fcbcc9221f
+# ╟─2272b29c-3a60-43cb-b07e-bf7870eed888
+# ╟─8812825a-139b-4a0d-9196-c3ba938c3cbc
+# ╟─d1091c8b-e51c-46da-b331-02bf17406ff6
+# ╟─0ac93160-05c5-4910-87fa-0775312863dd
+# ╟─ba507faa-b841-4768-adcc-64f1899d77b3
+# ╟─8554fb37-2012-46c5-92f5-bf6486ceb880
