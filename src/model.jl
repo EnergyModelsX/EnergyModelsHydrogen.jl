@@ -139,7 +139,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == 
             sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv)
-            + n.Stack_replacement_cost[t_inv]/t_inv.duration)
+            + n.Stack_replacement_cost[t_inv]* m[:elect_stack_replacement_sp_b][n, t_inv]/t_inv.duration)
 end
 
 

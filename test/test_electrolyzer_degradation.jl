@@ -135,6 +135,7 @@ function build_run_electrolyzer_model(Params)
                                 FixedProfile(100),  # Installed capacity [MW]
                                 FixedProfile(10),   # Variable Opex
                                 FixedProfile(0),    # Fixed Opex
+                                FixedProfile(1000),
                                 Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput 
                                 Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
                                 Dict(),             # Emissions dict
@@ -202,6 +203,7 @@ function build_run_electrolyzer_model(Params)
         @debug "elect_on_b $(value.(m[:elect_on_b]))"
         @debug "elect_previous_usage $(value.(m[:elect_previous_usage]))"
         @debug "elect_usage_in_sp $(value.(m[:elect_usage_in_sp]))"
+        @debug "elect_stack_replacement_sp_b $(value.(m[:elect_stack_replacement_sp_b]))"
         @debug "elect_efficiency_penalty $(value.(m[:elect_efficiency_penalty]))"
     end
     return (m, data)
@@ -251,3 +253,27 @@ end
     end
     #finalize(backend(m2).optimizer.model)
 end
+
+# Set deficit cost to be high to motivate electrolyzer use. Set small lifetime. 
+@testset "Electrolyzer - Stack replacement tests" begin
+    m2_dict = deepcopy(params_dict)
+    m2_dict[:Num_hours] = 5
+    m2_dict[:Deficit_cost] = FixedProfile(1000)
+    m2_dict[:Degradation_rate] = 1
+    m2_dict[:Equipment_lifetime] = 10
+    (m2, d2) = build_run_electrolyzer_model(m2_dict)
+    n = d2[:nodes][3]
+    # Usual tests
+    for t ∈ d2[:T]
+        t_prev = TS.previous(t,d2[:T])
+        if (t_prev != nothing)
+            @test (value.(m2[:elect_efficiency_penalty][n, t]) <= value.(m2[:elect_efficiency_penalty][n, t_prev]) || value.(m2[:elect_efficiency_penalty][n, t]) ≈ value.(m2[:elect_efficiency_penalty][n, t_prev]))
+            @test value.(m2[:elect_previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
+        end
+    end
+    # Params adjusted that stack replacement always favored (except for first) 
+    @test sum(value.(m2[:elect_stack_replacement_sp_b][n, t_inv]) for t_inv ∈ EMB.strategic_periods(d2[:T])) == d2[:T].len - 1
+    #finalize(backend(m2).optimizer.model)
+end
+
+ 
