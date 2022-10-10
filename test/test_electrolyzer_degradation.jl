@@ -135,7 +135,7 @@ function build_run_electrolyzer_model(Params)
                                 FixedProfile(100),  # Installed capacity [MW]
                                 FixedProfile(10),   # Variable Opex
                                 FixedProfile(0),    # Fixed Opex
-                                FixedProfile(1000),
+                                FixedProfile(1000),# Stack replacement costs
                                 Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput 
                                 Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
                                 Dict(),             # Emissions dict
@@ -219,7 +219,8 @@ params_dict = Dict(:Deficit_cost => FixedProfile(0), :Num_hours => 2, :Degradati
     m1_dict = deepcopy(params_dict)
     m1_dict[:Deficit_cost] = FixedProfile(17)
     (m1, d1) = build_run_default_EMB_model(m1_dict)
-    @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
+    # Levying a deficit penalty should increase minimum cost
+    @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1))
     finalize(backend(m0).optimizer.model)
     finalize(backend(m1).optimizer.model)
 end
@@ -230,7 +231,8 @@ end
     m1_dict = deepcopy(params_dict)
     m1_dict[:Deficit_cost] = FixedProfile(17)
     (m1, d1) = build_run_electrolyzer_model(m1_dict)
-    @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) # Levying a deficit penalty should increase minimum cost
+    # Levying a deficit penalty should increase minimum cost
+    @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1)) 
     finalize(backend(m0).optimizer.model)
     finalize(backend(m1).optimizer.model)
 end
@@ -247,7 +249,10 @@ end
     for t ∈ d2[:T]
         t_prev = TS.previous(t,d2[:T])
         if (t_prev != nothing)
-            @test (value.(m2[:elect_efficiency_penalty][n, t]) <= value.(m2[:elect_efficiency_penalty][n, t_prev]) || value.(m2[:elect_efficiency_penalty][n, t]) ≈ value.(m2[:elect_efficiency_penalty][n, t_prev]))
+            @test (value.(m2[:elect_efficiency_penalty][n, t]) <= 
+                        value.(m2[:elect_efficiency_penalty][n, t_prev]) || 
+                        value.(m2[:elect_efficiency_penalty][n, t]) ≈ 
+                            value.(m2[:elect_efficiency_penalty][n, t_prev]))
             @test value.(m2[:elect_previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
         end
     end
@@ -260,20 +265,21 @@ end
     m2_dict[:Num_hours] = 5
     m2_dict[:Deficit_cost] = FixedProfile(1000)
     m2_dict[:Degradation_rate] = 1
-    m2_dict[:Equipment_lifetime] = 10
+    m2_dict[:Equipment_lifetime] = 20
     (m2, d2) = build_run_electrolyzer_model(m2_dict)
     n = d2[:nodes][3]
     # Usual tests
     for t ∈ d2[:T]
         t_prev = TS.previous(t,d2[:T])
         if (t_prev != nothing)
-            @test (value.(m2[:elect_efficiency_penalty][n, t]) <= value.(m2[:elect_efficiency_penalty][n, t_prev]) || value.(m2[:elect_efficiency_penalty][n, t]) ≈ value.(m2[:elect_efficiency_penalty][n, t_prev]))
+            @test (value.(m2[:elect_efficiency_penalty][n, t]) <=
+                        value.(m2[:elect_efficiency_penalty][n, t_prev]) ||
+                        value.(m2[:elect_efficiency_penalty][n, t]) ≈
+                            value.(m2[:elect_efficiency_penalty][n, t_prev]))
             @test value.(m2[:elect_previous_usage][n,t]) <= m2_dict[:Equipment_lifetime]
         end
     end
-    # Params adjusted that stack replacement always favored (except for first) 
-    @test sum(value.(m2[:elect_stack_replacement_sp_b][n, t_inv]) for t_inv ∈ EMB.strategic_periods(d2[:T])) == d2[:T].len - 1
+    # Params adjusted that stack replacement is done once the lifetime is reached
+    @test sum(value.(m2[:elect_stack_replacement_sp_b][n, t_inv]) for t_inv ∈ EMB.strategic_periods(d2[:T])) == d2[:T].len - 2
     finalize(backend(m2).optimizer.model)
 end
-
- 

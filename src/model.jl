@@ -103,10 +103,10 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
         m[:elect_efficiency_penalty][n,t] == (1 - (n.Degradation_rate/100)*m[:elect_previous_usage][n,t])
         )
 
-    # Additional big-M constraint with binary variable 
+    # Additional big-M constraint with binary variable to account for degredation
     for p ∈ 𝒫ᵒᵘᵗ
         @constraint(m, [t ∈ 𝒯], 
-            m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:elect_efficiency_penalty][n,t]  # Accounts for degradation
+            m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:elect_efficiency_penalty][n,t]
             )
 
     end
@@ -126,7 +126,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     )
         
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t]<= n.Maximum_load*m[:cap_inst][n, t]
+        m[:cap_use][n, t]<= n.Maximum_load * m[:cap_inst][n, t]
     )
     
     # Unchanged from EnergyModelsBase.Network: Constraints on nodal emissions.
@@ -136,10 +136,11 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     end
             
     # Unchanged from EnergyModelsBase.Network: Constraint for the Opex contributions
+    # Note: Degradation included into opex_var although it is not! Simpler implementation
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == 
             sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv)
-            + n.Stack_replacement_cost[t_inv]* m[:elect_stack_replacement_sp_b][n, t_inv]/t_inv.duration)
+            + n.Stack_replacement_cost[t_inv] * m[:elect_stack_replacement_sp_b][n, t_inv] / t_inv.duration)
 end
 
 

@@ -9,7 +9,7 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Equipment_lifetime`
 - **`Cap::TimeProfile`** : Nominal installed capacity
 - **`Opex_var::TimeProfile`** :  Variable operational costs per energy unit produced 
 - **`Opex_fixed::TimeProfile`** : Fixed operating cost
-- **`Stack_replacement_cost::TimeProfile`**: RReplacement cost of electrolyzer stack. **Note**: Stack replacement can only be done once a strategic period, on first op.
+- **`Stack_replacement_cost::TimeProfile`**: Replacement cost of electrolyzer stack. **Note**: Stack replacement can only be done once a strategic period, in first op.
 - **`Input::Dict{EMB.Resource, Real}`**` : Map of input resources to the characteristic flow 
 - **`Output::Dict{EMB.Resource, Real}`** : Map of output resources to characteristic flow. 
 - **`Emissions::Dict{EMB.ResourceEmit, Real}`** : Map of emitting outputs to characteristic flow
