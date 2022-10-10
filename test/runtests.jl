@@ -9,8 +9,8 @@ const TS = TimeStructures
 const EMB = EnergyModelsBase
 const EMH = EnergyModelsHydrogen
 
-# using SCIP
-# optim = SCIP.Optimizer
+#using SCIP
+#optim = SCIP.Optimizer
 
 using Gurobi
 const env = Gurobi.Env()
