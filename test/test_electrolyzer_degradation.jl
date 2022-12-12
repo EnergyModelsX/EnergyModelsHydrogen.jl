@@ -1,16 +1,8 @@
-
-# TO SET LOGGING LEVEL
-ENV["JULIA_DEBUG"] = all
-
-#using Logging # Use for tailored logging.
-#logger = Logging.SimpleLogger(stdout, Logging.Debug)
-
-
 """
     Returns `(JuMP.model, data)` dictionary of default model that uses a converter of type `EMB.RefGen`.
 """
 function build_run_default_EMB_model(Params)
-    @info "RefGen model."
+    @debug "RefGen model."
     # Step 1: Defining the overall time structure.
     # Project lifetime: Params[:Num_hours] hours. 1 strategic investment period.
     # operations: period of Params[:Num_hours] hours, 1 hour resolution. 
@@ -82,7 +74,7 @@ function build_run_default_EMB_model(Params)
     @debug "Optimization model: $(m)"
 
     set_optimizer(m, optim)
-    set_optimizer_attribute(m, "OutputFlag", 0)
+    
     optimize!(m)
     
     if (JuMP.termination_status(m) == OPTIMAL)
@@ -105,7 +97,7 @@ end
     Returns `(JuMP.model, data)` dictionary of default model that uses a converter of type `EnergyModelsHydrogen`.
 """
 function build_run_electrolyzer_model(Params)
-    @info "Degradation electrolyzer model."
+    @debug "Degradation electrolyzer model."
     # Step 1: Defining the overall time structure.
     # Project lifetime: Params[:Num_hours] hours. 1 strategic investment period.
     # operations: period of Params[:Num_hours] hours, 1 hour resolution. 
@@ -185,10 +177,7 @@ function build_run_electrolyzer_model(Params)
     @debug "Optimization model: $(m)"
 
     set_optimizer(m, optim)
-    set_optimizer_attribute(m, "NonConvex", 2)
-    set_optimizer_attribute(m, "MIPGap", 1e-3)
-    set_optimizer_attribute(m, "OutputFlag", 0)
-
+    
     optimize!(m)
     
     if (JuMP.termination_status(m) == OPTIMAL)
@@ -215,12 +204,12 @@ params_dict = Dict(:Deficit_cost => FixedProfile(0), :Num_hours => 2, :Degradati
 
 @testset "RefGen - Basic sanity tests" begin
     (m0, d0) = build_run_default_EMB_model(params_dict)
-    @test objective_value(m0) ≈ 0
+    @test objective_value(m0) ≈ 0 atol = TEST_ATOL
     m1_dict = deepcopy(params_dict)
     m1_dict[:Deficit_cost] = FixedProfile(17)
     (m1, d1) = build_run_default_EMB_model(m1_dict)
     # Levying a deficit penalty should increase minimum cost
-    @test (objective_value(m0) >= objective_value(m1) || objective_value(m0) ≈ objective_value(m1))
+    @test objective_value(m0) ⪆ objective_value(m1) #|| objective_value(m0) ≈ objective_value(m1))
     finalize(backend(m0).optimizer.model)
     finalize(backend(m1).optimizer.model)
 end
@@ -280,6 +269,6 @@ end
         end
     end
     # Params adjusted that stack replacement is done once the lifetime is reached
-    @test sum(value.(m2[:elect_stack_replacement_sp_b][n, t_inv]) for t_inv ∈ EMB.strategic_periods(d2[:T])) == d2[:T].len - 2
+    @test sum(value.(m2[:elect_stack_replacement_sp_b][n, t_inv]) for t_inv ∈ EMB.strategic_periods(d2[:T])) ≈ d2[:T].len - 2
     finalize(backend(m2).optimizer.model)
 end
