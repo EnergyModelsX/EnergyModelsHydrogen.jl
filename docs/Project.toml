@@ -1,4 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
 EnergyModelsHydrogen = "44855f8b-b147-4985-ac18-48817d03c548"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+TimeStructures = "260f4295-b40d-47c0-843b-64f3de373d90"
