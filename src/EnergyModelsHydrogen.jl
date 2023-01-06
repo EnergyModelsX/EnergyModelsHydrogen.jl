@@ -1,3 +1,8 @@
+"""
+Main module for `EnergyModelsHydrogen.jl`.
+
+This module implements constraints for describing an `Electrolyzer`.
+"""
 module EnergyModelsHydrogen
 
 using JuMP

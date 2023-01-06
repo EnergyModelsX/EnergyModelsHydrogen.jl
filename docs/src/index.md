@@ -1,18 +1,22 @@
-# EnergyModelsBase.jl
+# EnergyModelsHydrogen.jl
 
-This Julia package provides an operational, multi nodal model.
+This Julia package provides implementation of an `Electrolyzer` for the operational, multi carrier energy model [`EnergyModelsBase.jl`](https://clean_export.pages.sintef.no/energymodelsbase.jl).
 
+```@docs
+EnergyModelsHydrogen
+```
 
 ## Manual outline
 ```@contents
 Pages = [
     "manual/quick-start.md",
-    "manual/philosophy.md",
-    "manual/simple-example.md"
 ]
 ```
 
 ## Library outline
 ```@contents
-Pages = ["library/public.md"]
+Pages = [
+    "library/public.md",
+    "library/internals.md"
+]
 ```

@@ -5,6 +5,7 @@
 /Manifest.toml
 docs/Manifest.toml
 test/Manifest.toml
+docs/src/manual/NEWS.md
 
 # IDE
 /.vscode
