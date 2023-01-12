@@ -1,5 +1,5 @@
 """
-    variables_node(m, 𝒩, 𝒯, node::Electrolyzer, modeltype)elect_on
+    variables_node(m, 𝒩, 𝒯, node::Electrolyzer, modeltype)
 
 Creates the following additional variables for **ALL** electrolyzer nodes:
 1) `elect_on_b[n,t]` - Binary variable which is 1 if electrolyzer n is running in time step t. 

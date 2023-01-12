@@ -1,6 +1,11 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
+
 /Manifest.toml
-/.vscode
+docs/Manifest.toml
 test/Manifest.toml
+docs/src/manual/NEWS.md
+
+# IDE
+/.vscode

@@ -1,14 +1,14 @@
+using Documenter
+
 using EnergyModelsHydrogen
 
-try
-    using Documenter
-catch
-    import Pkg
-    Pkg.activate(@__DIR__)
-    Pkg.instantiate()
-    
-    using Documenter
+
+# Copy the NEWS.md file
+news = "src/manual/NEWS.md"
+if isfile(news)
+    rm(news)
 end
+cp("../NEWS.md", "src/manual/NEWS.md")
 
 
 makedocs(
@@ -19,11 +19,11 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
-            "Philosophy" => "manual/philosophy.md",
-            "Examples" => "manual/simple-example.md",
+            "Release notes" => "manual/NEWS.md",
         ],
         "Examples" => Any[
-            "Simple Electrolyzer" => "examples/simple-electrolyzer-1-area.md",
+            "WIP: Simple Electrolyzer" => "examples/simple-electrolyzer-1-area.md",
+            "WIP: Electrolyzer: two areas" => "examples/simple-electrolyzer-2-areas.md",
         ],
         "Library" => Any[
             "Public" => "library/public.md",

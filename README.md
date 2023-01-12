@@ -1,5 +1,9 @@
 # EnergyModelsHydrogen
 
+[![Pipeline: passing](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/badges/main/pipeline.svg)](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/-/jobs)
+[![Docs: stable](https://img.shields.io/badge/docs-stable-4495d1.svg)](https://clean_export.pages.sintef.no/energymodelshydrogen.jl)
+
+
 `EnergyModelsHydrogen` is a package extending `EnergyModelsBase` to model Hydrogen production in greated detail, including e.g. degradation.
 
 > **Note**
