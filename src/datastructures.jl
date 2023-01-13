@@ -16,8 +16,8 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Equipment_lifetime`
 - **`CO2_capture::Real`** : CO2 capture rate
 - **`Data::Dict{String,EMB.Data}`** : Additional data (e.g., for investments)
 - **`Startup_time::Real`** : [WIP - Not implemented] Startup time of the electrolyzer as a fraction of the operational period (time step)
-- **`Minimum_load::Real`** : Minimum load as a fraction of the nominal installed capacity `Cap` above
-- **`Maximum_load::Real`** : Maximum load as a fraction of the nominal installed capacity `Cap` above
+- **`Minimum_load::Real`** : Minimum load as a fraction of the nominal installed capacity with potential for investments
+- **`Maximum_load::Real`** : Maximum load as a fraction of the nominal installed capacity with potential for investments
 - **`Equipment_lifetime::Real`** :Total operational equipment life time as multiple of operational period (time step)
 - **`Degradation_rate::Real`**: Percentage drop in efficiency due to degradation
 

@@ -41,11 +41,8 @@ end
 
 """
     create_node(m, n::Electrolyzer, 𝒯, 𝒫)
-Method to set specialized constraints for electrolyzers. The following features are added:
-- 1. Degradation. This takes in the user-specified `Degradation_rate` parameter.  
-First, the `elect_previous_usage[n,t]` is used to keep track of the total previous usage. 
-    
-    
+Method to set specialized constraints for electrolyzers including stack degradation and
+replacement costs.
 """
 function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
 
@@ -57,7 +54,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
 
 
-    # Unchanged: Get products flows as functions of node characteristic flow.
+    # Constraints for inflow to the node
     for p ∈ 𝒫ⁱⁿ
         @constraint(m, [t ∈ 𝒯], 
             m[:flow_in][n, t, p] == m[:cap_use][n, t]*n.Input[p])
@@ -103,7 +100,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
         m[:elect_efficiency_penalty][n,t] == (1 - (n.Degradation_rate/100)*m[:elect_previous_usage][n,t])
         )
 
-    # Additional big-M constraint with binary variable to account for degredation
+    # Outlet flow constraint including the efficiency penalty
     for p ∈ 𝒫ᵒᵘᵗ
         @constraint(m, [t ∈ 𝒯], 
             m[:flow_out][n, t, p] == m[:cap_use][n, t]*n.Output[p]*m[:elect_efficiency_penalty][n,t]
@@ -111,37 +108,49 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
 
     end
 
-    # Big M constraint for electrolyser so that binary is only 1 when cap_use > 0.
-    # Take Big-M to be 100 times the n.Cap[t]
-    @constraint(m, [t ∈ 𝒯], 
-        m[:cap_use][n, t] <= 100*n.Cap[t]*m[:elect_on_b][n,t]
-    )
-    @constraint(m, [t ∈ 𝒯], 
-        m[:cap_use][n, t] >= 0.001*m[:elect_on_b][n,t]
-    )
+    # Definition of the helper variable for the linear reformulation of the product of
+    # `:cap_inst` and `:elect_on_b`. This reformulation requires the defintion of a new
+    # variable `product = :cap_inst * :elect_on_b` and the introduction of both an
+    # upper_bound and a lower_bound of the variable `:cap_inst`. These bounds are 
+    # depending on whether Investments are allowed or not. In the case of no investments,
+    # this removes the bilinear term.
+    product = @variable(m, [𝒯], lower_bound = 0)
+    if haskey(n.Data,"Investments") 
+        upper_bound = n.Data["Investments"].Cap_max_inst
+        lower_bound = FixedProfile(0)
+    else
+        upper_bound = n.Cap
+        lower_bound = n.Cap
+    end
 
-    # Changed from EnergyModelsBase.Network to new Minimum_load and Maximum_load: Constraint for the maximum throughput
+    # Constraints for the linear reformulation. The constraints are based on the
+    # McCormick envelopes which result in an exact reformulation for the multiplication
+    # of a binary and a continuous variable
+    @constraints(m, begin 
+        [t ∈ 𝒯], product[t] >= lower_bound[t] * m[:elect_on_b][n,t]
+        [t ∈ 𝒯], product[t] >= upper_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
+        [t ∈ 𝒯], product[t] <= upper_bound[t] * m[:elect_on_b][n,t]
+        [t ∈ 𝒯], product[t] <= lower_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
+    end)
+
+    # Constraint for the maximum and minimum production volume
     @constraint(m, [t ∈ 𝒯],
-        n.Minimum_load*m[:cap_inst][n, t] <= m[:cap_use][n, t]
+        n.Minimum_load * product[t] <= m[:cap_use][n, t]
     )
-        
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t]<= n.Maximum_load * m[:cap_inst][n, t]
+        m[:cap_use][n, t] <= n.Maximum_load * product[t]
     )
     
-    # Unchanged from EnergyModelsBase.Network: Constraints on nodal emissions.
+    # Constraints on nodal process emissions
     for p_em ∈ 𝒫ᵉᵐ
         @constraint(m, [t ∈ 𝒯],
             m[:emissions_node][n, t, p_em] == m[:cap_use][n, t]*n.Emissions[p_em])
     end
             
-    # Unchanged from EnergyModelsBase.Network: Constraint for the Opex contributions
+    # Constraint for the Opex contributions
     # Note: Degradation included into opex_var although it is not! Simpler implementation
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == 
             sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv)
             + n.Stack_replacement_cost[t_inv] * m[:elect_stack_replacement_sp_b][n, t_inv] / t_inv.duration)
 end
-
-
-
