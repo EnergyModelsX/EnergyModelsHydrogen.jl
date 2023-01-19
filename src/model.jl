@@ -163,12 +163,12 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     end
 
     # Definition of the helper variable for the linear reformulation of the product of
-    # `:cap_inst` and `:elect_on_b`. This reformulation requires the defintion of a new
-    # variable `product = :cap_inst * :elect_on_b` and the introduction of both an
+    # `:cap_inst` and `:elect_on_b`. This reformulation requires the definition of a new
+    # variable `product_on = :cap_inst * :elect_on_b` and the introduction of both an
     # upper_bound and a lower_bound of the variable `:cap_inst`. These bounds are 
     # depending on whether Investments are allowed or not. In the case of no investments,
     # this removes the bilinear term.
-    product = @variable(m, [𝒯], lower_bound = 0)
+    product_on = @variable(m, [𝒯], lower_bound = 0)
     if haskey(n.Data,"Investments") 
         upper_bound = n.Data["Investments"].Cap_max_inst
         lower_bound = FixedProfile(0)
@@ -181,18 +181,18 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     # McCormick envelopes which result in an exact reformulation for the multiplication
     # of a binary and a continuous variable
     @constraints(m, begin 
-        [t ∈ 𝒯], product[t] >= lower_bound[t] * m[:elect_on_b][n,t]
-        [t ∈ 𝒯], product[t] >= upper_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
-        [t ∈ 𝒯], product[t] <= upper_bound[t] * m[:elect_on_b][n,t]
-        [t ∈ 𝒯], product[t] <= lower_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
+        [t ∈ 𝒯], product_on[t] >= lower_bound[t] * m[:elect_on_b][n,t]
+        [t ∈ 𝒯], product_on[t] >= upper_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
+        [t ∈ 𝒯], product_on[t] <= upper_bound[t] * m[:elect_on_b][n,t]
+        [t ∈ 𝒯], product_on[t] <= lower_bound[t]*(m[:elect_on_b][n,t]-1) + m[:cap_inst][n, t]
     end)
 
     # Constraint for the maximum and minimum production volume
     @constraint(m, [t ∈ 𝒯],
-        n.Minimum_load * product[t] <= m[:cap_use][n, t]
+        n.Minimum_load * product_on[t] <= m[:cap_use][n, t]
     )
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t] <= n.Maximum_load * product[t]
+        m[:cap_use][n, t] <= n.Maximum_load * product_on[t]
     )
     
     # Constraints on nodal process emissions
@@ -201,6 +201,26 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
             m[:emissions_node][n, t, p_em] == m[:cap_use][n, t]*n.Emissions[p_em]
         )
     end
+    
+    # Constraints for the linear reformulation of the mulitplication of the stack
+    # replacement binary and the installed capacity. The constraints are based on the
+    # McCormick envelopes which result in an exact reformulation for the multiplication
+    # of a binary and a continuous variable This reformulation requires the definition 
+    # of a new variable `product_replace = :cap_inst * :elect_on_b`
+    product_replace = @variable(m, [𝒯ᴵⁿᵛ], lower_bound = 0)
+    @constraints(m, begin 
+        [t_inv ∈ 𝒯ᴵⁿᵛ], product_replace[t_inv] >= 
+                            lower_bound[t_inv] * m[:elect_stack_replacement_sp_b][n,t_inv]
+
+        [t_inv ∈ 𝒯ᴵⁿᵛ], product_replace[t_inv] >= 
+                            upper_bound[t_inv]*(m[:elect_stack_replacement_sp_b][n,t_inv]-1) + m[:cap_inst][n,first(t_inv)]
+
+        [t_inv ∈ 𝒯ᴵⁿᵛ], product_replace[t_inv] <= 
+                            upper_bound[t_inv] * m[:elect_stack_replacement_sp_b][n,t_inv]
+
+        [t_inv ∈ 𝒯ᴵⁿᵛ], product_replace[t_inv] <= 
+                            lower_bound[t_inv]*(m[:elect_stack_replacement_sp_b][n,t_inv]-1) + m[:cap_inst][n,first(t_inv)]
+    end)
             
     # Constraint for the Opex contributions
     # Note: Degradation is included into opex_var although it is not a variable OPEX in practice!
@@ -208,6 +228,6 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == 
             sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv)
-            + m[:cap_inst][n, first(t_inv)] * n.Stack_replacement_cost[t_inv] * m[:elect_stack_replacement_sp_b][n, t_inv] / t_inv.duration
+            + product_replace[t_inv] * n.Stack_replacement_cost[t_inv] / t_inv.duration
     )
 end
