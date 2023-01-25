@@ -69,7 +69,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫)
     # at the beginning of a strategic period
     # The approach is based on the element-wise multiplication of the auxiliary variable
     # `:elect_usage_mult_sp_aux_b`. The auxiliary variable creates a multiplier matrix for each
-    # strategic period. The lementwise multiplication will then lead to the situation that the
+    # strategic period. The elementwise multiplication will then lead to the situation that the
     # previous periods are not counted if there was a stack replacement in between. 
     for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
         for t_inv_post ∈ 𝒯ᴵⁿᵛ
