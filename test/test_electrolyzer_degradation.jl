@@ -12,6 +12,7 @@ function build_run_electrolyzer_model(params)
     # Step 2: Define all the arc flow streams which are structs in {ResourceEmit, ResourceCarrier} <: Resource
     Power = ResourceCarrier("Power", 0.0)
     H2    = ResourceCarrier("H2", 0.0)
+    CO2   = ResourceEmit("CO2", 1.0)
     
     # Step 3: Defining products:
     products = [Power, H2]
@@ -25,7 +26,6 @@ function build_run_electrolyzer_model(params)
                                 FixedProfile(0),    # Variable Opex    
                                 FixedProfile(0),    # Fixed Opex
                                 Dict(Power => 1),   # Ratio of output to characteristic throughput
-                                Dict(),             # Emissions
                                 Dict(),             # Data
     )
 
@@ -36,8 +36,6 @@ function build_run_electrolyzer_model(params)
                                 params[:stack_cost],  # Stack replacement costs
                                 Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput 
                                 Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-                                Dict(),             # Emissions dict
-                                0.0,                # CO2 capture
                                 Dict(),             # Data
                                 5/60,               # Startup time  
                                 0,                  # Min load
@@ -51,7 +49,6 @@ function build_run_electrolyzer_model(params)
                                 Dict(:Surplus => FixedProfile(0),
                                      :Deficit => params[:deficit_cost]), # Penalty dict
                                 Dict(H2 => 1),      # Ratio of sink flows to sink characteristic throughput.
-                                Dict(),             # Emissions dict
     )
 
 
@@ -65,21 +62,17 @@ function build_run_electrolyzer_model(params)
         Direct("l4", Central_node, End_hydrogen_consumer, Linear())
     ]
 
-    # Step 6: Setting up the global data. Data for the entire project and not node or arc dependent
-    global_data = GlobalData(Dict())
-
-    # Step 7: Include all parameters in a single dictionary
+    # Step 6: Include all parameters in a single dictionary
     data = Dict(
         :T => overall_time_structure,
         :products => products,
         :nodes => Array{EMB.Node}(nodes),
         :links => Array{EMB.Link}(links),
-        :global_data => global_data,
     )
 
     # B Formulating and running the optimization problem
-    modeltype = OperationalModel()
-    m = create_model(data, modeltype)
+    model = OperationalModel(Dict(), CO2)
+    m = create_model(data, model)
 
     @debug "Optimization model: $(m)"
 
@@ -98,7 +91,7 @@ function build_run_electrolyzer_model(params)
         @debug "flow_out $(value.(m[:flow_out]))"
         @debug "elect_on_b $(value.(m[:elect_on_b]))"
         @debug "elect_previous_usage $(value.(m[:elect_previous_usage]))"
-        @debug "elect_usage_in_sp $(value.(m[:elect_usage_in_sp]))"
+        @debug "elect_usage_sp $(value.(m[:elect_usage_sp]))"
         @debug "elect_stack_replacement_sp_b $(value.(m[:elect_stack_replacement_sp_b]))"
         @debug "elect_efficiency_penalty $(value.(m[:elect_efficiency_penalty]))"
     end

@@ -2,6 +2,15 @@ Release Notes
 =============
 
 
+Version 0.2.0 (2023-02-03)
+--------------------------
+### Adjustmends to updates in EnergyModelsBase
+Adjustment to version 0.3.0, namely:
+* The removal of emissions from `Node` type definition that do not require them. In this case, this is the type `Electrolyzer` and all tests
+* Adjustment of the changes in the call of `variables_node`
+* Utlization of the new function calls for constraint generations
+* Removal of the type `GlobalData` and replacement with fields in the type `OperationalModel` in all tests
+
 Version 0.1.3 (2023-01-13)
 --------------------------
 ### Bug fixes
