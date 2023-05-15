@@ -1,7 +1,7 @@
 name = "EnergyModelsHydrogen"
 uuid = "44855f8b-b147-4985-ac18-48817d03c548"
 authors = ["Avinash Subramanian, Julian Straus <Julian.Straus@sintef.no>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
@@ -9,7 +9,7 @@ JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 TimeStructures = "260f4295-b40d-47c0-843b-64f3de373d90"
 
 [compat]
-EnergyModelsBase = "^0.3.1"
+EnergyModelsBase = "^0.3.3"
 JuMP = "1.5"
 TimeStructures = "0.1.10"
 julia = "1.6"
