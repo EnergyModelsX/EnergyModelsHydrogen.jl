@@ -219,8 +219,8 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
     )
 
     # Call of the function for the inlet flow to the `Electrolyzer` node
-    EMB.constraints_flow_in(m, n, 𝒯)
+    EMB.constraints_flow_in(m, n, 𝒯, modeltype)
             
     # Call of the functions for the variable OPEX constraint introduction
-    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
