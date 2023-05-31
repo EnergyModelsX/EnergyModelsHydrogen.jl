@@ -26,7 +26,7 @@ function build_run_electrolyzer_model(params)
                                 FixedProfile(0),    # Variable Opex    
                                 FixedProfile(0),    # Fixed Opex
                                 Dict(Power => 1),   # Ratio of output to characteristic throughput
-                                Dict(),             # Data
+                                [],             # Data
     )
 
     PEM_electrolyzer = EMH.Electrolyzer("PEM",
@@ -36,7 +36,7 @@ function build_run_electrolyzer_model(params)
                                 params[:stack_cost],  # Stack replacement costs
                                 Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput 
                                 Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-                                Dict(),             # Data
+                                [],             # Data
                                 5/60,               # Startup time  
                                 0,                  # Min load
                                 160,                # Max load

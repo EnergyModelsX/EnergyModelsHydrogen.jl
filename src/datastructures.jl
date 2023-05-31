@@ -9,9 +9,9 @@ New fields: `Startup_time`, `Minimum_load`, `Maximum_load`, `Stack_lifetime`. `D
 - **`Opex_var::TimeProfile`** :  Variable operational costs per energy unit produced 
 - **`Opex_fixed::TimeProfile`** : Fixed operating cost
 - **`Stack_replacement_cost::TimeProfile`**: Replacement cost of electrolyzer stack.
-- **`Input::Dict{EMB.Resource, Real}`**` : Map of input resources to the characteristic flow .
-- **`Output::Dict{EMB.Resource, Real}`** : Map of output resources to characteristic flow. 
-- **`Data::Dict{String,EMB.Data}`** : Additional data (e.g., for investments)
+- **`Input::Dict{Resource, Real}`**` : Map of input resources to the characteristic flow .
+- **`Output::Dict{Resource, Real}`** : Map of output resources to characteristic flow. 
+- **`Data::Array{Data}`** : Additional data (e.g., for investments)
 - **`Startup_time::Real`** : [WIP - Not implemented] Startup time of the electrolyzer
 as a fraction of the operational period (time step).
 - **`Minimum_load::Real`** : Minimum load as a fraction of the nominal installed
@@ -34,7 +34,7 @@ struct Electrolyzer <: Network
     Stack_replacement_cost::TimeProfile
     Input::Dict{Resource, Real} 
     Output::Dict{Resource, Real}
-    Data::Dict{String, Data}
+    Data::Array{Data}
     Startup_time::Real 
     Minimum_load::Real
     Maximum_load::Real
