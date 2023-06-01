@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+Version 0.3.0 (2023-05-31)
+--------------------------
+ * Adjustment to changes in `EnergyModelsBase` v0.4.0 related to extra input data
+
 Version 0.2.1 (2023-05-15)
 --------------------------
  * Adjustment to changes in `EnergyModelsBase` v0.3.3 related to the calls for the constraint functions
