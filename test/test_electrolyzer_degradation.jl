@@ -7,7 +7,7 @@ function build_run_electrolyzer_model(params)
     # Step 1: Defining the overall time structure.
     #   params[:num_sp] - # of strategic periods with a duration of 2.
     #   params[:num_op] - # of operational periods with a total durationg of 8760 h.
-    overall_time_structure = UniformTwoLevel(1,params[:num_sp],2,UniformTimes(1,params[:num_op],8760/params[:num_op]))
+    overall_time_structure = TwoLevel(params[:num_sp], 2, SimpleTimes(params[:num_op], 8760/params[:num_op]))
 
     # Step 2: Define all the arc flow streams which are structs in {ResourceEmit, ResourceCarrier} <: Resource
     Power = ResourceCarrier("Power", 0.0)
@@ -113,8 +113,7 @@ function penalty_test(m, data, params)
     penalty = m[:elect_efficiency_penalty]
 
     # Degradation test
-    for t ∈ 𝒯
-        t_prev = TS.previous(t, 𝒯)
+    for (t_prev, t) ∈ withprev(𝒯)
         if t_prev !== nothing
             @test value.(penalty[elect, t]) <= value.(penalty[elect, t_prev]) || 
                     value.(penalty[elect, t]) ≈ value.(penalty[elect, t_prev])
@@ -140,7 +139,7 @@ params_dict = Dict(
     # Modifying the input parameters
     params_deg = deepcopy(params_dict)
     params_deg[:num_op] = 5
-    params_deg[:deficit_cost] = StrategicFixedProfile([10, 10, 20, 25, 30])
+    params_deg[:deficit_cost] = StrategicProfile([10, 10, 20, 25, 30])
 
     params_deg[:stack_cost] = FixedProfile(3e8)
     # Run and test the model
@@ -189,7 +188,7 @@ end
                 logic = false
             end
             if logic
-                if EMH.is_prior(t_inv_pre, t_replace)
+                if isless(t_inv_pre, t_replace)
                     @test value.(stack_mult[elect, t_inv, t_inv_pre]) ≈ 0 atol = TEST_ATOL
                 else
                     @test value.(stack_mult[elect, t_inv, t_inv_pre]) ≈ 1 

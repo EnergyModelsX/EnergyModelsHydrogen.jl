@@ -6,11 +6,11 @@ This module implements constraints for describing an `Electrolyzer`.
 module EnergyModelsHydrogen
 
 using JuMP
-using TimeStructures
+using TimeStruct
 using EnergyModelsBase
 
 const EMB = EnergyModelsBase
-const TS  = TimeStructures
+const TS  = TimeStruct
 
 include("datastructures.jl")
 include("model.jl")

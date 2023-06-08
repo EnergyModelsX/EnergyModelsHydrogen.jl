@@ -31,20 +31,6 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{Electrolyzer}, 𝒯, modeltype
 end
 
 """
-    is_prior(t_prev::TS.StrategicPeriod, t::TS.StrategicPeriod)
-
-Returns true if the `t_prev` timestep occurs chronologically before the timestep `t`.
-"""
-function is_prior(t_prev::TS.StrategicPeriod, t::TS.StrategicPeriod)
-    if (t_prev.sp < t.sp)
-        return true
-    else
-        return false
-    end
-end
-
-
-"""
     EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫,  modeltype::EnergyModel)
 
 Method to set specialized constraints for electrolyzers including stack degradation and
@@ -69,7 +55,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
             # The following constraints set the auxiliary variable `:elect_usage_mult_sp_aux_b`
             # in all previous periods to 0 if there is a stack replacements. Otherwise, it sets
             # them to 1.
-            if is_prior(t_inv_pre, t_inv) && t_inv_post.sp >= t_inv.sp
+            if isless(t_inv_pre, t_inv) && t_inv_post.sp >= t_inv.sp
                 @constraint(m,
                     m[:elect_usage_mult_sp_aux_b][n, t_inv, t_inv_post, t_inv_pre] == 
                         1-m[:elect_stack_replacement_sp_b][n, t_inv]
@@ -109,24 +95,24 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
     for t_inv ∈ 𝒯ᴵⁿᵛ
         @constraint(m,
             m[:elect_usage_sp][n, t_inv] == 
-                sum(m[:elect_on_b][n, t]*t.duration for t ∈ t_inv) *
-                t_inv.duration
+                sum(m[:elect_on_b][n, t]*duration(t) for t ∈ t_inv) *
+                duration(t_inv)
         )
-        for t ∈ t_inv
-            if TS.isfirst(t)
+        for (t_prev, t) ∈ withprev(t_inv)
+            if isnothing(t_prev)
                 @constraint(m,
                     m[:elect_previous_usage][n, t] ==
                         sum(
                             m[:elect_usage_sp][n, t_inv_pre] * 
                             m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre]
-                            for t_inv_pre ∈ 𝒯ᴵⁿᵛ if is_prior(t_inv_pre, t_inv)
+                            for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
                         )
                 )
             else
                 @constraint(m,
                     m[:elect_previous_usage][n, t] ==
-                        m[:elect_previous_usage][n, previous(t, 𝒯)] + 
-                        previous(t, 𝒯).duration * m[:elect_on_b][n, previous(t, 𝒯)]
+                        m[:elect_previous_usage][n, t_prev] + 
+                        duration(t_prev) * m[:elect_on_b][n, t_prev]
                 )
             end
         end
@@ -135,7 +121,7 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
     # Constraint total usage of the electrolyzer including at the current time step.
     # This ensures that the last time step is appropriately constrained. 
     @constraint(m, [t ∈ 𝒯],
-        m[:elect_previous_usage][n,t] + t.duration*m[:elect_on_b][n, t] <= n.Stack_lifetime
+        m[:elect_previous_usage][n,t] + duration(t)*m[:elect_on_b][n, t] <= n.Stack_lifetime
     )
 
     # Determine the efficiency penalty at current timestep due to degradation:
@@ -211,13 +197,13 @@ function EMB.create_node(m, n::Electrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
                             cap_lower_bound[t_inv]*(m[:elect_stack_replacement_sp_b][n,t_inv]-1) + m[:cap_inst][n, first(t_inv)]
     end)
 
-    # Constraint for the fixed OPEX contributions. The division by t_inv.duration for the
+    # Constraint for the fixed OPEX contributions. The division by duration(t_inv) for the
     # stack replacement is requried due to multiplication with the duration in the objective
     # calculation
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_fixed][n, t_inv] == 
             n.Opex_fixed[t_inv] * m[:cap_inst][n, first(t_inv)]
-            + product_replace[t_inv] * n.Stack_replacement_cost[t_inv] / t_inv.duration
+            + product_replace[t_inv] * n.Stack_replacement_cost[t_inv] / duration(t_inv)
     )
 
     # Call of the function for the inlet flow to the `Electrolyzer` node
