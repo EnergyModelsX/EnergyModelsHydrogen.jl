@@ -1,10 +1,10 @@
 using Test
 using JuMP
-using TimeStructures
+using TimeStruct
 using EnergyModelsBase
 using EnergyModelsHydrogen
 
-const TS = TimeStructures
+const TS = TimeStruct
 const EMB = EnergyModelsBase
 const EMH = EnergyModelsHydrogen
 
