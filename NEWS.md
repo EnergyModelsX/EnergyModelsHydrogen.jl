@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+Version 0.5.0 (2024-02-11)
+--------------------------
+ * Adjusted to changes introduced throuch EnergyModelsBase version 0.6.
+ * Representative periods in `TimeStruct` are now included for the calculation of the degradation
+
 Version 0.4.0 (2023-06-02)
 --------------------------
 ### Switch to TimeStruct.jl
@@ -27,7 +32,7 @@ Adjustment to version 0.3.0, namely:
 Version 0.1.3 (2023-01-13)
 --------------------------
 ### Bug fixes
-* Fixed a bug, that required stack replacement in all years after the initial stack replacement 
+* Fixed a bug, that required stack replacement in all years after the initial stack replacement
 
 Version 0.1.2 (2023-01-10)
 --------------------------
