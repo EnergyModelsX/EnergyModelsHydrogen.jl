@@ -43,7 +43,7 @@ For example, consider a project life time of 30 years. The next step is to figur
 ```
 struct DynamicTwoLevel <: TimeStructure
 	first # Start year of the analysis
-	len::Integer # Number of strategic investment periods 
+	len::Integer # Number of strategic investment periods
 	duration::Array # Duration of each strategic period
 	operational::Array{TimeStructure} # Àrray of operational period time structures
 end
@@ -51,8 +51,8 @@ end
 
 - **Note**
 - The top-level `len` corresponds to the number of strategic investment periods.
-- The top-level `duration` corresponds to the number of **years** in each of the strategic/investment periods. 
-- The units of `duration` in the `operational` time structure is [hours]. Thus, `duration` denotes the resolution at the operational level. 
+- The top-level `duration` corresponds to the number of **years** in each of the strategic/investment periods.
+- The units of `duration` in the `operational` time structure is [hours]. Thus, `duration` denotes the resolution at the operational level.
 - `len` in the operational time structure denotes the number of time steps (each of resolution given by `duration`).
 - For consistency, the length of each element of the `operational` time structure **must** be 8760 hours i.e., `@assert op.len*op.duration == 8760` must be true for all elements of `operational`.
 - The `Operational_time_struct ∈ {UniformTimes, DynamicTimes}`. `UniformTimes` uses a **uniform time resolution** while `DynamicTimes` uses a **variable time resolution**. Both have 3 fields: `first`, `len`, `duration`; `duration` is a real number in `UniformTimes` but an array in `DynamicTimes`. The default unit is **hours**. If the user sets the operational time structure as: `UniformTimes(1, 48, 1)` it means we are looking at a 2 day period with a 1 hour resolution. One can also have `UniformTimes(1,48,4)` which is 2 days with 4 hour resolution.
@@ -64,8 +64,8 @@ The timestructure  for this example is written as:
 `𝒯 = DynamicTwoLevel(1, 5, [2, 3, 5, 10, 10], [UniformTimes(1, 8760, 1), UniformTimes(1, 365, 24), UniformTimes(1, 365, 24), UniformTimes(1, (8760/(24*7)), 24*7), UniformTimes(1, (8760/(24*7)), 24*7)]`
 
 **Confusing notation**
-- There seems to be no real reason to use the fields `len` and `duration` for both strategic and operational time structures. 
-- The term `duration` is unclear. At the top-level, it is used to denote a multiple of the corresponding element of `operational` time structure, yet it is used to denote resolution at the operational level. This can be clarified by making the corresponding units [years] and [hours] clearer. 
+- There seems to be no real reason to use the fields `len` and `duration` for both strategic and operational time structures.
+- The term `duration` is unclear. At the top-level, it is used to denote a multiple of the corresponding element of `operational` time structure, yet it is used to denote resolution at the operational level. This can be clarified by making the corresponding units [years] and [hours] clearer.
 - The length of each element of the `operational` time structure **must** be 8760 hours. This doesn't hold for almost all the tests and examples making all of them misleading.
 "
 
@@ -73,15 +73,15 @@ The timestructure  for this example is written as:
 md" ## TIMESTRUCTURE ITERATION [WIP]"
 
 # ╔═╡ 71a23c39-473d-4193-b33a-184eae7d2878
-md" Short note on how iteration works in Julia. Consider a custom data type which may be a `struct` such as a `TimeStructure`. We want to translate such a container into an **iterable**. For example, if we want to iterate through all the time steps in a given `TimeStructure`: 
+md" Short note on how iteration works in Julia. Consider a custom data type which may be a `struct` such as a `TimeStructure`. We want to translate such a container into an **iterable**. For example, if we want to iterate through all the time steps in a given `TimeStructure`:
 
 ```
 for item in iter
 	# body
 end
-``` 
+```
 
-this is translated into 
+this is translated into
 ```
 next = iterate(iter)
 while next !== nothing
@@ -107,19 +107,19 @@ end
 
 **QN**: Is there any particular reason  why we use a parametric struct `TimePeriod` since both are parameterized by `UniformTwoLevel`, and none of the fields depend on the parametric input type?
 
-- Termination condition for the iteration, given by the 
+- Termination condition for the iteration, given by the
 "
 
 # ╔═╡ fab54a9c-95cf-4e97-aa4a-c7bd07250bc7
 md"
-`Base.length` function. Note the following: - `length` is the number of strategic periods * number of operational periods. The model does not consider the `sp.duration`. So the units are the number of 
+`Base.length` function. Note the following: - `length` is the number of strategic periods * number of operational periods. The model does not consider the `sp.duration`. So the units are the number of
 "
 
 # ╔═╡ 27be7592-765d-491a-921b-211b5f81d992
 md" ## TIMEPROFILES"
 
 # ╔═╡ 95ad0c8c-e317-46d2-a758-8914a08fb01b
-md" Short note on **Parametric Composite Types**. This is when one wants to have the fields of a `struct` to be determined when the struct is created not when it is defined. For instance, one could have a: 
+md" Short note on **Parametric Composite Types**. This is when one wants to have the fields of a `struct` to be determined when the struct is created not when it is defined. For instance, one could have a:
 ```
 struct Point
 	x::Float64
@@ -132,7 +132,7 @@ struct Point
 	x::Int
 	y::Int
 end
-```. However, we can allow any arbitrary concrete type of `Point` with 
+```. However, we can allow any arbitrary concrete type of `Point` with
 ```
 struct Point{T}
 	x::T
@@ -147,7 +147,7 @@ All this does is specify the concrete types of the members"
 
 md" Onto **TIMEPROFILES**. Note that `TimeProfile` doesn't have much to do with time structures. Just to be more confusing.
 
-**`TimeProfile{T}`**: This is used to define actual values of an **input parameter** defined at every time period. The structure used depends on if we want to define the parameters over the operational time structure, strategic time structure, or both. 
+**`TimeProfile{T}`**: This is used to define actual values of an **input parameter** defined at every time period. The structure used depends on if we want to define the parameters over the operational time structure, strategic time structure, or both.
 - `FixedProfile{T}` e.g., `capacity = FixedProfile(10.0)`
 - `OperationalFixedProfile{T}. Fixed strategic profile with varying operational profiles`
 - `StrategicFixedProfile{T}. Fixed operational profiles, varying strategic profiles (e.g., varying capacities)`
@@ -177,16 +177,16 @@ In general, the indices and sets are as follows:
 - **`variables_emission()`** `: emissions_node[n,t,p], emissions_total[t,p], emissions_strategic[t,p]`
 - **`variables_opex()`** `: opex_var[n,t], opex_fixed[n,t]`. `opex_var` is the variable opex over all the operational periods in a strategic period.
 - **`variables_capex()`**
-- **`variables_capacity()`** `: cap_use[n,t], cap_inst[n,t] == n.Cap. cap_use` not for `Storage` or `Availability`. Each node only has one `cap_use` for all products. **Note that `cap_use[n,t]` is the characteristic throughput of a given node at a time period `t`**.
+- **`variables_capacity()`** `: cap_use[n,t], cap_inst[n,t] == n.cap. cap_use` not for `Storage` or `Availability`. Each node only has one `cap_use` for all products. **Note that `cap_use[n,t]` is the characteristic throughput of a given node at a time period `t`**.
 - **`variables_surplus_deficit()`** `: sink_surplus[n,t], sink_deficit[n,t]`
 - **`variables_storage()`** `: stor_level[n,t], stor_rate_use[n,t], stor_cap_inst[n,t] == n.Stor_cap, stor_rate_inst[n,t] == n.Rate_cap`. Note that only a single product can be stored and this should strictly be specified in the `Input` dictionary.
 - **`variables_node(m, nodes, T, modeltype)`**. Again this seems unnecessarily complicated. The usage is as follows:
 The method `variables_node(m, nodes, T, modeltype)` is called with the `𝒩, 𝒯` sets.
 
-However, there is another `variables_node(m, 𝒩, 𝒯, node, modeltype::EnergyModel)` method (with the additional  `node` argument) that is used to create tailored constraints for each node type (why does this have to be the same name as the calling method?): 
+However, there is another `variables_node(m, 𝒩, 𝒯, node, modeltype::EnergyModel)` method (with the additional  `node` argument) that is used to create tailored constraints for each node type (why does this have to be the same name as the calling method?):
 
-Note the following: 
-- The submethod `variables_node(m, 𝒩, 𝒯, node, modeltype::EnergyModel)` is called when the first node of a type is reached in the outer `variables_node()` method. It is not called again when the next node of that type is reached. 
+Note the following:
+- The submethod `variables_node(m, 𝒩, 𝒯, node, modeltype::EnergyModel)` is called when the first node of a type is reached in the outer `variables_node()` method. It is not called again when the next node of that type is reached.
 - This implies that the user specialized `variables_node(m, 𝒩, 𝒯, node, modeltype::EnergyModel)` method **MUST** create variables for **ALL** nodes of the given type `node`. This is in line with JuMP variables working with sets.
 "
 
@@ -204,10 +204,10 @@ md"**i.** constrains the input (`flow_in[n,t,p]`) and output (`flow_out[n,t,p]`)
 md"**ii.** Creates node specific constraints `create_node`.
 
 For `Source` and `Network` nodes, this sets:
-`cap_use[n, t] <= cap_inst[n, t]`.  
+`cap_use[n, t] <= cap_inst[n, t]`.
 
-- `create_node(n::Source)`: Sets `flow_out` to be the `cap_use*n.Output` i.e., the characteristic capacity into the `Output` multiple from dictionary. Similarly, sets `emissions_node` and `opex_var` (over the entire strategic period). 
-- `create_node(n::Network)`: Sets `flow_in` and `flow_out` to be a multiple of the characteristic capacity and the corresponding multiples in `Input` or `Output`. So 
+- `create_node(n::Source)`: Sets `flow_out` to be the `cap_use*n.Output` i.e., the characteristic capacity into the `Output` multiple from dictionary. Similarly, sets `emissions_node` and `opex_var` (over the entire strategic period).
+- `create_node(n::Network)`: Sets `flow_in` and `flow_out` to be a multiple of the characteristic capacity and the corresponding multiples in `Input` or `Output`. So
 `flow_in[n,t,p] == cap_use[n,t]*n.Input[p]`
 
 `flow_out[n,t,p] == cap_use[n,t]*n.Output[p]`
@@ -242,8 +242,8 @@ md" ## GEOGRAPHY PACKAGE"
 
 # ╔═╡ 8812825a-139b-4a0d-9196-c3ba938c3cbc
 md" The organization is as follows:
-- An an `Area` Node is set up to represent each geographically distinct area. 
-``` 
+- An an `Area` Node is set up to represent each geographically distinct area.
+```
 struct Area
 	id
     Name
@@ -252,7 +252,7 @@ struct Area
 	An::EMB.Availability
 end
 ```
-- For the last field of this node, instead of using a `GenAvailability` node as the central nodel. We instead use a `GeoAvailability` node. Both are subtypes of `EMB.Availability`. Thus, all geographical areas are combined together to set up overall mass balance constraints, over all the areas of the model. 
+- For the last field of this node, instead of using a `GenAvailability` node as the central nodel. We instead use a `GeoAvailability` node. Both are subtypes of `EMB.Availability`. Thus, all geographical areas are combined together to set up overall mass balance constraints, over all the areas of the model.
 - An abstract type `TransmissionMode` is set up that holds a struct of the method of transportation of a resource from one area to the next. A few options are `RefStatic`, `RefDynamic`, `PipelineMode`.
 - Lastly a `Transmission` object analogous to a link is defined which describes which `TransmissionMode`options are available between any two areas.  "
 
@@ -260,7 +260,7 @@ end
 md" ### USER INTERFACE - GEOGRAPHY"
 
 # ╔═╡ 0ac93160-05c5-4910-87fa-0775312863dd
-md" Formulating the problem basically involves filling out a dictionary of the following form:  
+md" Formulating the problem basically involves filling out a dictionary of the following form:
 ```
 case = Dict(
 			:areas          => Array{Area}(areas),
@@ -279,16 +279,16 @@ It is somewhat laborious to fill in the `links` and the `nodes` keys since these
 md" ### Internals of Problem Formulation with Geography"
 
 # ╔═╡ 8554fb37-2012-46c5-92f5-bf6486ceb880
-md" 
-1. First, all the steps discussed above are invoked since **`EMB.create_model()`** is called. 
+md"
+1. First, all the steps discussed above are invoked since **`EMB.create_model()`** is called.
 2. **`variables_area`**: Creates an `area_exchange[a, t, p]`. This is amount of resoruce `p` exchanged by area `a`
-3. **`variables_transmission`**: `trans_in[l, t, cm]` l is the `Transmission` object between two areas, and cm is the `TransmissionMode` in that object. `trans_out[l, t, cm]`, `trans_loss[l, t, cm]`, `trans_cap[l, t, cm]`. It also sets the `trans_cap[l, t, cm]` to be equal to the `Trans_cap`. 
-4. **`constraints_area()`**:  
-- If resource `p` is exchanged by area `a`, then replace the mass balance of its availability node with: `flow_in[n, t, p] == flow_out[n,t,p] - area_exchange[a, t, p]`. 
+3. **`variables_transmission`**: `trans_in[l, t, cm]` l is the `Transmission` object between two areas, and cm is the `TransmissionMode` in that object. `trans_out[l, t, cm]`, `trans_loss[l, t, cm]`, `trans_cap[l, t, cm]`. It also sets the `trans_cap[l, t, cm]` to be equal to the `Trans_cap`.
+4. **`constraints_area()`**:
+- If resource `p` is exchanged by area `a`, then replace the mass balance of its availability node with: `flow_in[n, t, p] == flow_out[n,t,p] - area_exchange[a, t, p]`.
 - If resource `p` is not then the vanilla `flow_in[n, t, p] == flow_out[n, t, p]` method is used as before.
 - Also:
 `area_exchange[a, t, p] = sum(sum(compute_trans_out)) - sum(sum(compute_trans_in))`
-- Lastly, `create_transmission_mode(m, 𝒯, l, cm)` is called which dispatches in cm. 
+- Lastly, `create_transmission_mode(m, 𝒯, l, cm)` is called which dispatches in cm.
 "
 
 # ╔═╡ Cell order:

@@ -16,6 +16,7 @@ include("datastructures.jl")
 include("model.jl")
 include("user_interface.jl")
 include("checks.jl")
+include("constraint_functions.jl")
 
 export Electrolyzer
 
