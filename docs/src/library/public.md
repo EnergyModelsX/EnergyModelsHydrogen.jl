@@ -4,6 +4,5 @@
 
 ```@autodocs
 Modules = [EnergyModelsHydrogen]
-Private = false
 Order = [:type]
 ```

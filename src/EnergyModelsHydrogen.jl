@@ -17,7 +17,8 @@ include("model.jl")
 include("user_interface.jl")
 include("checks.jl")
 include("constraint_functions.jl")
+include("utils.jl")
 
-export Electrolyzer
+export SimpleElectrolyzer, Electrolyzer
 
 end
