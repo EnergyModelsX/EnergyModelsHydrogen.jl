@@ -2,6 +2,7 @@ using Test
 using JuMP
 using TimeStruct
 using EnergyModelsBase
+using EnergyModelsInvestments
 using EnergyModelsHydrogen
 
 const TS = TimeStruct
@@ -15,8 +16,8 @@ function ⪆(x,y)
 end
 
 using SCIP
-const scip = optimizer_with_attributes(SCIP.Optimizer, 
-                                         MOI.Silent() => true) 
+const scip = optimizer_with_attributes(SCIP.Optimizer,
+                                         MOI.Silent() => true)
 optim = scip
 
 @testset "Wind Turbine -> Electrolyzer -> H2-consumer" begin

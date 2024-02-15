@@ -5,18 +5,7 @@ of the type defined in the package `EnergyModelsHydrogen`.
 function build_run_electrolyzer_model(params)
     @debug "Degradation electrolyzer model."
     # Step 1: Defining the overall time structure.
-    if params[:rep] == false
-        T = TwoLevel(
-            params[:num_sp],        # Number of strategic periods with a
-            2,                      # duration of 2.
-            SimpleTimes(
-                params[:num_op],        # Number of operational periods with a
-                8760/params[:num_op]    # total duration of 8760 h.
-            );
-            op_per_strat=8760,      # Total duration in a strategic period
-        )
-    else
-
+    if params[:rep]
         T = TwoLevel(
             params[:num_sp],        # Number of strategic periods with a
             2,                      # duration of 2.
@@ -31,7 +20,16 @@ function build_run_electrolyzer_model(params)
             );
             op_per_strat=8760,      # Total duration in a strategic period
         )
-
+    else
+        T = TwoLevel(
+            params[:num_sp],        # Number of strategic periods with a
+            2,                      # duration of 2.
+            SimpleTimes(
+                params[:num_op],        # Number of operational periods with a
+                8760/params[:num_op]    # total duration of 8760 h.
+            );
+            op_per_strat=8760,      # Total duration in a strategic period
+        )
     end
 
     # Step 2: Define all the arc flow streams which are structs in {ResourceEmit, ResourceCarrier} <: Resource
@@ -54,20 +52,37 @@ function build_run_electrolyzer_model(params)
         [],                 # Data
     )
 
-    PEM_electrolyzer = EMH.Electrolyzer(
-        "PEM",
-        FixedProfile(100),  # Installed capacity [MW]
-        FixedProfile(5),    # Variable Opex
-        FixedProfile(0),    # Fixed Opex
-        Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-        Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-        [],                         # Data
-        0,                          # Min load
-        160,                        # Max load
-        params[:degradation_rate],  # Degradation rate
-        params[:stack_cost],        # Stack replacement costs
-        params[:stack_lifetime],    # Stack lifetime in h
-    )
+    if params[:simple]
+        PEM_electrolyzer = EMH.SimpleElectrolyzer(
+            "PEM",
+            FixedProfile(100),  # Installed capacity [MW]
+            FixedProfile(5),    # Variable Opex
+            FixedProfile(0),    # Fixed Opex
+            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
+            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
+            params[:data],              # Data
+            0,                          # Min load
+            1,                          # Max load
+            params[:degradation_rate],  # Degradation rate
+            params[:stack_cost],        # Stack replacement costs
+            params[:stack_lifetime],    # Stack lifetime in h
+        )
+    else
+        PEM_electrolyzer = EMH.Electrolyzer(
+            "PEM",
+            FixedProfile(100),  # Installed capacity [MW]
+            FixedProfile(5),    # Variable Opex
+            FixedProfile(0),    # Fixed Opex
+            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
+            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
+            params[:data],              # Data
+            0,                          # Min load
+            1,                          # Max load
+            params[:degradation_rate],  # Degradation rate
+            params[:stack_cost],        # Stack replacement costs
+            params[:stack_lifetime],    # Stack lifetime in h
+        )
+    end
 
     End_hydrogen_consumer = RefSink(
         "Con",
@@ -99,7 +114,11 @@ function build_run_electrolyzer_model(params)
     )
 
     # B Formulating and running the optimization problem
-    model = OperationalModel(Dict(CO2 => FixedProfile(0)), Dict(CO2 => FixedProfile(0)), CO2)
+    if isempty(params[:data])
+        model = OperationalModel(Dict(CO2 => FixedProfile(0)), Dict(CO2 => FixedProfile(0)), CO2)
+    else
+        model = InvestmentModel(Dict(CO2 => FixedProfile(0)), Dict(CO2 => FixedProfile(0)), CO2, 0.07)
+    end
     m = create_model(data, model)
 
     @debug "Optimization model: $(m)"
@@ -160,6 +179,8 @@ params_dict = Dict(
     :stack_lifetime => 60000,
     :stack_cost => FixedProfile(3e5),
     :rep => false,
+    :simple => true,
+    :data => []
 )
 
 # Test set for simple degradation tests without stack replacement due to the
@@ -169,11 +190,38 @@ params_dict = Dict(
     params_deg = deepcopy(params_dict)
     params_deg[:num_op] = 5
     params_deg[:deficit_cost] = StrategicProfile([10, 10, 20, 25, 30])
-
     params_deg[:stack_cost] = FixedProfile(3e8)
+
     # Run and test the model
     (m, data) = build_run_electrolyzer_model(params_deg)
     penalty_test(m, data, params_deg)
+
+    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
+    finalize(backend(m).optimizer.model)
+end
+
+# Test set for the extension with investments allowed
+@testset "Electrolyzer - Investment extension test" begin
+    # Modifying the input parameters
+    params_inv = deepcopy(params_dict)
+    params_inv[:num_op] = 5
+    params_inv[:deficit_cost] = FixedProfile(1e4)
+    params_inv[:data] = [InvData(
+        capex_cap = FixedProfile(4e5),
+        cap_max_inst = FixedProfile(100),
+        cap_max_add = StrategicProfile([100, 0, 0, 0, 0, 0, 0, 0]),
+        cap_min_add = FixedProfile(0),
+        cap_start = 0,
+    )]
+    params_inv[:stack_cost] = FixedProfile(3e8)
+
+    # Run and test the model
+    (m, data) = build_run_electrolyzer_model(params_inv)
+    penalty_test(m, data, params_inv)
+
+    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
     finalize(backend(m).optimizer.model)
 end
 
@@ -201,6 +249,9 @@ end
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
+
+    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
 
     # Test for the multiplier matrix that it is 0 for the block if there was a stack
     # replacement. It will reset the block via the variable `t_replace` to the new
@@ -256,6 +307,9 @@ end
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
 
+    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
+
     # Test for the multiplier matrix that it is 0 for the block if there was a stack
     # replacement. It will reset the block via the variable `t_replace` to the new
     # `t_inv`, if the variable`:elect_stack_replacement_sp_b` is 1
@@ -281,6 +335,47 @@ end
             end
         end
     end
+
+    finalize(backend(m).optimizer.model)
+end
+
+# Test set for correct implementation of the quadratic constraints for `Electrolyzer` nodes
+@testset "Electrolyzer - Quadratic expression" begin
+    # Modifying the input parameters
+    params_elec = deepcopy(params_dict)
+    params_elec[:num_op] = 20
+    params_elec[:num_sp] = 8
+    params_elec[:deficit_cost] = FixedProfile(1000)
+    params_elec[:stack_cost] = FixedProfile(3e5)
+    params_elec[:simple] = false
+
+    # Run and test the model
+    (m, data) = build_run_electrolyzer_model(params_elec)
+    penalty_test(m, data, params_elec)
+
+    # Reassign types
+    elect = data[:nodes][3]
+    hydrogen = data[:products][2]
+    𝒯     = data[:T]
+    𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
+    stack_replace = m[:elect_stack_replacement_sp_b][elect, :]
+    stack_mult   = m[:elect_usage_mult_sp_b][elect, :, :]
+
+    # General test for the number of stack_replacements
+    @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
+
+    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    @test length(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64})) ==
+        params_elec[:num_op] * params_elec[:num_sp]
+
+    # Test that the penalty is correctly calculated
+    # - EMB.constraints_flow_out(m, n::Electrolyzer, 𝒯::TimeStructure, modeltype::EnergyModel)
+    @test sum(
+                value.(m[:flow_out][elect, t, hydrogen]) ≈
+                value.(m[:cap_use][elect, t]) * outputs(elect, hydrogen) *
+                value.(m[:elect_efficiency_penalty][elect, t]) for t ∈ 𝒯, atol=TEST_ATOL
+            ) == length(𝒯)
+
 
     finalize(backend(m).optimizer.model)
 end

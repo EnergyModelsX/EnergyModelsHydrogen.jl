@@ -1,10 +1,16 @@
 Release Notes
 =============
 
-Version 0.5.0 (2024-02-11)
+Version 0.5.1 (2024-02-16)
+--------------------------
+ * Introduced a new type `SimpleElectrolyzer` to implement stack degradation and minimum operational point without the penalty of the bilinear term.
+ * Add `EnergyModelsInvestments` as weak dependency to avoid cration of unnecessary variables for the reformulation of the bilinear terms.
+ * Introduced utilities that can be used for the bilinear reformulation.
+
+Version 0.5.0 (2024-02-14)
 --------------------------
  * Adjusted to changes introduced throuch EnergyModelsBase version 0.6.
- * Representative periods in `TimeStruct` are now included for the calculation of the degradation
+ * Representative periods in `TimeStruct` are now included for the calculation of the efficiency penalty.
 
 Version 0.4.0 (2023-06-02)
 --------------------------
