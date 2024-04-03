@@ -100,9 +100,9 @@ function constraints_usage(
     m,
     n::AbstractElectrolyzer,
     𝒯ᴵⁿᵛ,
-    t_inv::TS.StrategicPeriod{S, RepresentativePeriods{T, S, SimpleTimes{S}}},
+    t_inv::TS.StrategicPeriod{S, RepresentativePeriods{T, U, SimpleTimes{U}}},
     modeltype::EnergyModel,
-    ) where {S, T}
+    ) where {S, T, U}
 
     # Declaration of the required subsets
     𝒯ʳᵖ = repr_periods(t_inv)
@@ -150,7 +150,7 @@ function constraints_usage(
             @constraint(m,
             m[:elect_previous_usage][n, t] ==
                 m[:elect_previous_usage][n, first(t_rp_prev)] +
-                m[:elect_usage_rp][n, t_rp]
+                m[:elect_usage_rp][n, t_rp_prev]
         )
         else
             # Constraint for the previous usage of a standard operational period
