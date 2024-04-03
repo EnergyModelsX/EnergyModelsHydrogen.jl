@@ -1,8 +1,9 @@
 # Release Notes
 
-## Unversioned
+## Version 0.5.2 (2024-04-03)
 
 * Fixed a bug when utilizing representative periods.
+* Added a function for fixing the binary variables in periods they do not change.
 
 ## Version 0.5.1 (2024-02-16)
 
