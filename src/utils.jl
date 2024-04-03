@@ -33,7 +33,7 @@ function linear_reformulation(
     ub::TimeProfile,
     )
 
-    # Decleration of the auxiliary variable
+    # Declaration of the auxiliary variable
     var_aux = @variable(m, [𝒯], lower_bound = 0)
 
     # Constraints for the linear reformulation. The constraints are based on the
@@ -134,4 +134,67 @@ function multiplication_variables(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modelt
     )
 
     return  product_on, stack_replace
+end
+
+
+"""
+    fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
+
+Default option for fixing elect_on_b to 0 in the case of no available capacity in a given
+strategic periods.
+"""
+function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
+
+    # Declaration of the required subsets
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    mult_sp_aux_b = m[:elect_mult_sp_aux_b][n,:,:,:]
+
+    # Fixing the value to 0 if no capacity is installed
+    cap_bool = true
+    for t_inv ∈ 𝒯ᴵⁿᵛ
+        if capacity(n, t_inv) == 0 && cap_bool
+            JuMP.fix(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
+            set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
+            for t ∈ t_inv
+                JuMP.fix(m[:elect_on_b][n, t], 0)
+                set_start_value(m[:elect_on_b][n, t], 0)
+            end
+        else
+            cap_bool = false
+            if isfirst(t_inv)
+                set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
+            else
+                set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 1)
+            end
+            for t ∈ t_inv
+                set_start_value(m[:elect_on_b][n, t], 1)
+            end
+        end
+    end
+
+    # Set starting values with stack replacement multipliers in each strategic period
+    cap_bool = true
+    for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
+        if capacity(n, t_inv) == 0 && cap_bool
+            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 1)
+        elseif isless(t_inv_pre, t_inv)
+            cap_bool = false
+            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 0)
+        else
+            cap_bool = false
+            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 1)
+        end
+    end
+    cap_bool = true
+    for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ, t_inv_post ∈ 𝒯ᴵⁿᵛ
+        if capacity(n, t_inv) == 0 && cap_bool
+            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 1)
+        elseif isless(t_inv_pre, t_inv) && t_inv_post.sp ≥ t_inv.sp
+            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 0)
+            cap_bool = false
+        else
+            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 1)
+            cap_bool = false
+        end
+    end
 end

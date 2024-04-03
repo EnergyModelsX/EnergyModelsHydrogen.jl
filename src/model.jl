@@ -29,9 +29,12 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{AbstractElectrolyzer}, 𝒯, m
         𝒯ʳᵖ = repr_periods(𝒯)
         @variable(m, elect_usage_rp[𝒩ᴱᴸ, 𝒯ʳᵖ])
     end
-    @variable(m, elect_usage_mult_sp_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ], Bin, start = 1)
+    @variable(m, elect_usage_mult_sp_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ], Bin)
+    @variable(m, elect_mult_sp_aux_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, elect_stack_replacement_sp_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, 0.0 ≤ elect_efficiency_penalty[𝒩ᴱᴸ, 𝒯] ≤ 1.0)
+
+
 end
 
 """
@@ -44,6 +47,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
 
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    mult_sp_aux_b = m[:elect_mult_sp_aux_b][n,:,:,:]
 
     # Initiate the stack replacement multiplier variable `:elect_usage_mult_sp_b` that is
     # used in the constraints for the previous usage calculation `:elect_previous_usage`
@@ -52,12 +56,11 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
     # `mult_sp_aux_b`. The auxiliary variable creates a multiplier matrix for each
     # strategic period. The elementwise multiplication will then lead to the situation that the
     # previous periods are not counted if there was a stack replacement in between.
-    mult_sp_aux_b = @variable(m, [𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ], Bin, start = 1)
     for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
         for t_inv_post ∈ 𝒯ᴵⁿᵛ
             # The following constraints set the auxiliary variable `mult_sp_aux_b`
-            # in all previous periods to 0 if there is a stack replacements. Otherwise, it sets
-            # them to 1.
+            # in all previous periods to 0 if there is a stack replacements.
+            # Otherwise, it fixs them to 1.
             if isless(t_inv_pre, t_inv) && t_inv_post.sp ≥ t_inv.sp
                 @constraint(m,
                     mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre] ==
@@ -75,6 +78,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
                     mult_sp_aux_b[t_inv_post, t_inv, t_inv_pre]
             )
         end
+
         # Auxiliary constraint for linearizing the elementwise multiplication forcing
         # the multpiplier for the sum of `:elect_usage_sp`, `:elect_usage_mult_sp_b`:
         # to be equal or larger than the sum of the auxiliary variable `mult_sp_aux_b`
@@ -96,6 +100,9 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
         )
         constraints_usage(m, n, 𝒯ᴵⁿᵛ, t_inv, modeltype)
     end
+
+    # Fix the variable `:elect_on_b` for operational periods without capacity
+    fix_elect_on_b(m, n, 𝒯, 𝒫, modeltype)
 
     # Determine the efficiency penalty at current timestep due to degradation:
     # Linearly decreasing to zero with increasing `n.degradation_rate` and `:elect_previous_usage`.
