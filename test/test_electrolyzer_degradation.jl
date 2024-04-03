@@ -2,7 +2,7 @@
 Returns `(JuMP.model, data)` dictionary of default model that uses an electrolyzer
 of the type defined in the package `EnergyModelsHydrogen`.
 """
-function build_run_electrolyzer_model(params)
+function build_run_electrolyzer_model(params; cap=FixedProfile(100))
     @debug "Degradation electrolyzer model."
     # Step 1: Defining the overall time structure.
     if params[:rep]
@@ -55,7 +55,7 @@ function build_run_electrolyzer_model(params)
     if params[:simple]
         PEM_electrolyzer = EMH.SimpleElectrolyzer(
             "PEM",
-            FixedProfile(100),  # Installed capacity [MW]
+            cap,                # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex
             FixedProfile(0),    # Fixed Opex
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
@@ -70,7 +70,7 @@ function build_run_electrolyzer_model(params)
     else
         PEM_electrolyzer = EMH.Electrolyzer(
             "PEM",
-            FixedProfile(100),  # Installed capacity [MW]
+            cap,                # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex
             FixedProfile(0),    # Fixed Opex
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
@@ -188,7 +188,7 @@ params_dict = Dict(
 @testset "Electrolyzer - Degradation tests" begin
     # Modifying the input parameters
     params_deg = deepcopy(params_dict)
-    params_deg[:num_op] = 5
+    params_deg[:num_op] = 100
     params_deg[:deficit_cost] = StrategicProfile([10, 10, 20, 25, 30])
     params_deg[:stack_cost] = FixedProfile(3e8)
 
@@ -205,19 +205,21 @@ end
 @testset "Electrolyzer - Investment extension test" begin
     # Modifying the input parameters
     params_inv = deepcopy(params_dict)
-    params_inv[:num_op] = 5
+    params_inv[:num_op] = 2000
     params_inv[:deficit_cost] = FixedProfile(1e4)
     params_inv[:data] = [InvData(
         capex_cap = FixedProfile(4e5),
-        cap_max_inst = FixedProfile(100),
-        cap_max_add = StrategicProfile([100, 0, 0, 0, 0, 0, 0, 0]),
+        cap_max_inst = FixedProfile(200),
+        cap_max_add = StrategicProfile([100, 0, 0, 0, 0]),
         cap_min_add = FixedProfile(0),
         cap_start = 0,
     )]
-    params_inv[:stack_cost] = FixedProfile(3e8)
+    cap = StrategicProfile([0,0,100,100,100])
+    params_inv[:stack_cost] = FixedProfile(3e6)
+    params_inv[:stack_lifetime] = 20000
 
     # Run and test the model
-    (m, data) = build_run_electrolyzer_model(params_inv)
+    (m, data) = build_run_electrolyzer_model(params_inv; cap)
     penalty_test(m, data, params_inv)
 
     # Test that there are no quadratic constraints for SimpleElectrolyzer types
