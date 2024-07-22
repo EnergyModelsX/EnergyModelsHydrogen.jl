@@ -18,7 +18,7 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
 - **`stack_replacement_cost::TimeProfile`**: Replacement cost of electrolyzer stack.
 - **`input::Dict{Resource, Real}`**` : Map of input resources to the characteristic flow .
 - **`output::Dict{Resource, Real}`** : Map of output resources to characteristic flow.
-- **`data::Array{Data}`** : Additional data (e.g., for investments)
+- **`data::Array{<:Data}`** : Additional data (e.g., for investments)
 - **`min_load::Real`** : Minimum load as a fraction of the nominal installed
 capacity with potential for investments.
 - **`max_load::Real`** : Maximum load as a fraction of the nominal installed
@@ -38,7 +38,7 @@ struct Electrolyzer <: AbstractElectrolyzer
     opex_fixed::TimeProfile
     input::Dict{Resource, Real}
     output::Dict{Resource, Real}
-    data::Array{Data}
+    data::Array{<:Data}
     min_load::Real
     max_load::Real
     degradation_rate::Real
@@ -58,18 +58,21 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
 # Fields
 - **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** : Nominal installed capacity
-- **`opex_var::TimeProfile`** :  Variable operational costs per energy unit produced
-- **`opex_fixed::TimeProfile`** : Fixed operating cost
-- **`stack_replacement_cost::TimeProfile`**: Replacement cost of electrolyzer stack.
-- **`input::Dict{Resource, Real}`**` : Map of input resources to the characteristic flow .
-- **`output::Dict{Resource, Real}`** : Map of output resources to characteristic flow.
+- **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
+- **`opex_fixed::TimeProfile`** is the fixed operating expense.
+- **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
+- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion
+  value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with
+  conversion value `Real`.
 - **`data::Array{Data}`** : Additional data (e.g., for investments)
-- **`min_load::Real`** : Minimum load as a fraction of the nominal installed
-capacity with potential for investments.
-- **`max_load::Real`** : Maximum load as a fraction of the nominal installed
-capacity with potential for investments.
-- **`stack_lifetime::Real`** :Total operational equipment life time in hours.
-- **`degradation_rate::Real`**: Percentage drop in efficiency due to degradation in %/1000 h.
+- **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
+  with potential for investments.
+- **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
+  with potential for investments.
+- **`stack_lifetime::Real`** is the total operational stack life time.
+- **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
+  %/1000 h.
 
 **Notes**
 - The nominal electrolyzer efficiency is captured through the combination of `input`

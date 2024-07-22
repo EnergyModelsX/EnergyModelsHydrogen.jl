@@ -49,7 +49,6 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
         FixedProfile(0),    # Variable Opex
         FixedProfile(0),    # Fixed Opex
         Dict(Power => 1),   # Ratio of output to characteristic throughput
-        [],                 # Data
     )
 
     if params[:simple]
@@ -180,7 +179,7 @@ params_dict = Dict(
     :stack_cost => FixedProfile(3e5),
     :rep => false,
     :simple => true,
-    :data => []
+    :data => Data[]
 )
 
 # Test set for simple degradation tests without stack replacement due to the
@@ -207,12 +206,14 @@ end
     params_inv = deepcopy(params_dict)
     params_inv[:num_op] = 2000
     params_inv[:deficit_cost] = FixedProfile(1e4)
-    params_inv[:data] = [InvData(
-        capex_cap = FixedProfile(4e5),
-        cap_max_inst = FixedProfile(200),
-        cap_max_add = StrategicProfile([100, 0, 0, 0, 0]),
-        cap_min_add = FixedProfile(0),
-        cap_start = 0,
+    params_inv[:data] = Data[SingleInvData(
+        FixedProfile(4e5),
+        FixedProfile(200),
+        0,
+        ContinuousInvestment(
+            FixedProfile(0),
+            StrategicProfile([100, 0, 0, 0, 0]),
+        )
     )]
     cap = StrategicProfile([0,0,100,100,100])
     params_inv[:stack_cost] = FixedProfile(3e6)

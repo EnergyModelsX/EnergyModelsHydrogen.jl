@@ -3,9 +3,9 @@
         m,
         n::AbstractElectrolyzer,
         𝒯ᴵⁿᵛ,
-        t_inv::TS.StrategicPeriod{S, T},
+        t_inv::TS.StrategicPeriod{S, T, OP},
         modeltype::EnergyModel,
-        ) where {S, T<:SimpleTimes}
+        ) where {S, T, OP<:TimeStructure{T}}
 
 Function for creating the previous usage constraints, when the `TimeStructure` is given as
 `SimpleTimes`.
@@ -22,9 +22,9 @@ function constraints_usage(
     m,
     n::AbstractElectrolyzer,
     𝒯ᴵⁿᵛ,
-    t_inv::TS.StrategicPeriod{S, T},
+    t_inv::TS.StrategicPeriod{S, T, OP},
     modeltype::EnergyModel,
-    ) where {S, T<:SimpleTimes}
+    ) where {S, T, OP<:TimeStructure{T}}
 
     # Definition of the auxiliary variable for the linear reformulation of the element-wise
     # product of `:elect_usage_sp[n, t_inv_pre]` and `:elect_usage_mult_sp_b[n, t_inv, t_inv_pre]`.
@@ -51,7 +51,7 @@ function constraints_usage(
             @constraint(m,
                 m[:elect_previous_usage][n, t] ==
                     sum(
-                        prev_usage[t_inv, t_inv_pre] * duration(t_inv_pre)
+                        prev_usage[t_inv, t_inv_pre] * duration_strat(t_inv_pre)
                         for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
                     )
             )
@@ -76,7 +76,7 @@ function constraints_usage(
         stack_lifetime(n) ≥
             (
                 m[:elect_previous_usage][n, t] +
-                m[:elect_usage_sp][n, t_inv] * (duration(t_inv) - 1)
+                m[:elect_usage_sp][n, t_inv] * (duration_strat(t_inv) - 1)
             )
             * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
     )
@@ -86,9 +86,9 @@ end
         m,
         n::AbstractElectrolyzer,
         𝒯ᴵⁿᵛ,
-        t_inv::TS.StrategicPeriod{S, RepresentativePeriods{T, S, SimpleTimes{S}}},
+        t_inv::TS.StrategicPeriod{S, T, RepresentativePeriods{T, U, SimpleTimes{U}}},
         modeltype::EnergyModel,
-        ) where {S, T}
+        ) where {S, T, U}
 
 Function for creating the previous usage constraints, when the `TimeStructure` is given as
 `RepresentativePeriods`.
@@ -100,7 +100,7 @@ function constraints_usage(
     m,
     n::AbstractElectrolyzer,
     𝒯ᴵⁿᵛ,
-    t_inv::TS.StrategicPeriod{S, RepresentativePeriods{T, U, SimpleTimes{U}}},
+    t_inv::TS.StrategicPeriod{S, T, RepresentativePeriods{T, U, SimpleTimes{U}}},
     modeltype::EnergyModel,
     ) where {S, T, U}
 
@@ -139,7 +139,7 @@ function constraints_usage(
             @constraint(m,
                 m[:elect_previous_usage][n, t] ==
                     sum(
-                        prev_usage[t_inv, t_inv_pre] * duration(t_inv_pre)
+                        prev_usage[t_inv, t_inv_pre] * duration_strat(t_inv_pre)
                         for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
                     )
             )
@@ -174,7 +174,7 @@ function constraints_usage(
         stack_lifetime(n) ≥
             (
                 m[:elect_previous_usage][n, t] +
-                m[:elect_usage_sp][n, t_inv]*(duration(t_inv) - 1)
+                m[:elect_usage_sp][n, t_inv]*(duration_strat(t_inv) - 1)
             )
             * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
     )
