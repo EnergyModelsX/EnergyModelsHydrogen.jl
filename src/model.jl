@@ -125,13 +125,13 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
     # Constraint for the maximum and minimum production volume
     constraints_capacity(m, n, 𝒯, product_on, modeltype)
 
-    # Constraint for the fixed OPEX contributions. The division by duration(t_inv) for the
+    # Constraint for the fixed OPEX contributions. The division by duration_strat(t_inv) for the
     # stack replacement is requried due to multiplication with the duration in the objective
     # calculation
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_fixed][n, t_inv] ==
             opex_fixed(n, t_inv) * m[:cap_inst][n, first(t_inv)]
-            + stack_replace[t_inv] * stack_replacement_cost(n, t_inv) / duration(t_inv)
+            + stack_replace[t_inv] * stack_replacement_cost(n, t_inv) / duration_strat(t_inv)
     )
 
 

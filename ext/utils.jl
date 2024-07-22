@@ -25,7 +25,7 @@ function EMH.multiplication_variables(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫
         # Calculate linear reformulation of the multiplication of `cap_inst * elect_on_b`.
         # This is achieved through the introduction of an auxiliary variable
         #   `product_on` = `cap_inst * elect_on_b`
-        cap_upper_bound = EMI.max_installed(n)
+        cap_upper_bound = EMI.max_installed(EMI.investment_data(n, :cap))
         cap_lower_bound = FixedProfile(0)
         product_on = EMH.linear_reformulation(
             m,

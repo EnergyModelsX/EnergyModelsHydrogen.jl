@@ -1,5 +1,9 @@
 # Release Notes
 
+## Version 0.5.3 (2024-07-22)
+
+* Adjusted to changes introduced in `TimeStruct` v0.8 (and correspondingly `EnergyModelsBase` v0.7 and `EnergyModelsInvestments` v0.6).
+
 ## Version 0.5.2 (2024-04-03)
 
 * Fixed a bug when utilizing representative periods.
@@ -20,7 +24,7 @@
 
 ### Switch to TimeStruct.jl
 
-* Switched the time structure representation to [TimeStruct.jl](https://gitlab.sintef.no/julia-one-sintef/timestruct.jl).
+* Switched the time structure representation to [`TimeStruct`](https://sintefore.github.io/TimeStruct.jl/stable/).
 * TimeStruct.jl is implemented with only the basis features that were. available in TimesStructures.jl. This implies that neither operational nor strategic uncertainty is included in the model
 
 ## Version 0.3.0 (2023-05-31)
