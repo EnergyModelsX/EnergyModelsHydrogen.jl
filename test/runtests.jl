@@ -4,22 +4,22 @@ using TimeStruct
 using EnergyModelsBase
 using EnergyModelsInvestments
 using EnergyModelsHydrogen
+using SCIP
 
 const TS = TimeStruct
 const EMB = EnergyModelsBase
+const EMI = EnergyModelsInvestments
 const EMH = EnergyModelsHydrogen
 
-const TEST_ATOL = 1e-6
 
-function ⪆(x,y)
-    x > y || isapprox(x,y; atol = TEST_ATOL)
-end
+include("utils.jl")
 
-using SCIP
-const scip = optimizer_with_attributes(SCIP.Optimizer,
-                                         MOI.Silent() => true)
-optim = scip
+@testset "Hydrogen" begin
+    @testset "Electrolyser" begin
+        include("test_electrolyzer_degradation.jl")
+    end
 
-@testset "Wind Turbine -> Electrolyzer -> H2-consumer" begin
-    include("test_electrolyzer_degradation.jl")
+    @testset "Reformer" begin
+        include("test_reformer.jl")
+    end
 end

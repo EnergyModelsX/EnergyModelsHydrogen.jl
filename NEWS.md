@@ -1,8 +1,15 @@
 # Release Notes
 
-## Version 0.5.3 (2024-07-22)
+## Version 0.6.0 (2024-07-22)
 
 * Adjusted to changes introduced in `TimeStruct` v0.8 (and correspondingly `EnergyModelsBase` v0.7 and `EnergyModelsInvestments` v0.6).
+
+### Implementation of Reformer node
+
+* Reformer work as unit commitment nodes with minimum time for startup, shutdown and offline states with associated costs.
+* The initial version is based on the work of Erik Svendsmark for the startup shutdown technology.
+* The work was extended based on new available features in `TimeStruct` (namely `chunk` and `chunk_duration`).
+* In addition, the introduced costs are now dependent on the installed capacity.
 
 ## Version 0.5.2 (2024-04-03)
 

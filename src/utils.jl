@@ -110,32 +110,25 @@ function linear_reformulation(
 end
 
 """
-    multiplication_variables(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
+    multiplication_variables(m, n::AbstractHydrogenNetworkNode, 𝒯, var_b, modeltype::EnergyModel)
 
 Default option for calculating the multiplication variables of the installed capacity
-(expressed through `capacity(n, t)`) and the binary variables for an operating electrolyser
-in an operational period `t` (`elect_on_b[n, t]`) and a stack replacement in a strategic
-period `t_inv` (`elect_stack_replacement_sp_b[n, t_inv]`).
+(expressed through `capacity(n, t)`) and a binary variable `var_b` in an operational period
+`t` (_e.g._, `elect_on_b[n, t]`).
+
+!!! note
+    The time structure `𝒯` can be either a `TwoLevel` or `StrategicPeriods`. It is however
+    necessary, that the variable `var_b` is indexed over the iterators of `𝒯`.
 
 # Returns
-- **`product_on[t]`**: Multiplication of `capacity(n, t)` and `elect_on_b[n, t]`.
-- **`stack_replace[t_inv]`**: Multiplication of `capacity(n, t_inv)` and
-    `elect_stack_replacement_sp_b[n, t_inv]`.
+- **`prod[t]`**: Multiplication of `capacity(n, t)` and `var_b[n, t]`.
 """
-function multiplication_variables(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
-
-    # Declaration of the required subsets
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+function multiplication_variables(m, n::AbstractHydrogenNetworkNode, 𝒯, var_b, modeltype::EnergyModel)
 
     # Calculation of the multiplication with the installed capacity of the node
-    product_on = @expression(m, [t ∈ 𝒯], capacity(n, t) * m[:elect_on_b][n, t])
-    stack_replace = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        capacity(n, t_inv) * m[:elect_stack_replacement_sp_b][n, t_inv]
-    )
-
-    return  product_on, stack_replace
+    prod = @expression(m, [t ∈ 𝒯], capacity(n, t) * var_b[t])
+    return  prod
 end
-
 
 """
     fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
