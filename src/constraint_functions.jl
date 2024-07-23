@@ -181,9 +181,9 @@ function constraints_usage(
 end
 
 """
-    EMB.constraints_capacity(m, n::AbstractElectrolyzer, 𝒯::TimeStructure, var, modeltype::EnergyModel)
+    EMB.constraints_capacity(m, n::EMB.Node, 𝒯::TimeStructure, var, modeltype::EnergyModel)
 
-Function for creating operational limits off an `AbstractElectrolyzer` node.
+Function for creating operational limits off an `EMB.Node` node.
 
 The operational limits limit the capacity usage of the electrolyser node between a minimimum
 and maximum load based on the installed capacity.
@@ -193,7 +193,7 @@ and maximum load based on the installed capacity.
 given by a piecewise linear function to account for the increased energy demand at loads \
 above the nominal capacity.
 """
-function EMB.constraints_capacity(m, n::AbstractElectrolyzer, 𝒯::TimeStructure, var, modeltype::EnergyModel)
+function EMB.constraints_capacity(m, n::EMB.Node, 𝒯::TimeStructure, var, modeltype::EnergyModel)
 
     @constraint(m, [t ∈ 𝒯],
         min_load(n) * var[t] ≤ m[:cap_use][n, t]
@@ -221,4 +221,34 @@ function EMB.constraints_flow_out(m, n::Electrolyzer, 𝒯::TimeStructure, model
         m[:flow_out][n, t, p] ==
             m[:cap_use][n, t] * outputs(n, p) * m[:elect_efficiency_penalty][n, t]
     )
+end
+
+"""
+    EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `Reformer` node.
+It differs from the reference description through the incorporation of additional costs
+in each state of the node.
+"""
+function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    # Calculation of the cost contributors for start-up, shutdown, and offline state
+    prod_start = multiplication_variables(m, n, 𝒯ᴵⁿᵛ.ts, m[:ref_start_b][n, :], modeltype)
+    prod_shut = multiplication_variables(m, n, 𝒯ᴵⁿᵛ.ts, m[:ref_shut_b][n, :], modeltype)
+    prod_off = multiplication_variables(m, n, 𝒯ᴵⁿᵛ.ts, m[:ref_off_b][n, :], modeltype)
+
+    # Calculation of the OPEX contribution
+    for t_inv ∈ 𝒯ᴵⁿᵛ
+        @constraint(
+            m,
+            m[:opex_var][n, t_inv] == sum(
+                (
+                    m[:cap_use][n, t] * EMB.opex_var(n, t)
+                    + prod_start[t] * opex_startup(n, t)
+                    + prod_shut[t] * opex_shutdown(n, t)
+                    + prod_off[t] * opex_off(n, t)
+                )
+                * EMB.multiple(t_inv, t)
+                for t ∈ t_inv)
+        )
+    end
 end

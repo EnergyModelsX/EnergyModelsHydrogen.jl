@@ -20,5 +20,6 @@ include("constraint_functions.jl")
 include("utils.jl")
 
 export SimpleElectrolyzer, Electrolyzer
+export Reformer
 
 end

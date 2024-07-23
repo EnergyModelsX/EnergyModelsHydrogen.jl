@@ -120,10 +120,11 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
 
     # Calculation of auxiliary variables used in the calculation of the usage bound and
     # stack replacement
-    product_on, stack_replace = multiplication_variables(m, n, 𝒯, 𝒫, modeltype)
+    prod_on = multiplication_variables(m, n, 𝒯, m[:elect_on_b][n, :], modeltype)
+    stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, m[:elect_stack_replacement_sp_b][n, :], modeltype)
 
     # Constraint for the maximum and minimum production volume
-    constraints_capacity(m, n, 𝒯, product_on, modeltype)
+    constraints_capacity(m, n, 𝒯, prod_on, modeltype)
 
     # Constraint for the fixed OPEX contributions. The division by duration_strat(t_inv) for the
     # stack replacement is requried due to multiplication with the duration in the objective
@@ -134,10 +135,103 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
             + stack_replace[t_inv] * stack_replacement_cost(n, t_inv) / duration_strat(t_inv)
     )
 
-
     # Call of the function for the inlet flow to the `Electrolyzer` node
     constraints_flow_in(m, n, 𝒯, modeltype)
 
     # Call of the functions for the variable OPEX constraint introduction
+    constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+end
+
+"""
+    EMB.variables_node(m, 𝒩ʳᵉᶠ::Vector{Reformer}, 𝒯, modeltype::EnergyModel)
+
+
+Creates the following additional variables for **ALL** reformer nodes:
+- `:ref_off_b` - binary variable which is 1 if reformer `n` is in state `off` in time step `t`.
+- `:ref_start_b` - binary variable which is 1 if reformer `n` is in state `start-up` in time step `t`.
+- `:ref_on_b` - binary variable which is 1 if reformer `n` is in state `on` in time step `t`.
+- `:ref_shut_b` - binary variable which is 1 if reformer `n` is in state `shutdown` in time step `t`.
+"""
+function EMB.variables_node(m, 𝒩ʳᵉᶠ::Vector{Reformer}, 𝒯, modeltype::EnergyModel)
+    # Define the states and binary variables
+    @variable(m, ref_off_b[𝒩ʳᵉᶠ, 𝒯], Bin)
+    @variable(m, ref_start_b[𝒩ʳᵉᶠ, 𝒯], Bin)
+    @variable(m, ref_on_b[𝒩ʳᵉᶠ, 𝒯], Bin)
+    @variable(m, ref_shut_b[𝒩ʳᵉᶠ, 𝒯], Bin)
+end
+
+"""
+    EMB.create_node(m, n::StartShutNetwork, 𝒯, 𝒫, modeltype::EnergyModel)
+
+Sets all constraints for a reformer technology node.
+"""
+function EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
+
+    # Declaration of the required subsets.
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    𝒯ʳᵖ = repr_periods(𝒯)
+
+    # General flow in and out constraints
+    constraints_flow_in(m, n, 𝒯, modeltype)
+    constraints_flow_out(m, n, 𝒯, modeltype)
+
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
+        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
+    end
+
+    # Calculation of auxiliary variables used in the calculation of the usage bounds
+    prod_on = multiplication_variables(m, n, 𝒯, m[:ref_on_b][n, :], modeltype)
+
+    # Constraint for the maximum and minimum production volume
+    constraints_capacity(m, n, 𝒯, prod_on, modeltype)
+
+    # Only one state active in each time-step
+    @constraint(m, [t ∈ 𝒯],
+        m[:ref_off_b][n, t] + m[:ref_start_b][n, t] + m[:ref_on_b][n, t] + m[:ref_shut_b][n, t] == 1
+    )
+
+    # Fixed order of states (using representative periods, dealt with individually)
+    for t_rp ∈ 𝒯ʳᵖ, (t_prev, t) ∈ withprev(t_rp)
+        if isnothing(t_prev) # First operational period in a representative period
+            t_prev = last(t_rp) # Cyclic behavior
+        end
+        @constraint(m, m[:ref_off_b][n, t_prev]   ≥ m[:ref_start_b][n, t]  - m[:ref_start_b][n, t_prev])
+        @constraint(m, m[:ref_start_b][n, t_prev] ≥ m[:ref_on_b][n, t]     - m[:ref_on_b][n, t_prev])
+        @constraint(m, m[:ref_on_b][n, t_prev]    ≥ m[:ref_shut_b][n, t]   - m[:ref_shut_b][n, t_prev])
+        @constraint(m, m[:ref_shut_b][n, t_prev]  ≥ m[:ref_off_b][n, t]    - m[:ref_off_b][n, t_prev])
+    end
+
+    # For all representative periods, we constrain the start, shut and off time
+    for t_rp ∈ 𝒯ʳᵖ
+        t_last = last(t_rp)
+
+        it_tech = zip(
+            withprev(t_rp),
+            chunk_duration(t_rp, t_startup(n, t_rp); cyclic=true),
+            chunk_duration(t_rp, t_shutdown(n, t_rp); cyclic=true),
+            chunk_duration(t_rp, t_off(n, t_rp); cyclic=true),
+        )
+        for ((t_prev, t), chunck_start, chunck_shut, chunck_off) ∈ it_tech
+            if isnothing(t_prev)
+                t_prev = t_last
+            end
+            @constraint(m,
+                sum(m[:ref_start_b][n, θ] * duration(θ) for θ ∈ chunck_start) ≥
+                t_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
+            )
+            @constraint(m,
+                sum(m[:ref_shut_b][n, θ] * duration(θ) for θ ∈ chunck_shut) ≥
+                t_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
+            )
+            @constraint(m,
+                sum(m[:ref_off_b][n, θ] * duration(θ) for θ ∈ chunck_off) ≥
+                t_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
+            )
+        end
+    end
+
+    # Call of the functions for both fixed and variable OPEX constraints introduction
+    constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
     constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
