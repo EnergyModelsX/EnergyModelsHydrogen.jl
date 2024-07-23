@@ -1,4 +1,4 @@
-module EMHInvExt
+module EMIExt
 
 using EnergyModelsBase
 using EnergyModelsHydrogen
