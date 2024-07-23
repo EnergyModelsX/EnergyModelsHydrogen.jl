@@ -1,6 +1,10 @@
 # Release Notes
 
-## Version 0.6.0 (2024-07-22)
+## Version 0.6.1 (2024-07-23)
+
+* Moved `EnergyModelsInvestments` extension to a separate subfolder in the extension folder.
+
+## Version 0.6.0 (2024-07-23)
 
 * Adjusted to changes introduced in `TimeStruct` v0.8 (and correspondingly `EnergyModelsBase` v0.7 and `EnergyModelsInvestments` v0.6).
 
