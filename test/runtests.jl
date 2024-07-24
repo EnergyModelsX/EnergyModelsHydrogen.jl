@@ -22,4 +22,8 @@ include("utils.jl")
     @testset "Reformer" begin
         include("test_reformer.jl")
     end
+
+    @testset "Checks" begin
+        include("test_checks.jl")
+    end
 end

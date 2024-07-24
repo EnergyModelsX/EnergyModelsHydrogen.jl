@@ -1,6 +1,18 @@
 """ Abstract supertype for all hydrogen network nodes."""
 abstract type AbstractHydrogenNetworkNode <: NetworkNode end
 
+"""
+    min_load(n::AbstractHydrogenNetworkNode)
+Returns the minimum load of `Node` n.
+"""
+min_load(n::AbstractHydrogenNetworkNode) = n.min_load
+
+"""
+    max_load(n::AbstractHydrogenNetworkNode)
+Returns the maximum load of `Node` n.
+"""
+max_load(n::AbstractHydrogenNetworkNode) = n.max_load
+
 """ Abstract supertype for all electrolyzer nodes."""
 abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
 
@@ -15,24 +27,33 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
 
 # Fields
 - **`id`** is the name/identifier of the node.
-- **`cap::TimeProfile`** : Nominal installed capacity
-- **`opex_var::TimeProfile`** :  Variable operational costs per energy unit produced
-- **`opex_fixed::TimeProfile`** : Fixed operating cost
-- **`stack_replacement_cost::TimeProfile`**: Replacement cost of electrolyzer stack.
-- **`input::Dict{Resource, Real}`**` : Map of input resources to the characteristic flow .
-- **`output::Dict{Resource, Real}`** : Map of output resources to characteristic flow.
-- **`data::Array{<:Data}`** : Additional data (e.g., for investments)
-- **`min_load::Real`** : Minimum load as a fraction of the nominal installed
-capacity with potential for investments.
-- **`max_load::Real`** : Maximum load as a fraction of the nominal installed
-capacity with potential for investments.
-- **`stack_lifetime::Real`** :Total operational equipment life time in hours.
-- **`degradation_rate::Real`**: Percentage drop in efficiency due to degradation in %/1000 h.
+- **`cap::TimeProfile`** is the installed capacity.
+- **`opex_var::TimeProfile`** is the variable operating expense per capacity used (through
+  the variable `:cap_use`).
+- **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
+- **`input::Dict{<:Resource, <:Real}`** are the input [`Resource`]s with conversion
+  value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the generated [`Resource`]s with
+  conversion value `Real`.
+- **`data::Vector{Data}`** is the additional data (e.g. for investments).
+- **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
+  with potential for investments.
+- **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
+  with potential for investments.
+- **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
+  %/1000 h.
+- **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
+- **`stack_lifetime::Real`** is the total operational stack life time.
 
-**Notes**
-- The nominal electrolyzer efficiency is captured through the combination of `input`
-and `output`.
-- Stack replacement can only be done once a strategic period, in the first op.
+!!! note
+    - The nominal electrolyzer efficiency is captured through the combination of `input`
+      and `output`.
+    - The fixed and variable operating expenses are always related to installed capacity and
+      its usage. This implies if you define the capacity *via* the input through a value of
+      1, then the variable operating expense is calaculated through the required electricity.
+    - Stack replacement can only be done once a strategic period, in the first operational
+      period. The thought process behind is that it would otherwise lead to issues if a
+      strategic period is repeated.
 """
 struct Electrolyzer <: AbstractElectrolyzer
     id
@@ -55,32 +76,37 @@ end
 Description of a simple electrolyzer node with minimum and maximum load as well as stack
 replacement. Degradation is calculated, but not used for the efficiency calculations.
 
-New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, and
-`degradation_rate`.
+New fields compared to `NetworkNode`: `min_load`, `max_load`, `degradation_rate`,
+`stack_lifetime`, and `stack_replacement_cost`.
 
 # Fields
 - **`id`** is the name/identifier of the node.
-- **`cap::TimeProfile`** : Nominal installed capacity
-- **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
-- **`opex_fixed::TimeProfile`** is the fixed operating expense.
-- **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
-- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion
+- **`cap::TimeProfile`** is the installed capacity.
+- **`opex_var::TimeProfile`** is the variable operating expense per capacity usage.
+- **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
+- **`input::Dict{<:Resource, <:Real}`** are the input [`Resource`]s with conversion
   value `Real`.
-- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with
+- **`output::Dict{<:Resource, <:Real}`** are the generated [`Resource`]s with
   conversion value `Real`.
-- **`data::Array{Data}`** : Additional data (e.g., for investments)
+- **`data::Vector{Data}`** is the additional data (e.g. for investments).
 - **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
   with potential for investments.
 - **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
   with potential for investments.
-- **`stack_lifetime::Real`** is the total operational stack life time.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
   %/1000 h.
+- **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
+- **`stack_lifetime::Real`** is the total operational stack life time.
 
-**Notes**
-- The nominal electrolyzer efficiency is captured through the combination of `input`
-and `output`.
-- Stack replacement can only be done once a strategic period, in the first op.
+!!! note
+    - The nominal electrolyzer efficiency is captured through the combination of `input`
+      and `output`.
+    - The fixed and variable operating expenses are always related to installed capacity and
+      its usage. This implies if you define the capacity *via* the input through a value of
+      1, then the variable operating expense is calaculated through the required electricity.
+    - Stack replacement can only be done once a strategic period, in the first operational
+      period. The thought process behind is that it would otherwise lead to issues if a
+      strategic period is repeated.
 """
 struct SimpleElectrolyzer <: AbstractElectrolyzer
     id
@@ -96,18 +122,6 @@ struct SimpleElectrolyzer <: AbstractElectrolyzer
     stack_replacement_cost::TimeProfile
     stack_lifetime::Real
 end
-
-"""
-    min_load(n)
-Returns the minimum load of `Node` n.
-"""
-min_load(n::EMB.Node) = n.min_load
-
-"""
-    max_load(n)
-Returns the maximum load of `Node` n.
-"""
-max_load(n::EMB.Node) = n.max_load
 
 """
     degradation_rate(n::Electrolyzer)
@@ -146,24 +160,35 @@ technology descriptions.
 # Fields
 - **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** is the installed capacity.
-- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.
-- **`opex_fixed::TimeProfile`** is the fixed operational costs.
+- **`opex_var::TimeProfile`** is the variable operating expense per capacity usage.
+- **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
 - **`input::Dict{Resource, Real}`** is a dictionary of input resources.
 - **`output::Dict{Resource, Real}`** is a dictionary of output resources.
-- **`data::Array{Data}`** is an array of additional data (e.g., for investments
+- **`data::Array{Data}`** is an array of additional data (e.g., for investments).
 
-- **`opex_startup::TimeProfile`** is the start-up cost.
-- **`opex_shutdown::TimeProfile`** is the shut-down cost.
-- **`opex_off::TimeProfile`** is the operational cost when the node is offline.
+- **`opex_startup::TimeProfile`** is the start-up cost per installed capacity and
+  operational duration.
+- **`opex_shutdown::TimeProfile`** is the shut-down cost per installed capacity and
+  operational duration.
+- **`opex_off::TimeProfile`** is the operational cost when the node is offline per installed
+  capacity and operational duration.
 
-- **`t_startup::TimeProfile`** is the start-up time.
-- **`t_shutdown::TimeProfile`** is the shut-down time.
-- **`t_off::TimeProfile`** is the time the node is off.
+- **`t_startup::TimeProfile`** is the minimum start-up time.
+- **`t_shutdown::TimeProfile`** is the minimum shut-down time.
+- **`t_off::TimeProfile`** is the minimum time the node is offline.
 
 - **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
   with potential for investments.
 - **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
   with potential for investments.
+
+
+!!! note
+    - If you introduce CO₂ capture through the application of [`CaptureEnergyEmissions`],
+      you have to add your CO₂ instance as output. The reason for this is that we declare the
+      variable `:output` through the output dictionary.
+    - The specified startup, shutdown, and offline costs are relative to the installed
+      capacity and a duration of 1 of an operational period.
 """
 struct Reformer <: AbstractReformer
 	id::Any
@@ -186,17 +211,80 @@ struct Reformer <: AbstractReformer
     max_load::Real
 end
 
+"""
+    opex_startup(n::Reformer)
+
+Returns the startup OPEX of a Reformer `n` as `TimeProfile`.
+"""
 opex_startup(n::Reformer) = n.opex_startup
+"""
+    opex_startup(n::Reformer, t)
+
+Returns the startup OPEX of a Reformer `n` in operational period `t`.
+"""
 opex_startup(n::Reformer, t) = n.opex_startup[t]
+
+"""
+    opex_shutdown(n::Reformer)
+
+Returns the shutdown OPEX of a Reformer `n` as `TimeProfile`.
+"""
 opex_shutdown(n::Reformer) = n.opex_shutdown
+"""
+    opex_shutdown(n::Reformer, t)
+
+Returns the shutdown OPEX of a Reformer `n` in operational period `t`.
+"""
 opex_shutdown(n::Reformer, t) = n.opex_shutdown[t]
+
+"""
+    opex_off(n::Reformer)
+
+Returns the offline OPEX of a Reformer `n` as `TimeProfile`.
+"""
 opex_off(n::Reformer) = n.opex_off
+"""
+    opex_off(n::Reformer, t)
+
+Returns the offline OPEX of a Reformer `n` in operational period `t`.
+"""
 opex_off(n::Reformer, t) = n.opex_off[t]
 
+"""
+    t_startup(n::Reformer)
 
+Returns the minimum startup time of a Reformer `n` as `TimeProfile`.
+"""
 t_startup(n::Reformer) = n.t_startup
+"""
+    t_startup(n::Reformer, t)
+
+Returns the minimum startup time of a Reformer `n` in operational period `t`.
+"""
 t_startup(n::Reformer, t) = n.t_startup[t]
+
+"""
+    t_shutdown(n::Reformer)
+
+Returns the minimum shutdown time of a Reformer `n` as `TimeProfile`.
+"""
 t_shutdown(n::Reformer) = n.t_shutdown
+"""
+    t_shutdown(n::Reformer, t)
+
+Returns the minimum shutdown time of a Reformer `n` in operational period `t`.
+"""
 t_shutdown(n::Reformer, t) = n.t_shutdown[t]
+
+"""
+    t_off(n::Reformer)
+
+Returns the minimum offline time of a Reformer `n` as `TimeProfile`.
+"""
 t_off(n::Reformer) = n.t_off
+"""
+    t_off(n::Reformer, t)
+
+Returns the minimum offline time of a Reformer `n` in operational period `t`.
+"""
 t_off(n::Reformer, t) = n.t_off[t]
