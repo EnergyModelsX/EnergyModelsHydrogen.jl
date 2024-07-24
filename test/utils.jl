@@ -60,7 +60,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
     )
 
     if params[:simple]
-        PEM_electrolyzer = EMH.SimpleElectrolyzer(
+        PEM_electrolyzer = SimpleElectrolyzer(
             "PEM",
             cap,                # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex
@@ -75,7 +75,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
             params[:stack_lifetime],    # Stack lifetime in h
         )
     else
-        PEM_electrolyzer = EMH.Electrolyzer(
+        PEM_electrolyzer = Electrolyzer(
             "PEM",
             cap,                # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex
@@ -245,7 +245,7 @@ function build_run_reformer_model(params)
     end
 
     if params[:simple]
-        reformer = EMH.SimpleElectrolyzer(
+        reformer = SimpleElectrolyzer(
             "PEM",
             FixedProfile(50),   # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex
@@ -260,7 +260,7 @@ function build_run_reformer_model(params)
             params[:stack_lifetime],    # Stack lifetime in h
         )
     else
-        reformer = EMH.Reformer(
+        reformer = Reformer(
             "reformer",
             FixedProfile(50),   # Installed capacity [MW]
             FixedProfile(5),    # Variable Opex

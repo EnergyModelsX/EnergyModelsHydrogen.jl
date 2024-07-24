@@ -181,19 +181,31 @@ function constraints_usage(
 end
 
 """
-    EMB.constraints_capacity(m, n::EMB.Node, 𝒯::TimeStructure, var, modeltype::EnergyModel)
+    EMB.constraints_capacity(
+        m,
+        n::AbstractHydrogenNetworkNode,
+        𝒯::TimeStructure,
+        var,
+        modeltype::EnergyModel
+    )
 
-Function for creating operational limits off an `EMB.Node` node.
+Function for creating operational limits off an `AbstractHydrogenNetworkNode`.
 
 The operational limits limit the capacity usage of the electrolyser node between a minimimum
 and maximum load based on the installed capacity.
 
 ## TODO:
-- Consider the application of the upper bound only for systems in which the efficiency is \
-given by a piecewise linear function to account for the increased energy demand at loads \
-above the nominal capacity.
+- Consider the application of the upper bound only for systems in which the efficiency is
+  given by a piecewise linear function to account for the increased energy demand at loads
+  above the nominal capacity.
 """
-function EMB.constraints_capacity(m, n::EMB.Node, 𝒯::TimeStructure, var, modeltype::EnergyModel)
+function EMB.constraints_capacity(
+    m,
+    n::AbstractHydrogenNetworkNode,
+    𝒯::TimeStructure,
+    var,
+    modeltype::EnergyModel
+)
 
     @constraint(m, [t ∈ 𝒯],
         min_load(n) * var[t] ≤ m[:cap_use][n, t]

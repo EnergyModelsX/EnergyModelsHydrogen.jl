@@ -1,5 +1,9 @@
 # Release Notes
 
+## Version 0.6.2 (2024-07-24)
+
+* Added checks and tests of the checks for both `AbstractElectrolyzer` and `AbstractReformer`.
+
 ## Version 0.6.1 (2024-07-23)
 
 * Moved `EnergyModelsInvestments` extension to a separate subfolder in the extension folder.
