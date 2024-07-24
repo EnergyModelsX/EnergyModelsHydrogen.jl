@@ -1,5 +1,11 @@
 # Release Notes
 
+## Unversioned
+
+### Bugfix
+
+* Fixed a bug in a system with investments in which the initial valus for the `Electrolyser` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
+
 ## Version 0.6.2 (2024-07-24)
 
 * Added checks and tests of the checks for both `AbstractElectrolyzer` and `AbstractReformer`.

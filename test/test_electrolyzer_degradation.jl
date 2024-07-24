@@ -38,22 +38,29 @@ end
     params_inv[:data] = Data[SingleInvData(
         FixedProfile(4e5),
         FixedProfile(200),
-        0,
         ContinuousInvestment(
             FixedProfile(0),
-            StrategicProfile([100, 0, 0, 0, 0]),
+            StrategicProfile([0, 100, 0, 0, 0]),
         )
     )]
-    cap = StrategicProfile([0,0,100,100,100])
-    params_inv[:stack_cost] = FixedProfile(3e6)
+    cap = FixedProfile(0)
+    params_inv[:stack_cost] = FixedProfile(1e5)
     params_inv[:stack_lifetime] = 20000
 
     # Run and test the model
     (m, data) = build_run_electrolyzer_model(params_inv; cap)
     penalty_test(m, data, params_inv)
 
+    # Reassign types
+    elect = data[:nodes][3]
+    𝒯     = data[:T]
+    𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
+
     # Test that there are no quadratic constraints for SimpleElectrolyzer types
     @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
+
+    # Test for invested capacity
+    @test sum(value.(m[:cap_current][elect, t_inv]) ≈ 50/.62 for t_inv ∈ 𝒯ᴵⁿᵛ) == 4
     finalize(backend(m).optimizer.model)
 end
 

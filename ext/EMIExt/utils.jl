@@ -55,12 +55,12 @@ function EMH.multiplication_variables(
 end
 
 """
-    fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
+    EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
 
 Fixing `elect_on_b` to 0 i if it is not possible to add any capacity in the strategic
 periods up to the current.
 """
-function fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
+function EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
 
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
@@ -68,8 +68,13 @@ function fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::A
 
     # Fixing the value to 0 if it is not possible to add capacity beforehand
     cap_bool = true
+    tmp_max_add = EMI.max_add(EMI.investment_data(n, :cap))
     for t_inv ∈ 𝒯ᴵⁿᵛ
-        if EMI.max_add(n, t_inv) == 0 && cap_bool
+        if cap_bool &&
+            (
+                (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
+                (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
+            )
             JuMP.fix(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
             set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
             for t ∈ t_inv
@@ -92,7 +97,11 @@ function fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::A
     # Set starting values with stack replacement multipliers in each strategic period
     cap_bool = true
     for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
-        if EMI.max_add(n, t_inv) == 0 && cap_bool
+        if cap_bool &&
+            (
+                (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
+                (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
+            )
             set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 1)
         elseif isless(t_inv_pre, t_inv)
             cap_bool = false
@@ -104,7 +113,11 @@ function fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::A
     end
     cap_bool = true
     for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ, t_inv_post ∈ 𝒯ᴵⁿᵛ
-        if EMI.max_add(n, t_inv) == 0 && cap_bool
+        if cap_bool &&
+            (
+                (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
+                (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
+            )
             set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 1)
         elseif isless(t_inv_pre, t_inv) && t_inv_post.sp ≥ t_inv.sp
             set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 0)
