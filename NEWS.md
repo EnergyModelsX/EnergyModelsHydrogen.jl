@@ -9,6 +9,10 @@
 ### Bugfix
 
 * Fixed a bug in a system with investments in which the initial valus for the `Electrolyser` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
+* Fixed an error in the function `linear_reformulation` regarding:
+  1. The indexing of the bounds was wrong if the resulting variable is indexed over two time levels
+  2. One of the constraints would result in wrong values if a lower bound was specified.
+* The bugs in `linear_reformulation` did not affect our results as we specified a lower bound of 0 and and a ``FixedProfile` for bounds.
 
 ## Version 0.6.2 (2024-07-24)
 
