@@ -12,8 +12,8 @@ reformulation of the binary-continuous multiplication based on the McCormick rel
 the function [`EMH.linear_reformulation`](@ref).
 
 !!! note
-    If the reformer node does not have investments, it reuses the default function
-    to avoid increasing the number of variables in the model.
+    If the AbstractHydrogenNetworkNode node does not have investments, it reuses the default
+    function to avoid increasing the number of variables in the model.
 
 # Returns
 - **`prod[t]`**: Multiplication of `cap_inst[n, t]` and `var_b[t]`.
