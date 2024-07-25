@@ -8,13 +8,15 @@
         ub::TimeProfile,
     )
 
-Linear reformulation of the multiplication of the binary variable `var_binary` and the
-continuous variable `var_continuous`, indexed over `𝒯`. It returns the product `var_aux` as:
-    ``\texttt{var_aux}[t] = \texttt{var_binary}[t] * \texttt{var_continuous}[t]``
+Linear reformulation of the element-wise multiplication of the binary variable `var_binary[𝒯]`
+and the continuous variable `var_continuous[𝒯]`.
 
-The bounds `lb` and `ub` must have the ability to access their fields using the iterator of
-`𝒯`, that is if `𝒯` corresponds to the strategic periods, it is not possible to provide an
-`OperationalProfile`
+It returns the product `var_aux[𝒯]`.
+
+!!! note
+    The bounds `lb` and `ub` must have the ability to access their fields using the iterator
+    of `𝒯`, that is if `𝒯` corresponds to the strategic periods, it is not possible to
+    provide an `OperationalProfile` or `RepresentativeProfile`.
 
 # Arguments:
 - **`m`**: JuMP model.
@@ -60,22 +62,24 @@ end
         ub::TimeProfile,
     ) where {T}
 
-Linear reformulation of the multiplication of the binary variable `var_binary` and the
-continuous variable `var_continuous`, indexed over `𝒯`. It returns the product `var_aux` as:
-    ``\texttt{var_aux}[t_a, t_b] = \texttt{var_binary}[t_a, t_b] * \texttt{var_continuous}[t_b]``
+Linear reformulation of the multiplication of the binary variable `var_binary[𝒯ᵃ, 𝒯ᵇ]` and the
+continuous variable `var_continuous[𝒯ᵇ]`.
 
-𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel` or the strategic
-periods.
-The bounds `lb` and `ub` must have the ability to access their fields using the iterator of
-`𝒯`, that is if `𝒯` corresponds to the strategic periods, it is not possible to provide an
-`OperationalProfile`
+It returns the product `var_aux[𝒯ᵃ, 𝒯ᵇ]`.
+
+!!! note
+    𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel` or the strategic
+    periods.
+    The bounds `lb` and `ub` must have the ability to access their fields using the iterator
+    of `𝒯ᵃ`, that is if `𝒯ᵃ` corresponds to the strategic periods, it is not possible to
+    provide an `OperationalProfile` or `RepresentativeProfile`.
 
 # Arguments:
 - **`m`**: JuMP model.
 - **`𝒯ᵃ`**: Time used for the indices of the variables.
 - **`𝒯ᵇ`**: Time used for the indices of the variables.
-- **`var_binary`**: Binary variable for the multiplication, indexed only over `𝒯`.
-- **`var_continuous`**: Continuous variable for the multiplication, indexed only over `𝒯`.
+- **`var_binary`**: Binary variable for the multiplication, indexed over `𝒯ᵃ` and `𝒯ᵇ`.
+- **`var_continuous`**: Continuous variable for the multiplication, indexed only over `𝒯ᵃ`.
 - **`lb`::TimeProfile**: Lower bound of the continuous variable.
 - **`ub`::TimeProfile**: Upper bound of the continuous variable..
 """

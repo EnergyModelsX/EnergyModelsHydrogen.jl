@@ -1,5 +1,12 @@
 using Documenter
+using DocumenterInterLinks
+using EnergyModelsBase
+using EnergyModelsInvestments
 using EnergyModelsHydrogen
+
+const EMH = EnergyModelsHydrogen
+const EMB = EnergyModelsBase
+const EMI = EnergyModelsInvestments
 
 
 # Copy the NEWS.md file
@@ -9,9 +16,15 @@ if isfile(news)
 end
 cp("../NEWS.md", "src/manual/NEWS.md")
 
-DocMeta.setdocmeta!(EnergyModelsHydrogen, :DocTestSetup, :(using EnergyModelsHydrogen); recursive=true)
+
+links = InterLinks(
+    "EnergyModelsBase" => "https://energymodelsx.github.io/EnergyModelsBase.jl/stable/",
+)
+
+# DocMeta.setdocmeta!(EnergyModelsHydrogen, :DocTestSetup, :(using EnergyModelsHydrogen, EnergyModelsInvestments); recursive=true)
+
 makedocs(
-    sitename = "EnergyModelsHydrogen.jl",
+    sitename = "EnergyModelsHydrogen",
     repo="https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/blob/{commit}{path}#{line}",
     format = Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -20,7 +33,12 @@ makedocs(
         assets=String[],
     ),
 
-    modules = [EnergyModelsHydrogen],
+    modules = [
+        EnergyModelsHydrogen,
+        isdefined(Base, :get_extension) ?
+        Base.get_extension(EMH, :EMIExt) :
+        EMH.EMIExt,
+    ],
     pages = [
         "Home" => "index.md",
         "Manual" => Any[
@@ -33,7 +51,8 @@ makedocs(
             "Public" => "library/public.md",
             "Internals" => "library/internals.md"
         ]
-    ]
+    ],
+    plugins=[links],
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.

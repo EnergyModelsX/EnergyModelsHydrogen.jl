@@ -31,10 +31,10 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
 - **`opex_var::TimeProfile`** is the variable operating expense per capacity used (through
   the variable `:cap_use`).
 - **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
-- **`input::Dict{<:Resource, <:Real}`** are the input [`Resource`]s with conversion
-  value `Real`.
-- **`output::Dict{<:Resource, <:Real}`** are the generated [`Resource`]s with
-  conversion value `Real`.
+- **`input::Dict{<:Resource, <:Real}`** are the input
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the produced
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments).
 - **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
   with potential for investments.
@@ -84,10 +84,10 @@ New fields compared to `NetworkNode`: `min_load`, `max_load`, `degradation_rate`
 - **`cap::TimeProfile`** is the installed capacity.
 - **`opex_var::TimeProfile`** is the variable operating expense per capacity usage.
 - **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
-- **`input::Dict{<:Resource, <:Real}`** are the input [`Resource`]s with conversion
-  value `Real`.
-- **`output::Dict{<:Resource, <:Real}`** are the generated [`Resource`]s with
-  conversion value `Real`.
+- **`input::Dict{<:Resource, <:Real}`** are the input
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the produced
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments).
 - **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
   with potential for investments.
@@ -162,8 +162,10 @@ technology descriptions.
 - **`cap::TimeProfile`** is the installed capacity.
 - **`opex_var::TimeProfile`** is the variable operating expense per capacity usage.
 - **`opex_fixed::TimeProfile`** is the fixed operating expense per installed capacity.
-- **`input::Dict{Resource, Real}`** is a dictionary of input resources.
-- **`output::Dict{Resource, Real}`** is a dictionary of output resources.
+- **`input::Dict{<:Resource, <:Real}`** are the input
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the produced
+  [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Array{Data}`** is an array of additional data (e.g., for investments).
 
 - **`opex_startup::TimeProfile`** is the start-up cost per installed capacity and
@@ -184,7 +186,8 @@ technology descriptions.
 
 
 !!! note
-    - If you introduce CO₂ capture through the application of [`CaptureEnergyEmissions`],
+    - If you introduce CO₂ capture through the application of
+      [`CaptureEnergyEmissions`](@extref EnergyModelsBase.CaptureEnergyEmissions),
       you have to add your CO₂ instance as output. The reason for this is that we declare the
       variable `:output` through the output dictionary.
     - The specified startup, shutdown, and offline costs are relative to the installed

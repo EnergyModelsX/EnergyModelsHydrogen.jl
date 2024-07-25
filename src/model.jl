@@ -4,17 +4,17 @@
 Creates the following additional variables for **ALL** electrolyzer nodes:
 - `:elect_on_b` - binary variable which is 1 if electrolyzer n is running in time step t.
 - `:elect_previous_usage` - variable denoting number of previous operation
-periods until time t in which the electrolyzer n has been switched on. The value is provided
-in 1000 operational periods duration to avoid a too large matrix range.
+  periods until time t in which the electrolyzer n has been switched on. The value is provided
+  in 1000 operational periods duration to avoid a too large matrix range.
 - `:elect_usage_sp` - total time of electrolyzer usage in a strategic period.
 - `:elect_usage_rp` - total time of electrolyzer usage in a representative period, only
-declared if the `TimeStructure` includes `RepresentativePeriods`.
+  declared if the `TimeStructure` includes `RepresentativePeriods`.
 - `:elect_usage_mult_sp_b` - multiplier for resetting `:elect_previous_usage`
-when stack replacement occured.
+  when stack replacement occured.
 - `:elect_stack_replacement_sp_b` - binary variable, 1 if stack is replaced at the
-first operational period of strategic period.
+  first operational period of strategic period.
 - `:elect_efficiency_penalty` - coefficient that accounts for drop in efficiency at
-each operational period due to degradation in the electrolyzer. Starts at 1.
+  each operational period due to degradation in the electrolyzer. Starts at 1.
 """
 function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{AbstractElectrolyzer}, 𝒯, modeltype::EnergyModel)
 
@@ -161,7 +161,7 @@ function EMB.variables_node(m, 𝒩ʳᵉᶠ::Vector{Reformer}, 𝒯, modeltype::
 end
 
 """
-    EMB.create_node(m, n::StartShutNetwork, 𝒯, 𝒫, modeltype::EnergyModel)
+    EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for a reformer technology node.
 """

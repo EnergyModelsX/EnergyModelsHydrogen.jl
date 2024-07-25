@@ -9,14 +9,14 @@ This method checks that an `AbstractElectrolyzer` node is valid.
 - The values of the dictionary `output` are required to be non-negative.
 - The value of the field `fixed_opex` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
-  [`check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`].
+  [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 
 - The field `min_load` is required to be non-negative.
 - The field `max_load` is required to be larger than the field `min_load`.
 - The field `degradation_rate` is required to be in the range [0,1).
 - The `TimeProfile` of the field `stack_replacement` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
-  [`check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`].
+  [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 - The field `stack_lifetime` is required to be non-negative.
 """
 function EMB.check_node(
@@ -84,7 +84,7 @@ This method checks that a `AbstractReformer` node is valid.
 - The values of the dictionary `output` are required to be non-negative.
 - The value of the field `fixed_opex` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
-  [`check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`].
+  [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 
 - The field `opex_startup` is required to be non-negative.
 - The field `opex_shutdown` is required to be non-negative.
@@ -148,7 +148,8 @@ Checks that the unit commitment `time_profile` for the field `field_name` follow
 the given `TimeStructure` `𝒯`.
 
 ## Checks
-- The `time_profile` cannot have a finer granulation than `RepresentativeProfile`.
+- The `time_profile` cannot have a finer granulation than `RepresentativeProfile` through
+  calling the function [`EMB.check_representative_profile()`](@extref).
 - The `time_profile` must be non-negative.
 
 ## Conditional checks (if `check_timeprofiles=true`)

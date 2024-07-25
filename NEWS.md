@@ -2,6 +2,10 @@
 
 ## Unversioned
 
+### Documentation
+
+* Added external references to refer to types and methods from `EnergyModelsBase`.
+
 ### Bugfix
 
 * Fixed a bug in a system with investments in which the initial valus for the `Electrolyser` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
