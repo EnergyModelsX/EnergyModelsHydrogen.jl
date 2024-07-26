@@ -289,10 +289,10 @@ function EMB.constraints_capacity(
 )
 
     @constraint(m, [t ∈ 𝒯],
-        min_load(n) * var[t] ≤ m[:cap_use][n, t]
+        min_load(n, t) * var[t] ≤ m[:cap_use][n, t]
     )
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t] ≤ max_load(n) * var[t]
+        m[:cap_use][n, t] ≤ max_load(n, t) * var[t]
     )
 
     constraints_capacity_installed(m, n, 𝒯, modeltype)

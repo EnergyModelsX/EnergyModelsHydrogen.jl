@@ -11,8 +11,10 @@ This method checks that an `AbstractElectrolyzer` node is valid.
   accessible through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 
-- The field `min_load` is required to be non-negative.
-- The field `max_load` is required to be larger than the field `min_load`.
+  - The lower limit on capacity utilization is required ot be non-negative while the upper
+  limit is required to be larger or equal than the lower limit as described in the
+  [`check_load_lim()`](@ref)
+
 - The field `degradation_rate` is required to be in the range [0,1).
 - The `TimeProfile` of the field `stack_replacement` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
@@ -40,11 +42,7 @@ function EMB.check_node(
         "The values for the Dictionary `output` must be non-negative."
     )
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(min_load(n) ≥ 0, "The minimum load must be non-negative.")
-    @assert_or_log(
-        max_load(n) ≥ min_load(n),
-        "The maximum load must be larger than or equal to the minimum load."
-    )
+    check_load_lim(n, 𝒯)
     @assert_or_log(
         0 ≤ degradation_rate(n) < 1,
         "The stack degradation rate must be in the range [0, 1)."
@@ -86,12 +84,13 @@ This method checks that a `AbstractReformer` node is valid.
   accessible through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 
+- The lower limit on capacity utilization is required ot be non-negative while the upper
+  limit is required to be larger or equal than the lower limit as described in the
+  [`check_load_lim()`](@ref)
+
 - The field `opex_startup` is required to be non-negative.
 - The field `opex_shutdown` is required to be non-negative.
 - The field `opex_off` is required to be non-negative.
-
-- The field `min_load` is required to be non-negative.
-- The field `max_load` is required to be larger than the field `min_load`.
 """
 function EMB.check_node(
     n::AbstractReformer,
@@ -126,14 +125,10 @@ function EMB.check_node(
         sum(opex_off(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
         "The offline OPEX must be non-negative."
     )
+    check_load_lim(n, 𝒯)
     check_commitment_profile(t_startup(n), 𝒯, "t_startup", check_timeprofiles)
     check_commitment_profile(t_shutdown(n), 𝒯, "t_shutdown", check_timeprofiles)
     check_commitment_profile(t_off(n), 𝒯, "t_off", check_timeprofiles)
-    @assert_or_log(min_load(n) ≥ 0, "The minimum load must be non-negative.")
-    @assert_or_log(
-        max_load(n) ≥ min_load(n),
-        "The maximum load must be larger than or equal to the minimum load."
-    )
 end
 
 """
@@ -185,4 +180,23 @@ function check_commitment_profile(
     if check_timeprofiles && bool_sp
         EMB.check_profile(field_name, time_profile, 𝒯)
     end
+end
+"""
+    check_load_lim(n, 𝒯)
+
+Checks the limits for the capacity load.
+
+## Checks
+- The field `min_load` is required to be non-negative.
+- The field `max_load` is required to be larger than the field `min_load`.
+"""
+function check_load_lim(n, 𝒯)
+    @assert_or_log(
+        sum(min_load(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The minimum load must be non-negative."
+    )
+    @assert_or_log(
+        sum(max_load(n, t) ≥ min_load(n, t) for t ∈ 𝒯) == length(𝒯),
+        "The maximum load must be larger than or equal to the minimum load."
+    )
 end

@@ -1,17 +1,44 @@
 """ Abstract supertype for all hydrogen network nodes."""
 abstract type AbstractHydrogenNetworkNode <: NetworkNode end
 
+
+abstract type AbstractLoadLimits{T} end
 """
-    min_load(n::AbstractHydrogenNetworkNode)
-Returns the minimum load of `Node` n.
+    LoadLimits{T<:Real} <: AbstractLoadLimits{T}
+
+Type for the incorporation of limits on the capacity utilization of the node through
+constraining the variable [`:cap_use`](@extref EnergyModelsBase var_cap).
+
+# Fields
+- **`min`** is the minimum load as fraction of the installed capacity.
+- **`max`** is the maximum load as fraction of the installed capacity.
 """
-min_load(n::AbstractHydrogenNetworkNode) = n.min_load
+struct LoadLimits{T<:Real} <: AbstractLoadLimits{T}
+    min::T
+    max::T
+end
 
 """
-    max_load(n::AbstractHydrogenNetworkNode)
+    min_load(n::EMB.Node)
+Returns the minimum load of `Node` n.
+"""
+min_load(n::EMB.Node) = n.load_limits.min
+"""
+    min_load(n::EMB.Node, t)
+Returns the maximum load of `Node` n in operational period `t`.
+"""
+min_load(n::EMB.Node, t) = n.load_limits.min
+
+"""
+    max_load(n::EMB.Node)
 Returns the maximum load of `Node` n.
 """
-max_load(n::AbstractHydrogenNetworkNode) = n.max_load
+max_load(n::EMB.Node) = n.load_limits.max
+"""
+    max_load(n::EMB.Node, t)
+Returns the maximum load of `Node` n in operational period `t`.
+"""
+max_load(n::EMB.Node, t) = n.load_limits.max
 
 """ Abstract supertype for all electrolyzer nodes."""
 abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
@@ -36,10 +63,8 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments).
-- **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
-  with potential for investments.
-- **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
-  with potential for investments.
+- **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
+  [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
   %/1000 h.
 - **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
@@ -63,8 +88,7 @@ struct Electrolyzer <: AbstractElectrolyzer
     input::Dict{Resource, Real}
     output::Dict{Resource, Real}
     data::Array{<:Data}
-    min_load::Real
-    max_load::Real
+    load_limits::AbstractLoadLimits
     degradation_rate::Real
     stack_replacement_cost::TimeProfile
     stack_lifetime::Real
@@ -89,10 +113,8 @@ New fields compared to `NetworkNode`: `min_load`, `max_load`, `degradation_rate`
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments).
-- **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
-  with potential for investments.
-- **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
-  with potential for investments.
+- **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
+  [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
   %/1000 h.
 - **`stack_replacement_cost::TimeProfile`** is the replacement cost of electrolyzer stacks.
@@ -116,8 +138,7 @@ struct SimpleElectrolyzer <: AbstractElectrolyzer
     input::Dict{Resource, Real}
     output::Dict{Resource, Real}
     data::Array{Data}
-    min_load::Real
-    max_load::Real
+    load_limits::AbstractLoadLimits
     degradation_rate::Real
     stack_replacement_cost::TimeProfile
     stack_lifetime::Real
@@ -152,6 +173,48 @@ abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
 EMB.has_emissions(n::AbstractReformer) = true
 
 """
+    struct CommitParameters
+
+Type for providing parameters required in unit commitment constraints.
+
+# Fields
+- **`opex::TimeProfile`** is the cost profile per installed capacity and operational
+  duration if the node is within the state.
+- **`time::TimeProfile`** is the minimum time the node has to remain in the state before
+  it can transition to the next state.
+"""
+struct CommitParameters
+    opex::TimeProfile
+    time::TimeProfile
+end
+
+"""
+    opex(com_par::CommitParameters)
+
+Returns the unit commitment OPEX as `TimeProfile`.
+"""
+opex(com_par::CommitParameters) = com_par.opex
+"""
+    opex(com_par::CommitParameters, t)
+
+Returns the unit commitment OPEX in operational period `t`.
+"""
+opex(com_par::CommitParameters, t) = com_par.opex[t]
+
+"""
+    opex(com_par::CommitParameters)
+
+Returns the minimum time in the state as `TimeProfile`.
+"""
+state_time(com_par::CommitParameters) = com_par.time
+"""
+    opex(com_par::CommitParameters, t)
+
+Returns the minimum time in the state in operational period `t`.
+"""
+state_time(com_par::CommitParameters, t) = com_par.time[t]
+
+"""
     Reformer <: AbstractReformer
 
 A network node with start-up and shut-down time and costs that should be used for reformer
@@ -168,6 +231,9 @@ technology descriptions.
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`data::Array{Data}`** is an array of additional data (e.g., for investments).
 
+- **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
+  [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
+
 - **`opex_startup::TimeProfile`** is the start-up cost per installed capacity and
   operational duration.
 - **`opex_shutdown::TimeProfile`** is the shut-down cost per installed capacity and
@@ -178,11 +244,6 @@ technology descriptions.
 - **`t_startup::TimeProfile`** is the minimum start-up time.
 - **`t_shutdown::TimeProfile`** is the minimum shut-down time.
 - **`t_off::TimeProfile`** is the minimum time the node is offline.
-
-- **`min_load::Real`** is the minimum load as a fraction of the nominal installed capacity
-  with potential for investments.
-- **`max_load::Real`** is the maximum load as a fraction of the nominal installed capacity
-  with potential for investments.
 
 
 !!! note
@@ -202,16 +263,11 @@ struct Reformer <: AbstractReformer
 	output::Dict{Resource,Real}
 	data::Array{Data}
 
-	opex_startup::TimeProfile
-	opex_shutdown::TimeProfile
-	opex_off::TimeProfile
+    load_limits::AbstractLoadLimits
 
-	t_startup::TimeProfile
-	t_shutdown::TimeProfile
-	t_off::TimeProfile
-
-    min_load::Real
-    max_load::Real
+    startup::CommitParameters
+    shutdown::CommitParameters
+    offline::CommitParameters
 end
 
 """
@@ -219,75 +275,75 @@ end
 
 Returns the startup OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_startup(n::Reformer) = n.opex_startup
+opex_startup(n::Reformer) = opex(n.startup)
 """
     opex_startup(n::Reformer, t)
 
 Returns the startup OPEX of a Reformer `n` in operational period `t`.
 """
-opex_startup(n::Reformer, t) = n.opex_startup[t]
+opex_startup(n::Reformer, t) = opex(n.startup, t)
 
 """
     opex_shutdown(n::Reformer)
 
 Returns the shutdown OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_shutdown(n::Reformer) = n.opex_shutdown
+opex_shutdown(n::Reformer) = opex(n.shutdown)
 """
     opex_shutdown(n::Reformer, t)
 
 Returns the shutdown OPEX of a Reformer `n` in operational period `t`.
 """
-opex_shutdown(n::Reformer, t) = n.opex_shutdown[t]
+opex_shutdown(n::Reformer, t) = opex(n.shutdown, t)
 
 """
     opex_off(n::Reformer)
 
 Returns the offline OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_off(n::Reformer) = n.opex_off
+opex_off(n::Reformer) = opex(n.offline)
 """
     opex_off(n::Reformer, t)
 
 Returns the offline OPEX of a Reformer `n` in operational period `t`.
 """
-opex_off(n::Reformer, t) = n.opex_off[t]
+opex_off(n::Reformer, t) = opex(n.offline, t)
 
 """
     t_startup(n::Reformer)
 
 Returns the minimum startup time of a Reformer `n` as `TimeProfile`.
 """
-t_startup(n::Reformer) = n.t_startup
+t_startup(n::Reformer) = state_time(n.startup)
 """
     t_startup(n::Reformer, t)
 
 Returns the minimum startup time of a Reformer `n` in operational period `t`.
 """
-t_startup(n::Reformer, t) = n.t_startup[t]
+t_startup(n::Reformer, t) = state_time(n.startup, t)
 
 """
     t_shutdown(n::Reformer)
 
 Returns the minimum shutdown time of a Reformer `n` as `TimeProfile`.
 """
-t_shutdown(n::Reformer) = n.t_shutdown
+t_shutdown(n::Reformer) = state_time(n.shutdown)
 """
     t_shutdown(n::Reformer, t)
 
 Returns the minimum shutdown time of a Reformer `n` in operational period `t`.
 """
-t_shutdown(n::Reformer, t) = n.t_shutdown[t]
+t_shutdown(n::Reformer, t) = state_time(n.shutdown, t)
 
 """
     t_off(n::Reformer)
 
 Returns the minimum offline time of a Reformer `n` as `TimeProfile`.
 """
-t_off(n::Reformer) = n.t_off
+t_off(n::Reformer) = state_time(n.offline)
 """
     t_off(n::Reformer, t)
 
 Returns the minimum offline time of a Reformer `n` in operational period `t`.
 """
-t_off(n::Reformer, t) = n.t_off[t]
+t_off(n::Reformer, t) = state_time(n.offline, t)
