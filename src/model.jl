@@ -91,15 +91,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
 
     # Constraints for the calculation of the usage of the electrolyzer in the previous
     # time periods
-    for t_inv ∈ 𝒯ᴵⁿᵛ
-        @constraint(m,
-            m[:elect_usage_sp][n, t_inv] * 1000 ==
-                sum(
-                    m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
-                for t ∈ t_inv)
-        )
-        constraints_usage(m, n, 𝒯ᴵⁿᵛ, t_inv, modeltype)
-    end
+    constraints_usage(m, n, 𝒯ᴵⁿᵛ, modeltype)
 
     # Fix the variable `:elect_on_b` for operational periods without capacity
     fix_elect_on_b(m, n, 𝒯, 𝒫, modeltype)

@@ -12,7 +12,8 @@ using EnergyModelsBase
 const EMB = EnergyModelsBase
 const TS  = TimeStruct
 
-include("datastructures.jl")
+include(joinpath("structures", "node.jl"))
+include(joinpath("structures", "misc.jl"))
 include("model.jl")
 include("user_interface.jl")
 include("checks.jl")

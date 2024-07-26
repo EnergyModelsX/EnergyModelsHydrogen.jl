@@ -6,6 +6,10 @@
 
 * Added external references to refer to types and methods from `EnergyModelsBase`.
 
+### Enhancement
+
+* Rewrote the dynamic constraints for improved potential for extensions with differing time structures and in preparation for a receding horizon framework.
+
 ### Bugfix
 
 * Fixed a bug in a system with investments in which the initial valus for the `Electrolyser` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
