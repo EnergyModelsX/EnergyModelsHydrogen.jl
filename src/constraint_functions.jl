@@ -1,182 +1,263 @@
 """
-    constraints_usage(
-        m,
-        n::AbstractElectrolyzer,
-        𝒯ᴵⁿᵛ,
-        t_inv::TS.StrategicPeriod{S, T, OP},
-        modeltype::EnergyModel,
-        ) where {S, T, OP<:TimeStructure{T}}
+    constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Function for creating the previous usage constraints, when the `TimeStructure` is given as
-`SimpleTimes`.
-
-Within all the years (in `sp.duration`) we assume the degradation is the same as it
-is in the 1st year of that strategic period (optimistic assumption). However, when
-we move to the next strategic period, we sum up the total usage in the previous
-strategic periods
-This ensures that the next strategic period starts after accounting for all prior usage.
-Stack replacement resets the previous usage via the multiplier variable
-`:elect_usage_mult_sp_b`
+Function for creating the usage constraints for an AbstractElectrolyzer. These constraints
+calculate the usage of the electrolyser up to each time step for both the lifetime and the
 """
-function constraints_usage(
-    m,
-    n::AbstractElectrolyzer,
-    𝒯ᴵⁿᵛ,
-    t_inv::TS.StrategicPeriod{S, T, OP},
-    modeltype::EnergyModel,
-    ) where {S, T, OP<:TimeStructure{T}}
+function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    # Call the auxiliary function for calculating the linear reformulation of the
+    # multiplication of a binary and continuous variable
+    prev_usage = constraints_usage_aux(m, n, 𝒯ᴵⁿᵛ, modeltype)
 
+    # Mass/energy balance constraints for stored energy carrier.
+    for (t_inv_prev, t_inv) ∈ withprev(𝒯ᴵⁿᵛ)
+        # Calculation of hte usage within a strategic period
+        @constraint(m,
+            m[:elect_usage_sp][n, t_inv] * 1000 ==
+                sum(m[:elect_on_b][n, t] * EMB.multiple(t_inv, t) for t ∈ t_inv)
+        )
+
+        # Creation of the iterator and call of the iterator function -
+        # The representative period is initiated with the current investment period to allow
+        # dispatching on it.
+        prev_pers = PreviousPeriods(t_inv_prev, nothing, nothing);
+        elec_pers = ElecPeriods(𝒯ᴵⁿᵛ, t_inv, nothing, true)
+        ts = t_inv.operational
+        constraints_usage_iterate(m, n, prev_pers, elec_pers, prev_usage, t_inv, ts, modeltype)
+    end
+end
+
+"""
+    constraints_usage_aux(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Create the auxiliary variable for calculating the previous usage of an electrolyser node.
+"""
+function constraints_usage_aux(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     # Definition of the auxiliary variable for the linear reformulation of the element-wise
     # product of `:elect_usage_sp[n, t_inv_pre]` and `:elect_usage_mult_sp_b[n, t_inv, t_inv_pre]`.
     # This reformulation requires the introduction of both a `lower_bound` and a
     # `upper_bound` of the variable `:elect_usage_sp` given through a value of `0` and
     # `stack_lifetime(n)`.
-    use_lower_bound = FixedProfile(0)
-    use_upper_bound = FixedProfile(stack_lifetime(n))
-    prev_usage = linear_reformulation(m,
+    return linear_reformulation(m,
         𝒯ᴵⁿᵛ,
         𝒯ᴵⁿᵛ,
         m[:elect_usage_mult_sp_b][n, :, :],
         m[:elect_usage_sp][n, :],
-        use_lower_bound,
-        use_upper_bound,
-    )
-
-    # Iteration through the individual operational periods for calculating the new usage
-    for (t_prev, t) ∈ withprev(t_inv)
-        if isnothing(t_prev)
-            # Constraint for the previous usage of the first operational period in an
-            # investment period. The previous usage is given through the sum of the usage in
-            # all previous strategic periods after the stack replacement
-            @constraint(m,
-                m[:elect_previous_usage][n, t] ==
-                    sum(
-                        prev_usage[t_inv, t_inv_pre] * duration_strat(t_inv_pre)
-                        for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
-                    )
-            )
-
-        else
-            # Constraint for the previous usage of a standard operational period
-            # In this situation, it only has to consider whether the electrolyzer is on
-            # or off
-            @constraint(m,
-                m[:elect_previous_usage][n, t] ==
-                    m[:elect_previous_usage][n, t_prev] +
-                    duration(t_prev) * m[:elect_on_b][n, t_prev] / 1000
-            )
-        end
-    end
-
-    # Constraint for the total usage of the electrolyzer including the current time step.
-    # This ensures that the last repetition of the strategic period is appropriately
-    # constrained.
-    t = last(t_inv)
-    @constraint(m,
-        stack_lifetime(n) ≥
-            (
-                m[:elect_previous_usage][n, t] +
-                m[:elect_usage_sp][n, t_inv] * (duration_strat(t_inv) - 1)
-            )
-            * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
+        FixedProfile(0),
+        FixedProfile(stack_lifetime(n)),
     )
 end
+
 """
-    constraints_usage(
+    constraints_usage_iterate(
         m,
         n::AbstractElectrolyzer,
-        𝒯ᴵⁿᵛ,
-        t_inv::TS.StrategicPeriod{S, T, RepresentativePeriods{T, U, SimpleTimes{U}}},
+        prev_pers::PreviousPeriods,
+        elec_pers::ElecPeriods,
+        prev_usage,
+        per,
+        ts::RepresentativePeriods,
         modeltype::EnergyModel,
-        ) where {S, T, U}
+    )
 
-Function for creating the previous usage constraints, when the `TimeStructure` is given as
-`RepresentativePeriods`.
+Iterate through the individual time structures of a `AbstractElectrolyzer` node.
 
-The general concept remains unchanged. However, we can consider now sequential
-representative periods.
-"""
-function constraints_usage(
+In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
+of the electrolyser in representative periods through introducing the variable
+`elect_usage_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
+ """
+function constraints_usage_iterate(
     m,
     n::AbstractElectrolyzer,
-    𝒯ᴵⁿᵛ,
-    t_inv::TS.StrategicPeriod{S, T, RepresentativePeriods{T, U, SimpleTimes{U}}},
+    prev_pers::PreviousPeriods,
+    elec_pers::ElecPeriods,
+    prev_usage,
+    per,
+    _::RepresentativePeriods,
     modeltype::EnergyModel,
-    ) where {S, T, U}
-
+)
     # Declaration of the required subsets
-    𝒯ʳᵖ = repr_periods(t_inv)
+    𝒯ʳᵖ = repr_periods(per)
+    last_rp = last(𝒯ʳᵖ)
 
     # Constraint for the total usage in a given representative period
     @constraint(m, [t_rp ∈ 𝒯ʳᵖ],
         m[:elect_usage_rp][n, t_rp] * 1000 ==
-            sum(m[:elect_on_b][n, t] * multiple_strat(t_inv, t) * duration(t) for t ∈ t_rp)
+            sum(m[:elect_on_b][n, t] * multiple_strat(per, t) * duration(t) for t ∈ t_rp)
     )
 
-
-    # Definition of the auxiliary variable for the linear reformulation of the element-wise
-    # product of `:elect_usage_sp[n, t_inv_pre]` and `:elect_usage_mult_sp_b[n, t_inv, t_inv_pre]`.
-    # This reformulation requires the introduction of both a `lower_bound` and a
-    # `upper_bound` of the variable `:elect_usage_sp` given through a value of `0` and
-    # `stack_lifetime(n)`.
-    use_lower_bound = FixedProfile(0)
-    use_upper_bound = FixedProfile(stack_lifetime(n))
-    prev_usage = linear_reformulation(m,
-        𝒯ᴵⁿᵛ,
-        𝒯ᴵⁿᵛ,
-        m[:elect_usage_mult_sp_b][n, :, :],
-        m[:elect_usage_sp][n, :],
-        use_lower_bound,
-        use_upper_bound,
-    )
-
-    # Iteration through the individual operational periods for calculating the new usage
-    for (t_rp_prev, t_rp) ∈ withprev(𝒯ʳᵖ), (t_prev, t) ∈ withprev(t_rp)
-        if isnothing(t_rp_prev) && isnothing(t_prev)
-            # Constraint for the previous usage of the first operational period in an
-            # investment period. The previous usage is given through the sum of the usage in
-            # all previous strategic periods after the stack replacement
-            @constraint(m,
-                m[:elect_previous_usage][n, t] ==
-                    sum(
-                        prev_usage[t_inv, t_inv_pre] * duration_strat(t_inv_pre)
-                        for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
-                    )
-            )
-        elseif isnothing(t_prev)
-            # Constraint for the previous usage of the first operational period in a
-            # representative period. The previous usage is given through the sum of the usage
-            # in the previous representative period.
-            @constraint(m,
-            m[:elect_previous_usage][n, t] ==
-                m[:elect_previous_usage][n, first(t_rp_prev)] +
-                m[:elect_usage_rp][n, t_rp_prev]
-        )
-        else
-            # Constraint for the previous usage of a standard operational period
-            # In this situation, it only has to consider whether the electrolyzer is on
-            # or off
-            @constraint(m,
-                m[:elect_previous_usage][n, t] ==
-                    m[:elect_previous_usage][n, t_prev] +
-                    duration(t_prev) * m[:elect_on_b][n, t_prev] / 1000
-            )
-        end
+    # Iterate through the operational structure
+    for (t_rp_prev, t_rp) ∈ withprev(𝒯ʳᵖ)
+        prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), t_rp_prev, EMB.op_per(prev_pers));
+        elec_pers.last = t_rp == last_rp
+        ts = t_rp.operational.operational
+        constraints_usage_iterate(m, n, prev_pers, elec_pers, prev_usage, t_rp, ts, modeltype)
     end
+end
+"""
+In the case of `OperationalScenarios`, we purely iterate through the individual time
+structures.
+"""
+function constraints_usage_iterate(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods,
+    elec_pers::ElecPeriods,
+    prev_usage,
+    per,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ˢᶜ = opscenarios(per)
 
+    # Iterate through the operational structure
+    for t_scp ∈ 𝒯ˢᶜ
+        ts = t_scp.operational.operational
+        constraints_usage_iterate(m, n, prev_pers, elec_pers, prev_usage, t_scp, ts, modeltype)
+    end
+end
+
+"""
+In the case of `SimpleTimes`, the iterator function is at its lowest level. In this
+situation,the previous level is calculated using the function
+[`constraints_previous_usage`](@ref). The approach for calculating the
+constraints is depending on the types in the parameteric type
+[`EMB.PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
+"""
+function constraints_usage_iterate(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods,
+    elec_pers::ElecPeriods,
+    prev_usage,
+    per,
+    _::SimpleTimes,
+    modeltype::EnergyModel,
+)
     # Constraint for the total usage of the electrolyzer including the current time step.
     # This ensures that the last repetition of the strategic period is appropriately
     # constrained.
-    # The last(last()) is required as it is important for the last operational period in
-    # the last representative period.
-    t = last(last(𝒯ʳᵖ))
+    # The conditional statement activates this constraint only for the last representative
+    # period, if representative periods are present as stack replacement is only feasible
+    # once per strategic period
+    if is_last(elec_pers)
+        t_inv = strat_per(elec_pers)
+        t = last(per)
+        @constraint(m,
+            stack_lifetime(n) ≥
+                (
+                    m[:elect_previous_usage][n, t] +
+                    m[:elect_usage_sp][n, t_inv]*(duration_strat(t_inv) - 1)
+                )
+                * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
+        )
+    end
+
+    # Iterate through the operational structure
+    for (t_prev, t) ∈ withprev(per)
+        prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), EMB.rep_per(prev_pers), t_prev);
+        elec_pers.op = t
+
+        # Add the constraints for the previous usage
+        constraints_previous_usage(m, n, prev_pers, elec_pers, prev_usage, modeltype)
+    end
+end
+
+"""
+    constraints_previous_usage(
+        m,
+        n::AbstractElectrolyzer,
+        prev_pers::PreviousPeriods,
+        t_inv::TS.AbstractStrategicPeriod,
+        t::OperationalPeriod,
+        prev_usage,
+        modeltype::EnergyModel,
+    )
+
+Returns the previous usage of an `AbstractElectrolyzer` node depending on the type of
+[`PreviousPeriods`](@ref).
+
+The basic functionality is used in the case when the previous operational period is a
+`TimePeriod`, in which case it just returns the previous operational period.
+"""
+function constraints_previous_usage(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods,
+    elec_pers::ElecPeriods,
+    prev_usage,
+    modeltype::EnergyModel,
+)
+    t = op_per(elec_pers)
+    t_prev = EMB.op_per(prev_pers)
     @constraint(m,
-        stack_lifetime(n) ≥
-            (
-                m[:elect_previous_usage][n, t] +
-                m[:elect_usage_sp][n, t_inv]*(duration_strat(t_inv) - 1)
+        m[:elect_previous_usage][n, t] ==
+            m[:elect_previous_usage][n, t_prev] +
+            duration(t_prev) * m[:elect_on_b][n, t_prev] / 1000
+    )
+end
+"""
+When the previous operational, representative, and strategic periods are `Nothing`, the
+variable `elect_previous_usage` is fixed to a value of 0.
+"""
+function constraints_previous_usage(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods{Nothing, Nothing, Nothing},
+    elec_pers::ElecPeriods,
+    prev_usage,
+    modeltype::EnergyModel,
+)
+    t = op_per(elec_pers)
+    fix(m[:elect_previous_usage][n, t], 0; force=true)
+end
+"""
+When the previous operational and representative periods are `Nothing` while the previous
+strategic period is given, then previous usage is given through the sum of the usage in
+all previous strategic periods after the stack replacement through the variable
+`prev_usage`.
+"""
+function constraints_previous_usage(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods{<:TS.AbstractStrategicPeriod, Nothing, Nothing},
+    elec_pers::ElecPeriods,
+    prev_usage,
+    modeltype::EnergyModel,
+)
+    𝒯ᴵⁿᵛ = strat_periods(elec_pers)
+    t_inv = strat_per(elec_pers)
+    t = op_per(elec_pers)
+
+    @constraint(m,
+        m[:elect_previous_usage][n, t] ==
+            sum(
+                prev_usage[t_inv, t_inv_pre] * duration_strat(t_inv_pre)
+                for t_inv_pre ∈ 𝒯ᴵⁿᵛ if isless(t_inv_pre, t_inv)
             )
-            * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
+    )
+end
+"""
+When the previous operational period is `Nothing` and the previous representative period an
+`AbstractRepresentativePeriod` then the time structure *does* include `RepresentativePeriods`.
+
+The constraint then sums up the values from the previous representative period.
+"""
+function constraints_previous_usage(
+    m,
+    n::AbstractElectrolyzer,
+    prev_pers::PreviousPeriods{<:EMB.NothingPeriod, <:TS.AbstractRepresentativePeriod, Nothing},
+    elec_pers::ElecPeriods,
+    prev_usage,
+    modeltype::EnergyModel,
+)
+    t_rp_prev = rep_per(prev_pers)
+    t = op_per(elec_pers)
+    @constraint(m,
+        m[:elect_previous_usage][n, t] ==
+            m[:elect_previous_usage][n, first(t_rp_prev)] +
+            m[:elect_usage_rp][n, t_rp_prev]
     )
 end
 
@@ -261,6 +342,169 @@ function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::Ener
                 )
                 * EMB.multiple(t_inv, t)
                 for t ∈ t_inv)
+        )
+    end
+end
+
+"""
+    constraints_state_seq_iter(
+        m,
+        n::Reformer,
+        per,
+        t_last,
+        ts,
+        modeltype::EnergyModel
+    )
+
+Function for iterating through the time structure for calculating the correct cyclic
+constraints for the sequencing of the states of the Reformer `n`.
+
+The function automatically deduces the time structure provided to the system and calls the
+calls the corresponding function.
+"""
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    for t_rp ∈ repr_periods(per)
+        t_last = last(t_rp)
+        constraints_state_seq_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+    end
+end
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ˢᶜ = opscenarios(per)
+    for t_scp ∈ 𝒯ˢᶜ
+        t_last = last(t_scp)
+        constraints_state_seq_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+    end
+end
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    t_last,
+    _::SimpleTimes,
+    modeltype::EnergyModel
+)
+    for (t_prev, t) ∈ withprev(per)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_off_b, :ref_start_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_start_b, :ref_on_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_on_b, :ref_shut_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_shut_b, :ref_off_b, modeltype)
+    end
+end
+
+"""
+    constraints_state_seq(m, n::Reformer,
+        t, t_prev, t_last,
+        state_a::Symbol, state_b::Symbol,
+        modeltype::EnergyModel
+    )
+
+Function for creating the constraints on the sequencing of the individual states when
+`state_b` has to occur after `state_a`. Both `state_a` and `state_b` refer in this case to
+binary variables included in the JuMP model.
+"""
+function constraints_state_seq(m, n::Reformer,
+    t, t_prev, t_last,
+    state_a::Symbol, state_b::Symbol,
+    modeltype::EnergyModel,
+)
+    @constraint(m, m[state_a][n, t_prev] ≥ m[state_b][n, t] - m[state_b][n, t_prev])
+end
+"""
+When the previous period `t_prev` is nothing, _i.e._, the first operational period in
+another in a `SimpleTimes` time structure, it applies the cyclic constraint using `t_last`.
+"""
+function constraints_state_seq(m, n::Reformer,
+    t, t_prev::Nothing, t_last,
+    state_a::Symbol, state_b::Symbol,
+    modeltype::EnergyModel,
+)
+    @constraint(m, m[state_a][n, t_last] ≥ m[state_b][n, t] - m[state_b][n, t_last])
+end
+
+"""
+    constraints_state_time_iter(
+        m,
+        n::Reformer,
+        per,
+        t_last,
+        ts,
+        modeltype::EnergyModel
+    )
+
+Function for iterating through the time structure for calculating the correct requirement
+for the length of the individual states.
+"""
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    for t_rp ∈ repr_periods(per)
+        t_last = last(t_rp)
+        constraints_state_time_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+    end
+end
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    for t_scp ∈ opscenarios(per)
+        t_last = last(t_scp)
+        constraiteants_state_time_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+    end
+end
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    t_last,
+    _::SimpleTimes,
+    modeltype::EnergyModel
+)
+    it_tech = zip(
+        withprev(per),
+        chunk_duration(per, t_startup(n, per); cyclic=true),
+        chunk_duration(per, t_shutdown(n, per); cyclic=true),
+        chunk_duration(per, t_off(n, per); cyclic=true),
+    )
+
+    for ((t_prev, t), chunck_start, chunck_shut, chunck_off) ∈ it_tech
+        if isnothing(t_prev)
+            t_prev = t_last
+        end
+        @constraint(m,
+            sum(m[:ref_start_b][n, θ] * duration(θ) for θ ∈ chunck_start) ≥
+            t_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
+        )
+        @constraint(m,
+            sum(m[:ref_shut_b][n, θ] * duration(θ) for θ ∈ chunck_shut) ≥
+            t_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
+        )
+        @constraint(m,
+            sum(m[:ref_off_b][n, θ] * duration(θ) for θ ∈ chunck_off) ≥
+            t_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
         )
     end
 end

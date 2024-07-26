@@ -91,15 +91,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
 
     # Constraints for the calculation of the usage of the electrolyzer in the previous
     # time periods
-    for t_inv ∈ 𝒯ᴵⁿᵛ
-        @constraint(m,
-            m[:elect_usage_sp][n, t_inv] * 1000 ==
-                sum(
-                    m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
-                for t ∈ t_inv)
-        )
-        constraints_usage(m, n, 𝒯ᴵⁿᵛ, t_inv, modeltype)
-    end
+    constraints_usage(m, n, 𝒯ᴵⁿᵛ, modeltype)
 
     # Fix the variable `:elect_on_b` for operational periods without capacity
     fix_elect_on_b(m, n, 𝒯, 𝒫, modeltype)
@@ -166,10 +158,8 @@ end
 Sets all constraints for a reformer technology node.
 """
 function EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
-
     # Declaration of the required subsets.
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    𝒯ʳᵖ = repr_periods(𝒯)
 
     # General flow in and out constraints
     constraints_flow_in(m, n, 𝒯, modeltype)
@@ -188,47 +178,19 @@ function EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Only one state active in each time-step
     @constraint(m, [t ∈ 𝒯],
-        m[:ref_off_b][n, t] + m[:ref_start_b][n, t] + m[:ref_on_b][n, t] + m[:ref_shut_b][n, t] == 1
+        m[:ref_off_b][n, t] + m[:ref_start_b][n, t] + m[:ref_on_b][n, t] + m[:ref_shut_b][n, t]
+            == 1
     )
 
-    # Fixed order of states (using representative periods, dealt with individually)
-    for t_rp ∈ 𝒯ʳᵖ, (t_prev, t) ∈ withprev(t_rp)
-        if isnothing(t_prev) # First operational period in a representative period
-            t_prev = last(t_rp) # Cyclic behavior
-        end
-        @constraint(m, m[:ref_off_b][n, t_prev]   ≥ m[:ref_start_b][n, t]  - m[:ref_start_b][n, t_prev])
-        @constraint(m, m[:ref_start_b][n, t_prev] ≥ m[:ref_on_b][n, t]     - m[:ref_on_b][n, t_prev])
-        @constraint(m, m[:ref_on_b][n, t_prev]    ≥ m[:ref_shut_b][n, t]   - m[:ref_shut_b][n, t_prev])
-        @constraint(m, m[:ref_shut_b][n, t_prev]  ≥ m[:ref_off_b][n, t]    - m[:ref_off_b][n, t_prev])
-    end
+    for t_inv ∈ 𝒯ᴵⁿᵛ
+        # Calaculation of the last operational period
+        t_last  = last(t_inv)
 
-    # For all representative periods, we constrain the start, shut and off time
-    for t_rp ∈ 𝒯ʳᵖ
-        t_last = last(t_rp)
+        # Constraints for the order of the states of the reformer node
+        constraints_state_seq_iter(m, n, t_inv, t_last, t_inv.operational, modeltype)
 
-        it_tech = zip(
-            withprev(t_rp),
-            chunk_duration(t_rp, t_startup(n, t_rp); cyclic=true),
-            chunk_duration(t_rp, t_shutdown(n, t_rp); cyclic=true),
-            chunk_duration(t_rp, t_off(n, t_rp); cyclic=true),
-        )
-        for ((t_prev, t), chunck_start, chunck_shut, chunck_off) ∈ it_tech
-            if isnothing(t_prev)
-                t_prev = t_last
-            end
-            @constraint(m,
-                sum(m[:ref_start_b][n, θ] * duration(θ) for θ ∈ chunck_start) ≥
-                t_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
-            )
-            @constraint(m,
-                sum(m[:ref_shut_b][n, θ] * duration(θ) for θ ∈ chunck_shut) ≥
-                t_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
-            )
-            @constraint(m,
-                sum(m[:ref_off_b][n, θ] * duration(θ) for θ ∈ chunck_off) ≥
-                t_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
-            )
-        end
+        # Constraints for the minimum time of the individual states
+        constraints_state_time_iter(m, n, t_inv, t_last, t_inv.operational, modeltype)
     end
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
