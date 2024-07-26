@@ -264,3 +264,166 @@ function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::Ener
         )
     end
 end
+
+"""
+    constraints_state_seq_iter(
+        m,
+        n::Reformer,
+        per,
+        t_last,
+        ts,
+        modeltype::EnergyModel
+    )
+
+Function for iterating through the time structure for calculating the correct cyclic
+constraints for the sequencing of the states of the Reformer `n`.
+
+The function automatically deduces the time structure provided to the system and calls the
+calls the corresponding function.
+"""
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    for t_rp ∈ repr_periods(per)
+        t_last = last(t_rp)
+        constraints_state_seq_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+    end
+end
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ˢᶜ = opscenarios(per)
+    for t_scp ∈ 𝒯ˢᶜ
+        t_last = last(t_scp)
+        constraints_state_seq_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+    end
+end
+function constraints_state_seq_iter(
+    m,
+    n::Reformer,
+    per,
+    t_last,
+    _::SimpleTimes,
+    modeltype::EnergyModel
+)
+    for (t_prev, t) ∈ withprev(per)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_off_b, :ref_start_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_start_b, :ref_on_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_on_b, :ref_shut_b, modeltype)
+        constraints_state_seq(m, n, t, t_prev, t_last, :ref_shut_b, :ref_off_b, modeltype)
+    end
+end
+
+"""
+    constraints_state_seq(m, n::Reformer,
+        t, t_prev, t_last,
+        state_a::Symbol, state_b::Symbol,
+        modeltype::EnergyModel
+    )
+
+Function for creating the constraints on the sequencing of the individual states when
+`state_b` has to occur after `state_a`. Both `state_a` and `state_b` refer in this case to
+binary variables included in the JuMP model.
+"""
+function constraints_state_seq(m, n::Reformer,
+    t, t_prev, t_last,
+    state_a::Symbol, state_b::Symbol,
+    modeltype::EnergyModel,
+)
+    @constraint(m, m[state_a][n, t_prev] ≥ m[state_b][n, t] - m[state_b][n, t_prev])
+end
+"""
+When the previous period `t_prev` is nothing, _i.e._, the first operational period in
+another in a `SimpleTimes` time structure, it applies the cyclic constraint using `t_last`.
+"""
+function constraints_state_seq(m, n::Reformer,
+    t, t_prev::Nothing, t_last,
+    state_a::Symbol, state_b::Symbol,
+    modeltype::EnergyModel,
+)
+    @constraint(m, m[state_a][n, t_last] ≥ m[state_b][n, t] - m[state_b][n, t_last])
+end
+
+"""
+    constraints_state_time_iter(
+        m,
+        n::Reformer,
+        per,
+        t_last,
+        ts,
+        modeltype::EnergyModel
+    )
+
+Function for iterating through the time structure for calculating the correct requirement
+for the length of the individual states.
+"""
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    for t_rp ∈ repr_periods(per)
+        t_last = last(t_rp)
+        constraints_state_time_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+    end
+end
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    for t_scp ∈ opscenarios(per)
+        t_last = last(t_scp)
+        constraiteants_state_time_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+    end
+end
+function constraints_state_time_iter(
+    m,
+    n::Reformer,
+    per,
+    t_last,
+    _::SimpleTimes,
+    modeltype::EnergyModel
+)
+    it_tech = zip(
+        withprev(per),
+        chunk_duration(per, t_startup(n, per); cyclic=true),
+        chunk_duration(per, t_shutdown(n, per); cyclic=true),
+        chunk_duration(per, t_off(n, per); cyclic=true),
+    )
+
+    for ((t_prev, t), chunck_start, chunck_shut, chunck_off) ∈ it_tech
+        if isnothing(t_prev)
+            t_prev = t_last
+        end
+        @constraint(m,
+            sum(m[:ref_start_b][n, θ] * duration(θ) for θ ∈ chunck_start) ≥
+            t_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
+        )
+        @constraint(m,
+            sum(m[:ref_shut_b][n, θ] * duration(θ) for θ ∈ chunck_shut) ≥
+            t_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
+        )
+        @constraint(m,
+            sum(m[:ref_off_b][n, θ] * duration(θ) for θ ∈ chunck_off) ≥
+            t_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
+        )
+    end
+end
