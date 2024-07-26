@@ -68,8 +68,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
             params[:data],              # Data
-            0,                          # Min load
-            1,                          # Max load
+            LoadLimits(0, 1),   # Minimum and maximum load
             params[:degradation_rate],  # Degradation rate
             params[:stack_cost],        # Stack replacement costs
             params[:stack_lifetime],    # Stack lifetime in h
@@ -83,8 +82,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
             params[:data],              # Data
-            0,                          # Min load
-            1,                          # Max load
+            LoadLimits(0, 1),   # Minimum and maximum load
             params[:degradation_rate],  # Degradation rate
             params[:stack_cost],        # Stack replacement costs
             params[:stack_lifetime],    # Stack lifetime in h
@@ -253,8 +251,7 @@ function build_run_reformer_model(params)
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
             params[:data],              # Data
-            0,                          # Min load
-            1,                          # Max load
+            LoadLimits(0, 1),   # Minimum and maximum load
             params[:degradation_rate],  # Degradation rate
             params[:stack_cost],        # Stack replacement costs
             params[:stack_lifetime],    # Stack lifetime in h
@@ -269,6 +266,8 @@ function build_run_reformer_model(params)
             output,             # Ouput: Ratio of Output flow to characteristic throughput
             params[:data],      # Data
 
+            LoadLimits(0.2, 1.0), # Minimum and maximum load
+
             FixedProfile(0.2),  # Hourly cost for startup [€/MW/h]
             FixedProfile(0.2),  # Hourly cost for shutdown [€/MW/h]
             FixedProfile(0.02), # Hourly cost when offline [€/MW/h]
@@ -276,9 +275,6 @@ function build_run_reformer_model(params)
             FixedProfile(5),    # Startup time [h]
             FixedProfile(5),    # Shutdown time [h]
             FixedProfile(10),   # Minimum off time [h]
-
-            0.2,                # Min load [-]
-            1.0,                # Max load [-]
         )
     end
 

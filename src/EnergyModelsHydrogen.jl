@@ -23,4 +23,6 @@ include("utils.jl")
 export SimpleElectrolyzer, Electrolyzer
 export Reformer
 
+export LoadLimits
+
 end
