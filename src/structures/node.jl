@@ -173,6 +173,48 @@ abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
 EMB.has_emissions(n::AbstractReformer) = true
 
 """
+    struct CommitParameters
+
+Type for providing parameters required in unit commitment constraints.
+
+# Fields
+- **`opex::TimeProfile`** is the cost profile per installed capacity and operational
+  duration if the node is within the state.
+- **`time::TimeProfile`** is the minimum time the node has to remain in the state before
+  it can transition to the next state.
+"""
+struct CommitParameters
+    opex::TimeProfile
+    time::TimeProfile
+end
+
+"""
+    opex(com_par::CommitParameters)
+
+Returns the unit commitment OPEX as `TimeProfile`.
+"""
+opex(com_par::CommitParameters) = com_par.opex
+"""
+    opex(com_par::CommitParameters, t)
+
+Returns the unit commitment OPEX in operational period `t`.
+"""
+opex(com_par::CommitParameters, t) = com_par.opex[t]
+
+"""
+    opex(com_par::CommitParameters)
+
+Returns the minimum time in the state as `TimeProfile`.
+"""
+state_time(com_par::CommitParameters) = com_par.time
+"""
+    opex(com_par::CommitParameters, t)
+
+Returns the minimum time in the state in operational period `t`.
+"""
+state_time(com_par::CommitParameters, t) = com_par.time[t]
+
+"""
     Reformer <: AbstractReformer
 
 A network node with start-up and shut-down time and costs that should be used for reformer
@@ -223,13 +265,9 @@ struct Reformer <: AbstractReformer
 
     load_limits::AbstractLoadLimits
 
-	opex_startup::TimeProfile
-	opex_shutdown::TimeProfile
-	opex_off::TimeProfile
-
-	t_startup::TimeProfile
-	t_shutdown::TimeProfile
-	t_off::TimeProfile
+    startup::CommitParameters
+    shutdown::CommitParameters
+    offline::CommitParameters
 end
 
 """
@@ -237,75 +275,75 @@ end
 
 Returns the startup OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_startup(n::Reformer) = n.opex_startup
+opex_startup(n::Reformer) = opex(n.startup)
 """
     opex_startup(n::Reformer, t)
 
 Returns the startup OPEX of a Reformer `n` in operational period `t`.
 """
-opex_startup(n::Reformer, t) = n.opex_startup[t]
+opex_startup(n::Reformer, t) = opex(n.startup, t)
 
 """
     opex_shutdown(n::Reformer)
 
 Returns the shutdown OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_shutdown(n::Reformer) = n.opex_shutdown
+opex_shutdown(n::Reformer) = opex(n.shutdown)
 """
     opex_shutdown(n::Reformer, t)
 
 Returns the shutdown OPEX of a Reformer `n` in operational period `t`.
 """
-opex_shutdown(n::Reformer, t) = n.opex_shutdown[t]
+opex_shutdown(n::Reformer, t) = opex(n.shutdown, t)
 
 """
     opex_off(n::Reformer)
 
 Returns the offline OPEX of a Reformer `n` as `TimeProfile`.
 """
-opex_off(n::Reformer) = n.opex_off
+opex_off(n::Reformer) = opex(n.offline)
 """
     opex_off(n::Reformer, t)
 
 Returns the offline OPEX of a Reformer `n` in operational period `t`.
 """
-opex_off(n::Reformer, t) = n.opex_off[t]
+opex_off(n::Reformer, t) = opex(n.offline, t)
 
 """
     t_startup(n::Reformer)
 
 Returns the minimum startup time of a Reformer `n` as `TimeProfile`.
 """
-t_startup(n::Reformer) = n.t_startup
+t_startup(n::Reformer) = state_time(n.startup)
 """
     t_startup(n::Reformer, t)
 
 Returns the minimum startup time of a Reformer `n` in operational period `t`.
 """
-t_startup(n::Reformer, t) = n.t_startup[t]
+t_startup(n::Reformer, t) = state_time(n.startup, t)
 
 """
     t_shutdown(n::Reformer)
 
 Returns the minimum shutdown time of a Reformer `n` as `TimeProfile`.
 """
-t_shutdown(n::Reformer) = n.t_shutdown
+t_shutdown(n::Reformer) = state_time(n.shutdown)
 """
     t_shutdown(n::Reformer, t)
 
 Returns the minimum shutdown time of a Reformer `n` in operational period `t`.
 """
-t_shutdown(n::Reformer, t) = n.t_shutdown[t]
+t_shutdown(n::Reformer, t) = state_time(n.shutdown, t)
 
 """
     t_off(n::Reformer)
 
 Returns the minimum offline time of a Reformer `n` as `TimeProfile`.
 """
-t_off(n::Reformer) = n.t_off
+t_off(n::Reformer) = state_time(n.offline)
 """
     t_off(n::Reformer, t)
 
 Returns the minimum offline time of a Reformer `n` in operational period `t`.
 """
-t_off(n::Reformer, t) = n.t_off[t]
+t_off(n::Reformer, t) = state_time(n.offline, t)

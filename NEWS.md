@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unversioned
+## Unversioned (breaking changes)
 
 ### Documentation
 
@@ -10,6 +10,7 @@
 
 * Rewrote the dynamic constraints for improved potential for extensions with differing time structures and in preparation for a receding horizon framework.
 * Moved the load limits to a separate type for a reduced number of input of the different `Node`s.
+* Moved the unit commitment parameters to a separate type for a reduced number of input of the different `Node`s.
 
 ### Bugfix
 

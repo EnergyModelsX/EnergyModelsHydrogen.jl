@@ -268,13 +268,12 @@ function build_run_reformer_model(params)
 
             LoadLimits(0.2, 1.0), # Minimum and maximum load
 
-            FixedProfile(0.2),  # Hourly cost for startup [€/MW/h]
-            FixedProfile(0.2),  # Hourly cost for shutdown [€/MW/h]
-            FixedProfile(0.02), # Hourly cost when offline [€/MW/h]
-
-            FixedProfile(5),    # Startup time [h]
-            FixedProfile(5),    # Shutdown time [h]
-            FixedProfile(10),   # Minimum off time [h]
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(0.2), FixedProfile(5)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(0.2), FixedProfile(5)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(0.02), FixedProfile(10)),
         )
     end
 

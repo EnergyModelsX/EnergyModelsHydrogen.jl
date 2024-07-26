@@ -281,12 +281,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
@@ -301,12 +301,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
@@ -320,12 +320,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
@@ -339,12 +339,12 @@ EMB.TEST_ENV = true
             Dict(H2 => -1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
@@ -358,12 +358,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(-1),   # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(-1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         ref = Reformer(
             "Reformer",
@@ -374,12 +374,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(-1),   # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(-1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         ref = Reformer(
             "Reformer",
@@ -390,12 +390,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(-1),   # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(-1), FixedProfile(1)),
         )
 
         # Test that a wrong profiles for minimum time of unit commitment are caught by the checks.
@@ -410,12 +410,12 @@ EMB.TEST_ENV = true
                 Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
                 Data[],             # Data
                 LoadLimits(0, 1),   # Minimum and maximum load
-                FixedProfile(1),    # Startup OPEX
-                FixedProfile(1),    # Shutdown OPEX
-                FixedProfile(1),    # Offline OPEX
-                time_profile,       # Minimum startup time
-                FixedProfile(1),    # Minimum shutdown time
-                FixedProfile(1),    # Minimum offline time
+                # Hourly cost for startup [€/MW/h] and startup time [h]
+                CommitParameters(FixedProfile(1), time_profile),
+                # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+                CommitParameters(FixedProfile(1), FixedProfile(1)),
+                # Hourly cost when offline [€/MW/h] and minimum off time [h]
+                CommitParameters(FixedProfile(1), FixedProfile(1)),
             )
             return simple_graph(ref)
         end
@@ -440,12 +440,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(-0.5, 1.0),   # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
@@ -459,12 +459,12 @@ EMB.TEST_ENV = true
             Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(1.5, 1.0), # Minimum and maximum load
-            FixedProfile(1),    # Startup OPEX
-            FixedProfile(1),    # Shutdown OPEX
-            FixedProfile(1),    # Offline OPEX
-            FixedProfile(1),    # Minimum startup time
-            FixedProfile(1),    # Minimum shutdown time
-            FixedProfile(1),    # Minimum offline time
+            # Hourly cost for startup [€/MW/h] and startup time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
+            # Hourly cost when offline [€/MW/h] and minimum off time [h]
+            CommitParameters(FixedProfile(1), FixedProfile(1)),
         )
         @test_throws AssertionError simple_graph(ref)
 
