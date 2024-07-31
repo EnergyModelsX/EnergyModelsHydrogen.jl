@@ -44,8 +44,8 @@ function EMB.check_node(
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     check_load_lim(n, 𝒯)
     @assert_or_log(
-        0 ≤ degradation_rate(n) < 1,
-        "The stack degradation rate must be in the range [0, 1)."
+        0 ≤ degradation_rate(n) < 100,
+        "The stack degradation rate must be in the range [0, 100)."
     )
 
     if isa(stack_replacement_cost(n), StrategicProfile) && check_timeprofiles
@@ -126,9 +126,9 @@ function EMB.check_node(
         "The offline OPEX must be non-negative."
     )
     check_load_lim(n, 𝒯)
-    check_commitment_profile(t_startup(n), 𝒯, "t_startup", check_timeprofiles)
-    check_commitment_profile(t_shutdown(n), 𝒯, "t_shutdown", check_timeprofiles)
-    check_commitment_profile(t_off(n), 𝒯, "t_off", check_timeprofiles)
+    check_commitment_profile(time_startup(n), 𝒯, "time_startup", check_timeprofiles)
+    check_commitment_profile(time_shutdown(n), 𝒯, "time_shutdown", check_timeprofiles)
+    check_commitment_profile(time_off(n), 𝒯, "time_off", check_timeprofiles)
 end
 
 """

@@ -33,8 +33,6 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{AbstractElectrolyzer}, 𝒯, m
     @variable(m, elect_mult_sp_aux_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, elect_stack_replacement_sp_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, 0.0 ≤ elect_efficiency_penalty[𝒩ᴱᴸ, 𝒯] ≤ 1.0)
-
-
 end
 
 """
@@ -56,8 +54,8 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
     # `mult_sp_aux_b`. The auxiliary variable creates a multiplier matrix for each
     # strategic period. The elementwise multiplication will then lead to the situation that the
     # previous periods are not counted if there was a stack replacement in between.
-    for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
-        for t_inv_post ∈ 𝒯ᴵⁿᵛ
+    for t_inv_post ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
+        for t_inv ∈ 𝒯ᴵⁿᵛ
             # The following constraints set the auxiliary variable `mult_sp_aux_b`
             # in all previous periods to 0 if there is a stack replacements.
             # Otherwise, it fixs them to 1.
@@ -74,8 +72,8 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
             # the multpiplier for the sum of `:elect_usage_sp`, `:elect_usage_mult_sp_b`,
             # to be equal or smaller to the auxiliary variable `mult_sp_aux_b`
             @constraint(m,
-                m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre] ≤
-                    mult_sp_aux_b[t_inv_post, t_inv, t_inv_pre]
+                m[:elect_usage_mult_sp_b][n, t_inv_post, t_inv_pre] ≤
+                    mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre]
             )
         end
 
@@ -83,9 +81,9 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
         # the multpiplier for the sum of `:elect_usage_sp`, `:elect_usage_mult_sp_b`:
         # to be equal or larger than the sum of the auxiliary variable `mult_sp_aux_b`
         @constraint(m,
-            m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre] ≥
-                sum(mult_sp_aux_b[t_inv_aux, t_inv, t_inv_pre] for t_inv_aux ∈ 𝒯ᴵⁿᵛ) -
-                (𝒯.len-1)
+            m[:elect_usage_mult_sp_b][n, t_inv_post, t_inv_pre] ≥
+                sum(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre] for t_inv ∈ 𝒯ᴵⁿᵛ) -
+                (length(𝒯ᴵⁿᵛ)-1)
         )
     end
 

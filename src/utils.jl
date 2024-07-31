@@ -9,22 +9,16 @@
     )
 
 Linear reformulation of the element-wise multiplication of the binary variable `var_binary[𝒯]`
-and the continuous variable `var_continuous[𝒯]`.
+and the continuous variable `var_continuous[𝒯] ∈ [ub, lb]`.
 
-It returns the product `var_aux[𝒯]`.
+It returns the product `var_aux[𝒯]` with
+
+``var\\_aux[t] = var\\_binary[t] \\times var\\_continuous[t]``.
 
 !!! note
     The bounds `lb` and `ub` must have the ability to access their fields using the iterator
     of `𝒯`, that is if `𝒯` corresponds to the strategic periods, it is not possible to
     provide an `OperationalProfile` or `RepresentativeProfile`.
-
-# Arguments:
-- **`m`**: JuMP model.
-- **`𝒯`**: Time index used for the variables.
-- **`var_binary`**: Binary variable for the multiplication, indexed only over `𝒯`.
-- **`var_continuous`**: Continuous variable for the multiplication, indexed only over `𝒯`.
-- **`lb`::TimeProfile**: Lower bound of the continuous variable.
-- **`ub`::TimeProfile**: Upper bound of the continuous variable..
 """
 function linear_reformulation(
     m,
@@ -63,25 +57,21 @@ end
     ) where {T}
 
 Linear reformulation of the multiplication of the binary variable `var_binary[𝒯ᵃ, 𝒯ᵇ]` and the
-continuous variable `var_continuous[𝒯ᵇ]`.
+continuous variable `var_continuous[𝒯ᵇ] ∈ [ub, lb]`.
 
-It returns the product `var_aux[𝒯ᵃ, 𝒯ᵇ]`.
+It returns the product `var_aux[𝒯ᵃ, 𝒯ᵇ]` with
+
+``var\\_aux[t_a, t_b] = var\\_binary[t_a, t_b] \\times var\\_continuous[t_b]``.
+
 
 !!! note
-    𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel` or the strategic
-    periods.
+    𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel`, `StratPeriods`,
+    `StratReprPeriods`, or comparable.
+    This is enforced through the parametric type `T`.
+
     The bounds `lb` and `ub` must have the ability to access their fields using the iterator
     of `𝒯ᵃ`, that is if `𝒯ᵃ` corresponds to the strategic periods, it is not possible to
     provide an `OperationalProfile` or `RepresentativeProfile`.
-
-# Arguments:
-- **`m`**: JuMP model.
-- **`𝒯ᵃ`**: Time used for the indices of the variables.
-- **`𝒯ᵇ`**: Time used for the indices of the variables.
-- **`var_binary`**: Binary variable for the multiplication, indexed over `𝒯ᵃ` and `𝒯ᵇ`.
-- **`var_continuous`**: Continuous variable for the multiplication, indexed only over `𝒯ᵃ`.
-- **`lb`::TimeProfile**: Lower bound of the continuous variable.
-- **`ub`::TimeProfile**: Upper bound of the continuous variable..
 """
 function linear_reformulation(
     m,
@@ -114,20 +104,52 @@ function linear_reformulation(
 end
 
 """
-    multiplication_variables(m, n::AbstractHydrogenNetworkNode, 𝒯, var_b, modeltype::EnergyModel)
+    multiplication_variables(
+        m,
+        n::AbstractHydrogenNetworkNode,
+        𝒯,
+        var_b,
+        modeltype::EnergyModel
+    )
 
-Default option for calculating the multiplication variables of the installed capacity
-(expressed through `capacity(n, t)`) and a binary variable `var_b` in an operational period
-`t` (_e.g._, `elect_on_b[n, t]`).
+Function for calculating the muliplication of the capacity of an `AbstractHydrogenNetworkNode`
+and a binary variable.
+
+    modeltype::EnergyModel
+
+Multiplication of the installed capacity (expressed through `capacity(n, t)`) and a binary
+variable `var_b` in a period `t` (_e.g._, `elect_on_b[n, t]`).
 
 !!! note
     The time structure `𝒯` can be either a `TwoLevel` or `StrategicPeriods`. It is however
     necessary, that the variable `var_b` is indexed over the iterators of `𝒯`.
 
-# Returns
+## Returns
 - **`prod[t]`**: Multiplication of `capacity(n, t)` and `var_b[n, t]`.
+
+
+    modeltype::AbstractInvestmentModel
+
+When the modeltype is an `AbstractInvestmentModel`, then the function applies a linear
+reformulation of the binary-continuous multiplication based on the McCormick relaxation and
+the function [`linear_reformulation`](@ref).
+
+!!! note
+    If the `AbstractHydrogenNetworkNode` node does not have investments, it reuses the
+    default function to avoid increasing the number of variables in the model.
+
+## Returns
+- **`prod[t]`**: Multiplication of `cap_inst[n, t]` and `var_b[t]` or alternatively
+  `cap_current[n, t]` and `var_b[t]`, if the TimeStructure is a `StrategicPeriods` and
+  the node `n` has investments.
 """
-function multiplication_variables(m, n::AbstractHydrogenNetworkNode, 𝒯, var_b, modeltype::EnergyModel)
+function multiplication_variables(
+    m,
+    n::AbstractHydrogenNetworkNode,
+    𝒯,
+    var_b,
+    modeltype::EnergyModel
+)
 
     # Calculation of the multiplication with the installed capacity of the node
     prod = @expression(m, [t ∈ 𝒯], capacity(n, t) * var_b[t])
@@ -137,8 +159,22 @@ end
 """
     fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
 
-Default option for fixing elect_on_b to 0 in the case of no available capacity in a given
-strategic periods.
+Fixes the variable `:elect_on_b`  in operational periods without capacity and the variable
+`:elect_stack_replacement_sp_b` in strategic periods without capacity to 0 to simplify the
+optimziation problem.
+
+Provides start values to the variables in all other periods as well as start values for
+the variable `:elect_usage_mult_sp_b`
+
+    modeltype::EnergyModel
+
+Base the approach on the capacity extracted through the function
+[`EMB.capacity`](@extref EnergyModelsBase.capacity).
+
+    modeltype::AbstractInvestmentModel
+
+Base the approach on the maximum added capacity extracted through the function
+`EMI.max_add`.
 """
 function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
 

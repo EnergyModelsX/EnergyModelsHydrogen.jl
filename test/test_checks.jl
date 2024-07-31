@@ -177,7 +177,7 @@ EMB.TEST_ENV = true
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
             Data[],             # Data
             LoadLimits(0, 1),   # Minimum and maximum load
-            1,                  # Degradation rate
+            100,                # Degradation rate
             FixedProfile(3e5),  # Stack replacement costs
             60000,              # Stack lifetime in h
         )
