@@ -3,6 +3,7 @@ using DocumenterInterLinks
 using EnergyModelsBase
 using EnergyModelsInvestments
 using EnergyModelsHydrogen
+using TimeStruct
 
 const EMH = EnergyModelsHydrogen
 const EMB = EnergyModelsBase
@@ -18,7 +19,9 @@ cp("../NEWS.md", "src/manual/NEWS.md")
 
 
 links = InterLinks(
+    "TimeStruct" => "https://sintefore.github.io/TimeStruct.jl/stable/",
     "EnergyModelsBase" => "https://energymodelsx.github.io/EnergyModelsBase.jl/stable/",
+    "EnergyModelsInvestments" => "https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/",
 )
 
 # DocMeta.setdocmeta!(EnergyModelsHydrogen, :DocTestSetup, :(using EnergyModelsHydrogen, EnergyModelsInvestments); recursive=true)
@@ -45,11 +48,19 @@ makedocs(
             "Quick Start" => "manual/quick-start.md",
             "Release notes" => "manual/NEWS.md",
         ],
-        "Examples" => Any[
+        "Nodes" => Any[
+            "Electrolyser" => "nodes/electrolyser.md",
+            "Reformer" => "nodes/reformer.md",
+        ],
+        "Auxiliary functions" => Any[
+            "Linear reformulation" => "aux-fun/lin-reform.md",
         ],
         "Library" => Any[
             "Public" => "library/public.md",
-            "Internals" => "library/internals.md"
+            "Internals" => map(
+                s -> "library/internals/$(s)",
+                sort(readdir(joinpath(@__DIR__, "src/library/internals")))
+            ),
         ]
     ],
     plugins=[links],

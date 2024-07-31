@@ -5,6 +5,7 @@
 ### Documentation
 
 * Added external references to refer to types and methods from `EnergyModelsBase`.
+* Significantly improved the documentation through inclusion of the mathematical descriptions for the individual nodes.
 
 ### Enhancement
 

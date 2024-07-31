@@ -1,23 +1,3 @@
-"""
-    multiplication_variables(
-        m,
-        n::EMH.AbstractHydrogenNetworkNode,
-        𝒯,
-        var_b,
-        modeltype::AbstractInvestmentModel
-    )
-
-When the modeltype is an `AbstractInvestmentModel`, then the function reuses a linear
-reformulation of the binary-continuous multiplication based on the McCormick relaxation and
-the function [`EMH.linear_reformulation`](@ref).
-
-!!! note
-    If the AbstractHydrogenNetworkNode node does not have investments, it reuses the default
-    function to avoid increasing the number of variables in the model.
-
-# Returns
-- **`prod[t]`**: Multiplication of `cap_inst[n, t]` and `var_b[t]`.
-"""
 function EMH.multiplication_variables(
     m,
     n::EMH.AbstractHydrogenNetworkNode,
@@ -54,12 +34,6 @@ function EMH.multiplication_variables(
     return prod
 end
 
-"""
-    EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
-
-Fixing `elect_on_b` to 0 i if it is not possible to add any capacity in the strategic
-periods up to the current.
-"""
 function EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
 
     # Declaration of the required subsets

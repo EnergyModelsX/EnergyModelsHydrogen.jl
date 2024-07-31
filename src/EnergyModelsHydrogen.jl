@@ -1,7 +1,9 @@
 """
-Main module for `EnergyModelsHydrogen.jl`.
+Main module for `EnergyModelsHydrogen`.
 
-This module implements constraints for describing an `Electrolyzer`.
+This module implements constraints for describing electrolysis through the types
+`SimpleElectrolyzer` and `Electrolyzer` as well as natural gas reforming through the type
+`Reformer`.
 """
 module EnergyModelsHydrogen
 

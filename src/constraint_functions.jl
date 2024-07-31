@@ -2,7 +2,8 @@
     constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
 Function for creating the usage constraints for an AbstractElectrolyzer. These constraints
-calculate the usage of the electrolyser up to each time step for both the lifetime and the
+calculate the usage of the electrolyzer up to each time step for both the lifetime and the
+degradation calculations.
 """
 function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     # Call the auxiliary function for calculating the linear reformulation of the
@@ -30,7 +31,7 @@ end
 """
     constraints_usage_aux(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Create the auxiliary variable for calculating the previous usage of an electrolyser node.
+Create the auxiliary variable for calculating the previous usage of an electrolyzer node.
 """
 function constraints_usage_aux(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     # Definition of the auxiliary variable for the linear reformulation of the element-wise
@@ -63,7 +64,7 @@ end
 Iterate through the individual time structures of a `AbstractElectrolyzer` node.
 
 In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
-of the electrolyser in representative periods through introducing the variable
+of the electrolyzer in representative periods through introducing the variable
 `elect_usage_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
  """
 function constraints_usage_iterate(
@@ -83,7 +84,7 @@ function constraints_usage_iterate(
     # Constraint for the total usage in a given representative period
     @constraint(m, [t_rp ∈ 𝒯ʳᵖ],
         m[:elect_usage_rp][n, t_rp] * 1000 ==
-            sum(m[:elect_on_b][n, t] * multiple_strat(per, t) * duration(t) for t ∈ t_rp)
+            sum(m[:elect_on_b][n, t] * EMB.multiple(per, t) for t ∈ t_rp)
     )
 
     # Iterate through the operational structure
@@ -199,7 +200,7 @@ function constraints_previous_usage(
 end
 """
 When the previous operational, representative, and strategic periods are `Nothing`, the
-variable `elect_previous_usage` is fixed to a value of 0.
+# variable `elect_previous_usage` is fixed to a value of 0.
 """
 function constraints_previous_usage(
     m,
@@ -272,7 +273,7 @@ end
 
 Function for creating operational limits off an `AbstractHydrogenNetworkNode`.
 
-The operational limits limit the capacity usage of the electrolyser node between a minimimum
+The operational limits limit the capacity usage of the electrolyzer node between a minimimum
 and maximum load based on the installed capacity.
 
 ## TODO:
@@ -335,10 +336,10 @@ function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::Ener
             m,
             m[:opex_var][n, t_inv] == sum(
                 (
-                    m[:cap_use][n, t] * EMB.opex_var(n, t)
-                    + prod_start[t] * opex_startup(n, t)
-                    + prod_shut[t] * opex_shutdown(n, t)
-                    + prod_off[t] * opex_off(n, t)
+                    EMB.opex_var(n, t) * m[:cap_use][n, t] +
+                    opex_startup(n, t) * prod_start[t] +
+                    opex_shutdown(n, t) * prod_shut[t] +
+                    opex_off(n, t) * prod_off[t]
                 )
                 * EMB.multiple(t_inv, t)
                 for t ∈ t_inv)
@@ -359,8 +360,13 @@ end
 Function for iterating through the time structure for calculating the correct cyclic
 constraints for the sequencing of the states of the Reformer `n`.
 
-The function automatically deduces the time structure provided to the system and calls the
-calls the corresponding function.
+The function automatically deduces the provided time structure and calls the calls the
+corresponding functions iteratively.
+It eventually calls the function [`constraints_state_seq`](@ref) for imposing the sequencing
+constraints on the different states.
+
+When the time structure includes `RepresentativePeriods`, period `t_last` is updated with
+last operational period within each representative period.
 """
 function constraints_state_seq_iter(
     m,
@@ -375,6 +381,10 @@ function constraints_state_seq_iter(
         constraints_state_seq_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
     end
 end
+"""
+When the time structure includes `OperationalScenarios`, period `t_last` is updated with
+last operational period within each operational scenario.
+"""
 function constraints_state_seq_iter(
     m,
     n::Reformer,
@@ -407,19 +417,29 @@ function constraints_state_seq_iter(
 end
 
 """
-    constraints_state_seq(m, n::Reformer,
-        t, t_prev, t_last,
-        state_a::Symbol, state_b::Symbol,
-        modeltype::EnergyModel
+    constraints_state_seq(
+        m,
+        n::Reformer,
+        t,
+        t_prev,
+        t_last,
+        state_a::Symbol,
+        state_b::Symbol,
+        modeltype::EnergyModel,
     )
 
 Function for creating the constraints on the sequencing of the individual states when
 `state_b` has to occur after `state_a`. Both `state_a` and `state_b` refer in this case to
 binary variables included in the JuMP model.
 """
-function constraints_state_seq(m, n::Reformer,
-    t, t_prev, t_last,
-    state_a::Symbol, state_b::Symbol,
+function constraints_state_seq(
+    m,
+    n::Reformer,
+    t,
+    t_prev,
+    t_last,
+    state_a::Symbol,
+    state_b::Symbol,
     modeltype::EnergyModel,
 )
     @constraint(m, m[state_a][n, t_prev] ≥ m[state_b][n, t] - m[state_b][n, t_prev])
@@ -428,9 +448,14 @@ end
 When the previous period `t_prev` is nothing, _i.e._, the first operational period in
 another in a `SimpleTimes` time structure, it applies the cyclic constraint using `t_last`.
 """
-function constraints_state_seq(m, n::Reformer,
-    t, t_prev::Nothing, t_last,
-    state_a::Symbol, state_b::Symbol,
+function constraints_state_seq(
+    m,
+    n::Reformer,
+    t,
+    t_prev::Nothing,
+    t_last,
+    state_a::Symbol,
+    state_b::Symbol,
     modeltype::EnergyModel,
 )
     @constraint(m, m[state_a][n, t_last] ≥ m[state_b][n, t] - m[state_b][n, t_last])
@@ -448,6 +473,9 @@ end
 
 Function for iterating through the time structure for calculating the correct requirement
 for the length of the individual states.
+
+When the time structure includes `RepresentativePeriods`, period `t_last` is updated with
+last operational period within each representative period.
 """
 function constraints_state_time_iter(
     m,
@@ -462,6 +490,10 @@ function constraints_state_time_iter(
         constraints_state_time_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
     end
 end
+"""
+When the time structure includes `OperationalScenarios`, period `t_last` is updated with
+last operational period within each operational scenario.
+"""
 function constraints_state_time_iter(
     m,
     n::Reformer,
@@ -485,9 +517,9 @@ function constraints_state_time_iter(
 )
     it_tech = zip(
         withprev(per),
-        chunk_duration(per, t_startup(n, per); cyclic=true),
-        chunk_duration(per, t_shutdown(n, per); cyclic=true),
-        chunk_duration(per, t_off(n, per); cyclic=true),
+        chunk_duration(per, time_startup(n, per); cyclic=true),
+        chunk_duration(per, time_shutdown(n, per); cyclic=true),
+        chunk_duration(per, time_off(n, per); cyclic=true),
     )
 
     for ((t_prev, t), chunck_start, chunck_shut, chunck_off) ∈ it_tech
@@ -496,15 +528,15 @@ function constraints_state_time_iter(
         end
         @constraint(m,
             sum(m[:ref_start_b][n, θ] * duration(θ) for θ ∈ chunck_start) ≥
-            t_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
+            time_startup(n, t) * (m[:ref_start_b][n, t] - m[:ref_start_b][n, t_prev])
         )
         @constraint(m,
             sum(m[:ref_shut_b][n, θ] * duration(θ) for θ ∈ chunck_shut) ≥
-            t_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
+            time_shutdown(n, t) * (m[:ref_shut_b][n, t] - m[:ref_shut_b][n, t_prev])
         )
         @constraint(m,
             sum(m[:ref_off_b][n, θ] * duration(θ) for θ ∈ chunck_off) ≥
-            t_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
+            time_off(n, t) * (m[:ref_off_b][n, t] - m[:ref_off_b][n, t_prev])
         )
     end
 end

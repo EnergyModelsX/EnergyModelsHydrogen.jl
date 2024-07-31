@@ -1,8 +1,14 @@
 """ Abstract supertype for all hydrogen network nodes."""
 abstract type AbstractHydrogenNetworkNode <: NetworkNode end
 
+"""
+    AbstractLoadLimits{T}
 
+Abstract type for the load limits. This type can be used to incorporate other types for the
+load limit.
+"""
 abstract type AbstractLoadLimits{T} end
+
 """
     LoadLimits{T<:Real} <: AbstractLoadLimits{T}
 
@@ -19,29 +25,50 @@ struct LoadLimits{T<:Real} <: AbstractLoadLimits{T}
 end
 
 """
+    min_load(load_lim::AbstractLoadLimits)
+Returns the minimum load of `LoadLimits` load_lim.
+"""
+min_load(load_lim::AbstractLoadLimits) = load_lim.min
+"""
+    min_load(load_lim::AbstractLoadLimits, t)
+Returns the minimum load of `LoadLimits` load_lim in operational period `t`.
+"""
+min_load(load_lim::AbstractLoadLimits, t) = load_lim.min
+"""
     min_load(n::EMB.Node)
 Returns the minimum load of `Node` n.
 """
-min_load(n::EMB.Node) = n.load_limits.min
+min_load(n::EMB.Node) = min_load(n.load_limits)
 """
     min_load(n::EMB.Node, t)
-Returns the maximum load of `Node` n in operational period `t`.
+Returns the minimum load of `Node` n in operational period `t`.
 """
-min_load(n::EMB.Node, t) = n.load_limits.min
+min_load(n::EMB.Node, t) = min_load(n.load_limits, t)
 
+"""
+    max_load(load_lim::AbstractLoadLimits)
+Returns the maximum load of `LoadLimits` load_lim.
+"""
+max_load(load_lim::AbstractLoadLimits) = load_lim.max
+"""
+    min_load(load_lim::AbstractLoadLimits, t)
+Returns the maximum load of `LoadLimits` load_lim in operational period `t`.
+"""
+max_load(load_lim::AbstractLoadLimits, t) = load_lim.max
 """
     max_load(n::EMB.Node)
 Returns the maximum load of `Node` n.
 """
-max_load(n::EMB.Node) = n.load_limits.max
+max_load(n::EMB.Node) = max_load(n.load_limits)
 """
     max_load(n::EMB.Node, t)
 Returns the maximum load of `Node` n in operational period `t`.
 """
-max_load(n::EMB.Node, t) = n.load_limits.max
+max_load(n::EMB.Node, t) = max_load(n.load_limits, t)
 
 """ Abstract supertype for all electrolyzer nodes."""
 abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
+
 
 """
     Electrolyzer <: AbstractElectrolyzer
@@ -167,11 +194,6 @@ Returns the stack lfetime of electrolyzer `n`.
 """
 stack_lifetime(n::AbstractElectrolyzer) = n.stack_lifetime
 
-""" Abstract supertype for all reformer nodes."""
-abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
-
-EMB.has_emissions(n::AbstractReformer) = true
-
 """
     struct CommitParameters
 
@@ -188,31 +210,34 @@ struct CommitParameters
     time::TimeProfile
 end
 
+""" Abstract supertype for all reformer nodes."""
+abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
+
 """
-    opex(com_par::CommitParameters)
+    opex_state(com_par::CommitParameters)
 
 Returns the unit commitment OPEX as `TimeProfile`.
 """
-opex(com_par::CommitParameters) = com_par.opex
+opex_state(com_par::CommitParameters) = com_par.opex
 """
-    opex(com_par::CommitParameters, t)
+    opex_state(com_par::CommitParameters, t)
 
 Returns the unit commitment OPEX in operational period `t`.
 """
-opex(com_par::CommitParameters, t) = com_par.opex[t]
+opex_state(com_par::CommitParameters, t) = com_par.opex[t]
 
 """
-    opex(com_par::CommitParameters)
+    time_state(com_par::CommitParameters)
 
 Returns the minimum time in the state as `TimeProfile`.
 """
-state_time(com_par::CommitParameters) = com_par.time
+time_state(com_par::CommitParameters) = com_par.time
 """
-    opex(com_par::CommitParameters, t)
+    time_state(com_par::CommitParameters, t)
 
 Returns the minimum time in the state in operational period `t`.
 """
-state_time(com_par::CommitParameters, t) = com_par.time[t]
+time_state(com_par::CommitParameters, t) = com_par.time[t]
 
 """
     Reformer <: AbstractReformer
@@ -250,7 +275,7 @@ technology descriptions.
     - If you introduce CO₂ capture through the application of
       [`CaptureEnergyEmissions`](@extref EnergyModelsBase.CaptureEnergyEmissions),
       you have to add your CO₂ instance as output. The reason for this is that we declare the
-      variable `:output` through the output dictionary.
+      variable `:output` through the `output` dictionary.
     - The specified startup, shutdown, and offline costs are relative to the installed
       capacity and a duration of 1 of an operational period.
 """
@@ -271,79 +296,79 @@ struct Reformer <: AbstractReformer
 end
 
 """
-    opex_startup(n::Reformer)
+    opex_startup(n::AbstractReformer)
 
-Returns the startup OPEX of a Reformer `n` as `TimeProfile`.
+Returns the startup OPEX of a AbstractReformer `n` as `TimeProfile`.
 """
-opex_startup(n::Reformer) = opex(n.startup)
+opex_startup(n::AbstractReformer) = opex_state(n.startup)
 """
-    opex_startup(n::Reformer, t)
+    opex_startup(n::AbstractReformer, t)
 
-Returns the startup OPEX of a Reformer `n` in operational period `t`.
+Returns the startup OPEX of a AbstractReformer `n` in operational period `t`.
 """
-opex_startup(n::Reformer, t) = opex(n.startup, t)
-
-"""
-    opex_shutdown(n::Reformer)
-
-Returns the shutdown OPEX of a Reformer `n` as `TimeProfile`.
-"""
-opex_shutdown(n::Reformer) = opex(n.shutdown)
-"""
-    opex_shutdown(n::Reformer, t)
-
-Returns the shutdown OPEX of a Reformer `n` in operational period `t`.
-"""
-opex_shutdown(n::Reformer, t) = opex(n.shutdown, t)
+opex_startup(n::AbstractReformer, t) = opex_state(n.startup, t)
 
 """
-    opex_off(n::Reformer)
+    opex_shutdown(n::AbstractReformer)
 
-Returns the offline OPEX of a Reformer `n` as `TimeProfile`.
+Returns the shutdown OPEX of a AbstractReformer `n` as `TimeProfile`.
 """
-opex_off(n::Reformer) = opex(n.offline)
+opex_shutdown(n::AbstractReformer) = opex_state(n.shutdown)
 """
-    opex_off(n::Reformer, t)
+    opex_shutdown(n::AbstractReformer, t)
 
-Returns the offline OPEX of a Reformer `n` in operational period `t`.
+Returns the shutdown OPEX of a AbstractReformer `n` in operational period `t`.
 """
-opex_off(n::Reformer, t) = opex(n.offline, t)
-
-"""
-    t_startup(n::Reformer)
-
-Returns the minimum startup time of a Reformer `n` as `TimeProfile`.
-"""
-t_startup(n::Reformer) = state_time(n.startup)
-"""
-    t_startup(n::Reformer, t)
-
-Returns the minimum startup time of a Reformer `n` in operational period `t`.
-"""
-t_startup(n::Reformer, t) = state_time(n.startup, t)
+opex_shutdown(n::AbstractReformer, t) = opex_state(n.shutdown, t)
 
 """
-    t_shutdown(n::Reformer)
+    opex_off(n::AbstractReformer)
 
-Returns the minimum shutdown time of a Reformer `n` as `TimeProfile`.
+Returns the offline OPEX of a AbstractReformer `n` as `TimeProfile`.
 """
-t_shutdown(n::Reformer) = state_time(n.shutdown)
+opex_off(n::AbstractReformer) = opex_state(n.offline)
 """
-    t_shutdown(n::Reformer, t)
+    opex_off(n::AbstractReformer, t)
 
-Returns the minimum shutdown time of a Reformer `n` in operational period `t`.
+Returns the offline OPEX of a AbstractReformer `n` in operational period `t`.
 """
-t_shutdown(n::Reformer, t) = state_time(n.shutdown, t)
+opex_off(n::AbstractReformer, t) = opex_state(n.offline, t)
 
 """
-    t_off(n::Reformer)
+    time_startup(n::AbstractReformer)
 
-Returns the minimum offline time of a Reformer `n` as `TimeProfile`.
+Returns the minimum startup time of a AbstractReformer `n` as `TimeProfile`.
 """
-t_off(n::Reformer) = state_time(n.offline)
+time_startup(n::AbstractReformer) = time_state(n.startup)
 """
-    t_off(n::Reformer, t)
+    time_startup(n::AbstractReformer, t)
 
-Returns the minimum offline time of a Reformer `n` in operational period `t`.
+Returns the minimum startup time of a AbstractReformer `n` in operational period `t`.
 """
-t_off(n::Reformer, t) = state_time(n.offline, t)
+time_startup(n::AbstractReformer, t) = time_state(n.startup, t)
+
+"""
+    time_shutdown(n::AbstractReformer)
+
+Returns the minimum shutdown time of a AbstractReformer `n` as `TimeProfile`.
+"""
+time_shutdown(n::AbstractReformer) = time_state(n.shutdown)
+"""
+    time_shutdown(n::AbstractReformer, t)
+
+Returns the minimum shutdown time of a AbstractReformer `n` in operational period `t`.
+"""
+time_shutdown(n::AbstractReformer, t) = time_state(n.shutdown, t)
+
+"""
+    time_off(n::AbstractReformer)
+
+Returns the minimum offline time of a AbstractReformer `n` as `TimeProfile`.
+"""
+time_off(n::AbstractReformer) = time_state(n.offline)
+"""
+    time_off(n::AbstractReformer, t)
+
+Returns the minimum offline time of a AbstractReformer `n` in operational period `t`.
+"""
+time_off(n::AbstractReformer, t) = time_state(n.offline, t)
