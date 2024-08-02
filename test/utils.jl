@@ -166,12 +166,12 @@ function penalty_test(m, case, params)
 
     # Calculation of the penalty
     @test sum(
-            value.(penalty[elect, t]) <= value.(penalty[elect, t_prev]) ||
+            value.(penalty[elect, t]) ⪅ value.(penalty[elect, t_prev]) ||
             value.(penalty[elect, t]) ≈ value.(penalty[elect, t_prev])
             for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)
         ) == length(𝒯) - params[:num_sp] * (params[:rep]+1)
     @test sum(
-            value.(m[:elect_previous_usage][elect, t]) ≤ params[:stack_lifetime] for t ∈ 𝒯
+            value.(m[:elect_previous_usage][elect, t]) ⪅ params[:stack_lifetime] for t ∈ 𝒯
         ) == length(𝒯)
 end
 
@@ -241,41 +241,26 @@ function build_run_reformer_model(params)
     else
         output = Dict(H2 => 1.0)
     end
+    reformer = Reformer(
+        "reformer",
+        FixedProfile(50),   # Installed capacity [MW]
+        FixedProfile(5),    # Variable Opex
+        FixedProfile(0),    # Fixed Opex
+        Dict(NG => 1.25, Power => 0.11),   # Input: Ratio of Input flows to characteristic throughput
+        output,             # Ouput: Ratio of Output flow to characteristic throughput
+        params[:data],      # Data
 
-    if params[:simple]
-        reformer = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(50),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(0),    # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            params[:data],              # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            params[:degradation_rate],  # Degradation rate
-            params[:stack_cost],        # Stack replacement costs
-            params[:stack_lifetime],    # Stack lifetime in h
-        )
-    else
-        reformer = Reformer(
-            "reformer",
-            FixedProfile(50),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(0),    # Fixed Opex
-            Dict(NG => 1.25, Power => 0.11),   # Input: Ratio of Input flows to characteristic throughput
-            output,             # Ouput: Ratio of Output flow to characteristic throughput
-            params[:data],      # Data
+        params[:load_limits], # Minimum and maximum load
 
-            LoadLimits(0.2, 1.0), # Minimum and maximum load
+        # Hourly cost for startup [€/MW/h] and startup time [h]
+        CommitParameters(FixedProfile(0.2), FixedProfile(5)),
+        # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
+        CommitParameters(FixedProfile(0.2), FixedProfile(5)),
+        # Hourly cost when offline [€/MW/h] and minimum off time [h]
+        CommitParameters(FixedProfile(0.02), FixedProfile(10)),
 
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(0.2), FixedProfile(5)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(0.2), FixedProfile(5)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(0.02), FixedProfile(10)),
-        )
-    end
+        params[:rate_change], # Rate of change limit [-/h]
+    )
 
     H2_sink = RefSink(
         "h2_demand",

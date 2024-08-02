@@ -15,7 +15,7 @@ const EMH = EnergyModelsHydrogen
 include("utils.jl")
 
 @testset "Hydrogen" begin
-    @testset "Electrolyser" begin
+    @testset "Electrolyzer" begin
         include("test_electrolyzer_degradation.jl")
     end
 

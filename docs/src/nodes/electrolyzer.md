@@ -1,4 +1,4 @@
-# [Electrolyser nodes](@id nodes-elec)
+# [Electrolyzer nodes](@id nodes-elec)
 
 Electrolysis plants can be separated between the electrolysis stack and the balance of plant.
 While the former is the core of the plant for the production of hydrogen, it experiences degradation resulting in a reduced efficiency when utilizing the stack.
@@ -16,7 +16,7 @@ Instead, it utilizes it only for stack replacement calculations to avoid bilinea
 
 !!! danger "Electrolysis with changing capacities"
     The stack degradation calculations do not consider a change in capacity.
-    If you want to include investments or only an increased capacity over the course of time, you have to include several electrolysis nodes in which each Node corresponds to the capacity in a strategic period when the capacities are changed.
+    If you want to include investments or only an increased capacity over the course of time, you have to include several electrolysis nodes in which each node corresponds to the capacity in a strategic period with a changing capacity.
 
 ### [Standard fields](@id nodes-elec-fields-stand)
 
@@ -66,7 +66,7 @@ The standard fields are given as:
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the electrolyzer.
-  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref sec_load_limit)*.\
+  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-load_limit)*.\
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`degradation_rate::Real`**:\
   The degradation rate is the reduction in efficiency of the electrolyser due to utilization.
@@ -115,7 +115,7 @@ The variable ``\texttt{opex\_fixed}`` also includes the cost of stack replacemen
 
 #### [Additional variables](@id nodes-elec-math-add)
 
-Electrolyser nodes declare in addition several variables through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref).
+Electrolyzer nodes declare in addition several variables through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref).
 These variables are:
 
 - ``\texttt{elect\_on\_b}[n_{el}, t]``: State of electrolyser node ``n_{el}`` in operational period ``t``.\

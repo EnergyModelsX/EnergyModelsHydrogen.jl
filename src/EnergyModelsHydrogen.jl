@@ -27,4 +27,6 @@ export Reformer
 
 export LoadLimits, CommitParameters
 
+export RampBi, RampUp, RampDown, RampNone
+
 end

@@ -189,6 +189,9 @@ function EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
 
         # Constraints for the minimum time of the individual states
         constraints_state_time_iter(m, n, t_inv, t_last, t_inv.operational, modeltype)
+
+        # Constraints for the limit on the rate of change
+        constraints_rate_of_change_iterate(m, n, t_inv, t_last, t_inv.operational, modeltype)
     end
 
     # Call of the functions for both fixed and variable OPEX constraints introduction

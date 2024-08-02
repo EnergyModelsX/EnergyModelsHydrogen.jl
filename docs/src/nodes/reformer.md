@@ -16,6 +16,10 @@ In this respect, reformer plants should be represented with unit commitment cons
 Reformer are incorporated through a single composite type [`Reformer`](@ref) although provisions are made to include other types.
 The following sections will provide you with an explanation of the individual fields of the type.
 
+!!! danger "Reformer with changing capacities"
+    The unit commitment, minimum usage, and rate of change constraints are for the installed capacity.
+    This implies that if you include changing capacities over the course of time or if you include investments, it is required to include a separate node for each strategic period with a changing capacity.
+
 ### [Standard fields](@id nodes-ref-fields-stand)
 
 The standard fields are given as:
@@ -54,13 +58,18 @@ The standard fields are given as:
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the reformer plant.
-  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref sec_load_limit)*.\
+  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-load_limit)*.\
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`startup::CommitParameters`**, **`shutdown::CommitParameters`**, and **`offline::CommitParameters`**:\
   The fields `startup`, `shutdown`, and `offline` specify the required parameters for unit commitment.
-  These parameters are included through the type [`CommitParameters`](@ref) and correspond to both a stage cost and minium time in a stage as described in *[Inclusion of unit commitment](@ref sec_unit_commit)*.\
+  These parameters are included through the type [`CommitParameters`](@ref) and correspond to both a stage cost and minium time in a stage as described in *[Unit commitment](@ref lib-pub-unit_commit)*.\
   It is important to note that you can only use `FixedProfile`, `StrategicProfile`, or `RepresentativeProfile` for the time profiles, but not `OperationalProfile`.
   In addition, all values have to be non-negative.
+- **`rate_limit::TimeProfile`**:\
+  The `rate_limit` specifies the maximum allowed change in the relative capacity utilization of the reformer in a duration of 1 of an operational period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)*.
+  Different types can be incorporated having constraints on the positive (`RampUp` and `RampBi`) or negative (`RampDown` and `RampBi`) allowed change as described in *[Change of utilization](@ref lib-pub-ramping)*.
+  Constraints are only created when required by the composite type.\
+  All values have to be in range ``[0,1]``.
 
 ## [Mathematical description](@id nodes-ref-math)
 
@@ -203,25 +212,61 @@ This is enforced through a single constraint given as
 
 ##### [Constraints through separate functions](@id nodes-ref-math-con-add-fun)
 
-Within the function `create_node`, we iterate the through the strategic periods to call two functions, [`EnergyModelsHydrogen.constraints_state_seq_iter`](@ref) for enforcing the correct sequencing of the individual states and [`EnergyModelsHydrogen.constraints_state_time_iter`](@ref) for enforcing the minimum time a node has to be in a given state.
-Both functions iterate through the individual time structures (strategic periods, representative periods, operational scenarios) to calculate the proper constraints based on the chosen time structure.
-Both functions utilize a cyclic approach in which rhe last operational period ``t_{last}`` within a strategic period (representative period, if included, or operational scenario, if included) is required to be passed to the constraint.
+Within the function `create_node`, we iterate the through the strategic periods to call three functions, [`EnergyModelsHydrogen.constraints_rate_of_change_iterate`](@ref) for enforcing the limit on the rate of change, [`EnergyModelsHydrogen.constraints_state_seq_iter`](@ref) for enforcing the correct sequencing of the individual states, and [`EnergyModelsHydrogen.constraints_state_time_iter`](@ref) for enforcing the minimum time a node has to be in a given state.
+All functions iterate through the individual time structures (strategic periods, representative periods, operational scenarios) to calculate the proper constraints based on the chosen time structure.
+All functions utilize a cyclic approach in which the last operational period ``t_{last}`` within a strategic period (representative period, if included, or operational scenario, if included) is required to be passed to the constraint.
 
-As outlined, the function `constraints_state_seq_iter` iterates through the time structure to determine the correct last operational period.
-The constraint is eventually included through the function [`EnergyModelsHydrogen.constraints_state_seq`](@ref) which has two methods:
+As outlined, the function `constraints_rate_of_change_iterate` iterates through the time structure to determine the correct last operational period.
+Both the previous, the current, and the last operational periods are then passed to a instance of the parametric type  [`EnergyModelsHydrogen.RefPeriods`](@ref) which allows to either extract the last or previous period using the function  [`EnergyModelsHydrogen.prev_op`](@ref), depending on whether the previous period ``t_{prev}`` is `nothing`.
+The general approach for a rate of change constraint is given by
 
-1. If the previous period ``t_{prev}`` is an `OperationalPeriod`, it imposes the sequencing constraints as:
+```math
+\begin{aligned}
+\texttt{cap\_use}[n_{ref}, t] - \texttt{ref\_on\_b}[n_{ref}, t_{prev}] & \leq \texttt{cap\_inst}[n, t] \times ramp\_up(n_{ref}, t) \times duration(t) \\
+\texttt{cap\_use}[n_{ref}, t_{prev}] - \texttt{ref\_on\_b}[n_{ref}, t] & \leq \texttt{cap\_inst}[n, t] \times ramp\_down(n_{ref}, t) \times duration(t)
+\end{aligned}
+```
 
-   ```math
-   \begin{aligned}
-   \texttt{ref\_off\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_start\_b}[n_{ref}, t] - \texttt{ref\_start\_b}[n_{ref}, t_{prev}] \\
-   \texttt{ref\_start\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_on\_b}[n_{ref}, t] - \texttt{ref\_on\_b}[n_{ref}, t_{prev}] \\
-   \texttt{ref\_on\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_shut\_b}[n_{ref}, t] - \texttt{ref\_shut\_b}[n_{ref}, t_{prev}] \\
-   \texttt{ref\_shut\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_off\_b}[n_{ref}, t] - \texttt{ref\_off\_b}[n_{ref}, t_{prev}] \\
-   \end{aligned}
-   ```
+Both constraints have to be included to limit the rate of change both if the capacity utilization is increasing and decreasing.
+The reformer node should also be allowed to go from the state *startup* to any capacity utilization as well as from any capacity utilization to the state *shutdown*.
+This implies that the constraints should only be active, if ``\texttt{ref\_on\_b}[n_{ref}, t] = \texttt{ref\_on\_b}[n_{ref}, t_{prev}] = 1`` corresponding to a disjunction.
 
-2. If the previous period ``t_{prev}`` is `nothing`, it is replaced by ``t_{last}``.
+This is achieved through rewriting the rate of change constraints using the convex-hull reformulation (which is similar to the Big-M reformulation in this specific instance):
+
+```math
+\begin{aligned}
+\texttt{cap\_use}[n_{ref}, t] - & \texttt{ref\_on\_b}[n_{ref}, t_{prev}] \leq \\ &
+\texttt{cap\_inst}[n, t] \times ramp\_up(n_{ref}, t) * duration(t) + \\ &
+capacity(n_{ref}, t) \times (2 - \texttt{ref\_on\_b}[n_{ref}, t] - \texttt{ref\_on\_b}[n_{ref}, t_{prev}])
+\end{aligned}
+```
+
+!!! tip "How does it work?"
+    We can differentiate the constraint into three different cases:
+
+    1. Consider the case in which ``\texttt{ref\_on\_b}[n_{ref}, t] = \texttt{ref\_on\_b}[n_{ref}, t_{prev}] = 1``.
+       The second term cancels out in this situation resulting in the original rate of change constraints.
+    2. If ``\texttt{ref\_on\_b}[n_{ref}, t] \neq \texttt{ref\_on\_b}[n_{ref}, t_{prev}]`` we experience a change in state.
+       In this situation, it should be possible to move from 100 % capacity utilization to 0 % or *vice versa*.
+       This is allowed as the second term corresponds to ``capacity(n, t)``.
+    3. If ``\texttt{ref\_on\_b}[n_{ref}, t] = \texttt{ref\_on\_b}[n_{ref}, t_{prev}] = 0``, this constraint is no longer relevant as the capacity utilization is already limited in other constraints.
+       It would however be possible, if not restricted by other constraints, to increase the utilization from 0 to 100 % in a single operational period.
+
+The function ``capacity`` of the node is replaced with the function ``max_installed(investment_data())`` If you utilize `EnergyModelsInvestments` and the reformer node has the potential for investment.
+
+The function `constraints_state_seq_iter` utlizes the same iteration approach as the function `constraints_rate_of_change_iterate`.
+The constraint is eventually included through the function [`EnergyModelsHydrogen.constraints_state_seq`](@ref) in which the sequencing constraints are included:
+
+```math
+\begin{aligned}
+\texttt{ref\_off\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_start\_b}[n_{ref}, t] - \texttt{ref\_start\_b}[n_{ref}, t_{prev}] \\
+\texttt{ref\_start\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_on\_b}[n_{ref}, t] - \texttt{ref\_on\_b}[n_{ref}, t_{prev}] \\
+\texttt{ref\_on\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_shut\_b}[n_{ref}, t] - \texttt{ref\_shut\_b}[n_{ref}, t_{prev}] \\
+\texttt{ref\_shut\_b}[n_{ref}, t_{prev}] & \geq \texttt{ref\_off\_b}[n_{ref}, t] - \texttt{ref\_off\_b}[n_{ref}, t_{prev}] \\
+\end{aligned}
+```
+
+If the previous period ``t_{prev}`` is `nothing`, it is replaced by ``t_{last}``.
 
 !!! tip "How does it work?"
     Consider a case in which the former was in the  previous period ``t_{prev}`` offline.

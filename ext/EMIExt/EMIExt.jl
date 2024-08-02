@@ -12,6 +12,7 @@ const EMI = EnergyModelsInvestments
 const TS = TimeStruct
 
 include("model.jl")
+include("constraint_functions.jl")
 include("utils.jl")
 
 end

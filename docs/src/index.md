@@ -13,7 +13,7 @@ Two different types are provided, [`SimpleElectrolyzer`](@ref) and [`Electrolyze
 Both types include constraints on the lifetime of the electrolysis stack and the potential for stack replacement.
 In addition, both types calculate the degradation rate.
 The [`Electrolyzer`](@ref) node utilizes the degradation rate to calculate a reducing efficiency resulting in a bilinear problem.
-The mathematical descriptions can be found on the page *[Electrolyser nodes](@ref nodes-elec)*.
+The mathematical descriptions can be found on the page *[Electrolyzer nodes](@ref nodes-elec)*.
 
 The second node is a reformer node described through the type [`Reformer`](@ref).
 The reformer node is incorporating unit commit constraints.
@@ -33,7 +33,7 @@ Depth = 1
 
 ```@contents
 Pages = [
-    "nodes/electrolyser.md",
+    "nodes/electrolyzer.md",
     "nodes/reformer.md",
 ]
 Depth = 1

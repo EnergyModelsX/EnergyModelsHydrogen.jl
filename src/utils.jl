@@ -168,13 +168,14 @@ the variable `:elect_usage_mult_sp_b`
 
     modeltype::EnergyModel
 
-Base the approach on the capacity extracted through the function
-[`EMB.capacity`](@extref EnergyModelsBase.capacity).
+
+The function utilizes the the value of the field `cap` of the node.
 
     modeltype::AbstractInvestmentModel
 
-Base the approach on the maximum added capacity extracted through the function
-`EMI.max_add`.
+
+When the node has investment data, the function utilizes the the value of the field
+`EMI.max_add` of the `AbstractInvData`. Otherwise, it uses as well the field `cap` of the node.
 """
 function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
 
@@ -230,4 +231,28 @@ function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Energ
             cap_bool = false
         end
     end
+end
+
+"""
+    ramp_disjunct(m, n::Reformer, ref_pers::RefPeriods, modeltype::EnergyModel)
+
+Function for calculation disjunction contribution for the ramping constraints of a reformer.
+
+
+    modeltype::EnergyModel
+
+The function utilizes the the value of the field `cap` of the node for achieving tight
+bounds for the disjunction.
+
+    modeltype::AbstractInvestmentModel
+
+When the node has investment data, the function utilizes the the value of the field
+`EMI.max_installed` of the `AbstractInvData` for achieving tight bounds for the disjunction.
+Otherwise, it uses as well the field `cap` of the node.
+"""
+function ramp_disjunct(m, n::Reformer, ref_pers::RefPeriods, modeltype::EnergyModel)
+    # Extract the values from the types
+    t_prev = prev_op(ref_pers)
+    t = current_op(ref_pers)
+    return @expression(m, capacity(n, t) * (2 - m[:ref_on_b][n, t] - m[:ref_on_b][n, t_prev]))
 end

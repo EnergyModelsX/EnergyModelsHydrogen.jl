@@ -5,11 +5,11 @@ This method checks that an `AbstractElectrolyzer` node is valid.
 
 ## Checks
 - The field `cap` is required to be non-negative.
-- The values of the dictionary `input` are required to be non-negative.
-- The values of the dictionary `output` are required to be non-negative.
 - The value of the field `fixed_opex` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
+- The values of the dictionary `input` are required to be non-negative.
+- The values of the dictionary `output` are required to be non-negative.
 
   - The lower limit on capacity utilization is required ot be non-negative while the upper
   limit is required to be larger or equal than the lower limit as described in the
@@ -33,6 +33,7 @@ function EMB.check_node(
         sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
         "The capacity must be non-negative."
     )
+    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     @assert_or_log(
         sum(inputs(n, p) ≥ 0 for p ∈ inputs(n)) == length(inputs(n)),
         "The values for the Dictionary `input` must be non-negative."
@@ -41,7 +42,6 @@ function EMB.check_node(
         sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
         "The values for the Dictionary `output` must be non-negative."
     )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     check_load_lim(n, 𝒯)
     @assert_or_log(
         0 ≤ degradation_rate(n) < 100,
@@ -78,19 +78,24 @@ This method checks that a `AbstractReformer` node is valid.
 
 ## Checks
 - The field `cap` is required to be non-negative.
-- The values of the dictionary `input` are required to be non-negative.
-- The values of the dictionary `output` are required to be non-negative.
 - The value of the field `fixed_opex` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
+- The values of the dictionary `input` are required to be non-negative.
+- The values of the dictionary `output` are required to be non-negative.
 
 - The lower limit on capacity utilization is required ot be non-negative while the upper
   limit is required to be larger or equal than the lower limit as described in the
   [`check_load_lim()`](@ref)
 
-- The field `opex_startup` is required to be non-negative.
-- The field `opex_shutdown` is required to be non-negative.
-- The field `opex_off` is required to be non-negative.
+- The field `opex` of the `CommitParameters` of the fields `startup`, `shutdown`, and `off`
+  is required to be non-negative.
+- The field `time` of the `CommitParameters` of the fields `startup`, `shutdown`, and `off`
+  is required to be non-negative and accessible through a `StrategicPeriod`, or
+  `Representativeperiod` as outlined in the function
+  [`check_commitment_profile`](@ref).
+
+- The field `rate_limit` is required to be in the range [0,1].
 """
 function EMB.check_node(
     n::AbstractReformer,
@@ -104,6 +109,7 @@ function EMB.check_node(
         sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
         "The capacity must be non-negative."
     )
+    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     @assert_or_log(
         sum(inputs(n, p) ≥ 0 for p ∈ inputs(n)) == length(inputs(n)),
         "The values for the Dictionary `input` must be non-negative."
@@ -112,7 +118,7 @@ function EMB.check_node(
         sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
         "The values for the Dictionary `output` must be non-negative."
     )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    check_load_lim(n, 𝒯)
     @assert_or_log(
         sum(opex_startup(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
         "The start-up OPEX must be non-negative."
@@ -125,10 +131,21 @@ function EMB.check_node(
         sum(opex_off(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
         "The offline OPEX must be non-negative."
     )
-    check_load_lim(n, 𝒯)
     check_commitment_profile(time_startup(n), 𝒯, "time_startup", check_timeprofiles)
     check_commitment_profile(time_shutdown(n), 𝒯, "time_shutdown", check_timeprofiles)
     check_commitment_profile(time_off(n), 𝒯, "time_off", check_timeprofiles)
+    if isa(ramp_limit(n), UnionRampUp) # If we have bounds on positive changes
+        @assert_or_log(
+            sum(0 ≤ ramp_up(n, t) ≤ 1 for t ∈ 𝒯) == length(𝒯),
+            "The positive rate of change limit must be in the range [0, 1]"
+        )
+    end
+    if isa(ramp_limit(n), UnionRampDown) # If we have bounds on negative changes
+        @assert_or_log(
+            sum(0 ≤ ramp_down(n, t) ≤ 1 for t ∈ 𝒯) == length(𝒯),
+            "The negative rate of change limit must be in the range [0, 1]"
+        )
+    end
 end
 
 """
@@ -144,14 +161,13 @@ the given `TimeStructure` `𝒯`.
 
 ## Checks
 - The `time_profile` cannot have a finer granulation than `RepresentativeProfile` through
-  calling the function [`EMB.check_representative_profile()`](@extref).
+  calling the function [`EnergyModelsBase.check_representative_profile`](@extref EnergyModelsBase).
 - The `time_profile` must be non-negative.
 
 ## Conditional checks (if `check_timeprofiles=true`)
 - The `time_profile`s have to have the same length as the number of strategic or
   representative periods.
 """
-
 function check_commitment_profile(
     time_profile,
     𝒯,

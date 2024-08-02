@@ -10,7 +10,17 @@ EMB.TEST_ENV = true
     CO2 = ResourceEmit("CO2", 1.0)
 
     # Function for setting up the system for testing an `AbstractElectrolyzer` node
-    function simple_graph(network::SimpleElectrolyzer)
+    function simple_graph(;
+        cap = FixedProfile(-25),        # Installed capacity [MW]
+        opex_var = FixedProfile(5),     # Variable Opex
+        opex_fixed = FixedProfile(100), # Fixed Opex
+        input = Dict(Power => 1),       # Input: Ratio of Input flows to characteristic throughput
+        output = Dict(H2 => 0.62),      # Ouput: Ratio of Output flow to characteristic throughput
+        load_limits = LoadLimits(0, 1), # Minimum and maximum load
+        degradation_rate = 0.1,         # Degradation rate
+        stack_replacement_cost = FixedProfile(3e5),  # Stack replacement costs
+        stack_lifetime = 60000,         # Stack lifetime in h
+    )
 
         # Used source, network, and sink
         source = RefSource(
@@ -27,15 +37,28 @@ EMB.TEST_ENV = true
             Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
             Dict(H2 => 1),
         )
+        elec = SimpleElectrolyzer(
+            "PEM",
+            cap,
+            opex_var,
+            opex_fixed,
+            input,
+            output,
+            Data[],
+            load_limits,
+            degradation_rate,
+            stack_replacement_cost,
+            stack_lifetime
+        )
 
         resources = [Power, H2, CO2]
         ops = SimpleTimes(5, 2)
         T = TwoLevel(2, 2, ops; op_per_strat=10)
 
-        nodes = [source, network, sink]
+        nodes = [source, elec, sink]
         links = [
-            Direct(12, source, network)
-            Direct(23, network, sink)
+            Direct(12, source, elec)
+            Direct(23, elec, sink)
             ]
 
         model = OperationalModel(
@@ -57,183 +80,75 @@ EMB.TEST_ENV = true
     @testset "Test checks - AbstractElectrolyzer" begin
 
         # Test that a wrong capacity is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(-25),  # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
-
+        @test_throws AssertionError simple_graph(cap=FixedProfile(-25))
 
         # Test that a wrong fixed OPEX is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(-100), # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;opex_var=FixedProfile(5))
 
         # Test that a wrong input dictionary is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => -1),  # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;input=Dict(Power => -1))
 
         # Test that a wrong output dictionary is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => -0.62),  # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;output=Dict(H2 => -0.62))
 
         # Test that a wrong minimum load is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(-0.5, 1.0),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;load_limits=LoadLimits(-0.5, 1.0))
 
         # Test that a wrong maximum load is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(1.5, 1.0), # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;load_limits=LoadLimits(1.5, 1.0))
 
         # Test that a wrong degradation rate load is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            -0.1,               # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            100,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;degradation_rate=-0.1)
+        @test_throws AssertionError simple_graph(;degradation_rate=100)
 
         # Test that a wrong stack replacement profile is caught by the checks.
-        function check_stack_replace_prof(stack_replace)
-            elec = SimpleElectrolyzer(
-                "PEM",
-                FixedProfile(25),   # Installed capacity [MW]
-                FixedProfile(5),    # Variable Opex
-                FixedProfile(100),  # Fixed Opex
-                Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-                Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-                Data[],             # Data
-                LoadLimits(0, 1),   # Minimum and maximum load
-                1,                  # Degradation rate
-                stack_replace,      # Stack replacement costs
-                60000,              # Stack lifetime in h
-            )
-            return simple_graph(elec)
-        end
-        stack_replace = FixedProfile(-5)
-        @test_throws AssertionError check_stack_replace_prof(stack_replace)
-        stack_replace = StrategicProfile([10])
-        @test_throws AssertionError check_stack_replace_prof(stack_replace)
-        stack_replace = OperationalProfile([10])
-        @test_throws AssertionError check_stack_replace_prof(stack_replace)
+        stack_replacement_cost = FixedProfile(-5)
+        @test_throws AssertionError simple_graph(;stack_replacement_cost)
+        stack_replacement_cost = StrategicProfile([10])
+        @test_throws AssertionError simple_graph(;stack_replacement_cost)
+        stack_replacement_cost = OperationalProfile([10])
+        @test_throws AssertionError simple_graph(;stack_replacement_cost)
 
         # Test that a wrong lifetime is caught by the checks.
-        elec = SimpleElectrolyzer(
-            "PEM",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5), # Stack replacement costs
-            -10,                # Stack lifetime in h
-        )
-        @test_throws AssertionError simple_graph(elec)
+        @test_throws AssertionError simple_graph(;stack_lifetime=-10)
     end
 
     # Function for setting up the system for testing an `AbstractElectrolyzer` node
-    function simple_graph(network::Reformer)
+    function simple_graph(;
+        cap = FixedProfile(-25),  # Installed capacity [MW]
+        opex_var = FixedProfile(5),    # Variable Opex
+        opex_fixed = FixedProfile(100),  # Fixed Opex
+        input = Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
+        output = Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
+        load_limits = LoadLimits(0, 1),   # Minimum and maximum load
+        startup = CommitParameters(FixedProfile(1), FixedProfile(1)),
+        shutdown = CommitParameters(FixedProfile(1), FixedProfile(1)),
+        offline = CommitParameters(FixedProfile(1), FixedProfile(1)),
+        rate_limit = RampNone(),    # Rate of change parameter
+    )
 
-        # Used source, network, and sink
+        # Used source, reformer, and sink
         source = RefSource(
             "source",
             FixedProfile(4),
             FixedProfile(10),
             FixedProfile(0),
             Dict(NG => 1),
+        )
+
+        reformer = Reformer(
+            "Reformer",
+            cap,
+            opex_var,
+            opex_fixed,
+            input,
+            output,
+            Data[],
+            load_limits,
+            startup,
+            shutdown,
+            offline,
+            rate_limit,
         )
 
         sink = RefSink(
@@ -247,10 +162,10 @@ EMB.TEST_ENV = true
         ops = SimpleTimes(1, 2)
         T = TwoLevel(1, 2, ops; op_per_strat=10)
 
-        nodes = [source, network, sink]
+        nodes = [source, reformer, sink]
         links = [
-            Direct(12, source, network)
-            Direct(23, network, sink)
+            Direct(12, source, reformer)
+            Direct(23, reformer, sink)
             ]
 
         model = OperationalModel(
@@ -272,204 +187,46 @@ EMB.TEST_ENV = true
     @testset "Test checks - AbstractReformer" begin
 
         # Test that a wrong capacity is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(-25),  # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
-
+        @test_throws AssertionError simple_graph(;cap=FixedProfile(-25))
 
         # Test that a wrong fixed OPEX is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(-100), # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
+        @test_throws AssertionError simple_graph(;opex_fixed=FixedProfile(-100))
 
         # Test that a wrong input dictionary is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(Power => -1),  # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
+        @test_throws AssertionError simple_graph(;input=Dict(NG => -1))
 
         # Test that a wrong output dictionary is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => -1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
+        @test_throws AssertionError simple_graph(;output=Dict(H2 => -1.0))
+
+        # Test that a wrong minimum load is caught by the checks.
+        @test_throws AssertionError simple_graph(;load_limits=LoadLimits(-0.5, 1.0))
+
+        # Test that a wrong maximum load is caught by the checks.
+        @test_throws AssertionError simple_graph(;load_limits=LoadLimits(1.5, 1.0))
 
         # Test that a wrong unit commitment times are caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(-1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(-1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(0, 1),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(-1), FixedProfile(1)),
-        )
+        commit_param = CommitParameters(FixedProfile(-1), FixedProfile(1))
+        @test_throws AssertionError simple_graph(;startup=commit_param)
+        @test_throws AssertionError simple_graph(;shutdown=commit_param)
+        @test_throws AssertionError simple_graph(;offline=commit_param)
 
         # Test that a wrong profiles for minimum time of unit commitment are caught by the checks.
         # - check_commitment_profile()
-        function check_commitment_prof(time_profile)
-            ref = Reformer(
-                "Reformer",
-                FixedProfile(25),   # Installed capacity [MW]
-                FixedProfile(5),    # Variable Opex
-                FixedProfile(100),  # Fixed Opex
-                Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-                Dict(H2 => 1.0),    # Ouput: Ratio of Output flow to characteristic throughput
-                Data[],             # Data
-                LoadLimits(0, 1),   # Minimum and maximum load
-                # Hourly cost for startup [€/MW/h] and startup time [h]
-                CommitParameters(FixedProfile(1), time_profile),
-                # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-                CommitParameters(FixedProfile(1), FixedProfile(1)),
-                # Hourly cost when offline [€/MW/h] and minimum off time [h]
-                CommitParameters(FixedProfile(1), FixedProfile(1)),
-            )
-            return simple_graph(ref)
-        end
-        min_start = OperationalProfile([10])
-        @test_throws AssertionError check_commitment_prof(min_start)
-        min_start = StrategicProfile([OperationalProfile([10])])
-        @test_throws AssertionError check_commitment_prof(min_start)
-        min_start = FixedProfile(-5)
-        @test_throws AssertionError check_commitment_prof(min_start)
-        min_start = StrategicProfile([-5])
-        @test_throws AssertionError check_commitment_prof(min_start)
-        min_start = StrategicProfile([10, 10])
-        @test_throws AssertionError check_commitment_prof(min_start)
+        startup = CommitParameters(FixedProfile(1), OperationalProfile([10]))
+        @test_throws AssertionError simple_graph(;startup)
+        startup = CommitParameters(FixedProfile(1), StrategicProfile([OperationalProfile([10])]))
+        @test_throws AssertionError simple_graph(;startup)
+        startup = CommitParameters(FixedProfile(1), FixedProfile(-5))
+        @test_throws AssertionError simple_graph(;startup)
+        startup = CommitParameters(FixedProfile(1), StrategicProfile([-5]))
+        @test_throws AssertionError simple_graph(;startup)
+        startup = CommitParameters(FixedProfile(1), StrategicProfile([10, 10]))
+        @test_throws AssertionError simple_graph(;startup)
 
-        # Test that a wrong minimum load is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(-0.5, 1.0),   # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
-
-        # Test that a wrong maximum load is caught by the checks.
-        ref = Reformer(
-            "Reformer",
-            FixedProfile(25),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(100),  # Fixed Opex
-            Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
-            Data[],             # Data
-            LoadLimits(1.5, 1.0), # Minimum and maximum load
-            # Hourly cost for startup [€/MW/h] and startup time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost for shutdown [€/MW/h] and shutdown time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-            # Hourly cost when offline [€/MW/h] and minimum off time [h]
-            CommitParameters(FixedProfile(1), FixedProfile(1)),
-        )
-        @test_throws AssertionError simple_graph(ref)
-
+        # Test that a wrong rate of change value is caught by the checks.
+        @test_throws AssertionError simple_graph(;rate_limit=RampBi(FixedProfile(-1)))
+        @test_throws AssertionError simple_graph(;rate_limit=RampBi(FixedProfile(1.5)))
     end
-
 end
 
 # Set the global again to false
