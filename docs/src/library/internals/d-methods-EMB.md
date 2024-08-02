@@ -26,4 +26,5 @@ EnergyModelsBase.constraints_opex_var
 ```@docs
 EnergyModelsBase.check_node
 EnergyModelsHydrogen.check_load_lim
+EnergyModelsHydrogen.check_commitment_profile
 ```

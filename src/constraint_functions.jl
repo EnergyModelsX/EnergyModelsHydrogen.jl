@@ -348,6 +348,115 @@ function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::Ener
 end
 
 """
+    constraints_rate_of_change_iterate(
+        m,
+        n::Reformer,
+        per,
+        t_last,
+        ts,
+        modeltype::EnergyModel,
+    )
+
+Function for iterating through the time structure for calculating the correct rate of change
+constraints of the Reformer `n`.
+
+When the time structure includes `RepresentativePeriods`, period `t_last` is updated with
+last operational period within each representative period.
+"""
+function constraints_rate_of_change_iterate(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    for t_rp ∈ repr_periods(per)
+        t_last = last(t_rp)
+        ts = t_rp.operational.operational
+        constraints_rate_of_change_iterate(m, n, t_rp, t_last, ts, modeltype)
+    end
+end
+"""
+When the time structure includes `OperationalScenarios`, period `t_last` is updated with
+last operational period within each operational scenario.
+"""
+function constraints_rate_of_change_iterate(
+    m,
+    n::Reformer,
+    per,
+    _,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ˢᶜ = opscenarios(per)
+    for t_scp ∈ 𝒯ˢᶜ
+        t_last = last(t_scp)
+        ts = t_scp.operational.operational
+        constraints_rate_of_change_iterate(m, n, t_scp, t_last, ts, modeltype)
+    end
+end
+function constraints_rate_of_change_iterate(
+    m,
+    n::Reformer,
+    per,
+    t_last,
+    _::SimpleTimes,
+    modeltype::EnergyModel
+)
+    for (t_prev, t) ∈ withprev(per)
+        ref_pers = RefPeriods(t_prev, t, t_last)
+        constraints_rate_of_change(m, n, ref_pers, modeltype)
+    end
+end
+
+"""
+    constraints_rate_of_change(
+        m,
+        n::Reformer,
+        ramp_lim::UnionRampUp,
+        ref_pers::RefPeriods,
+        prod_on,
+        modeltype::EnergyModel,
+    )
+
+Function for creating the constraints on the maximum postivite rate of change. This
+constraint is only active if the `Reformer` is online in both the current and the previous
+operational periods, that is:
+
+    m[:ref_on_b][n, t_prev] = m[:ref_on_b][n, t] = 1
+
+The function [`prev_op`](@ref) is used to incorporate the cyclic constraints while the
+function [`ramp_disjunct`](@ref) is used to extract the disjuntion contribution to the
+constraint depending on the modeltype.
+"""
+function constraints_rate_of_change(
+    m,
+    n::Reformer,
+    ref_pers::RefPeriods,
+    modeltype::EnergyModel,
+)
+    # Extract the values from the types
+    t_prev = prev_op(ref_pers)
+    t = current_op(ref_pers)
+    bound_disjunct = ramp_disjunct(m, n, ref_pers, modeltype)
+
+    if isa(ramp_limit(n), UnionRampUp) # If we have bounds on positive changes
+        @constraint(m,
+            m[:cap_use][n, t] - m[:cap_use][n, t_prev] ≤
+                m[:cap_inst][n, t] * ramp_up(n, t) * duration(t) + bound_disjunct
+        )
+    end
+    if isa(ramp_limit(n), UnionRampDown) # If we have bounds on negative changes
+        @constraint(m,
+            m[:cap_use][n, t_prev] - m[:cap_use][n, t] ≤
+                m[:cap_inst][n, t] * ramp_down(n, t) * duration(t) + bound_disjunct
+        )
+    end
+end
+
+"""
     constraints_state_seq_iter(
         m,
         n::Reformer,
@@ -378,7 +487,8 @@ function constraints_state_seq_iter(
 )
     for t_rp ∈ repr_periods(per)
         t_last = last(t_rp)
-        constraints_state_seq_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+        ts = t_rp.operational.operational
+        constraints_state_seq_iter(m, n, t_rp, t_last, ts, modeltype)
     end
 end
 """
@@ -397,7 +507,8 @@ function constraints_state_seq_iter(
     𝒯ˢᶜ = opscenarios(per)
     for t_scp ∈ 𝒯ˢᶜ
         t_last = last(t_scp)
-        constraints_state_seq_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+        ts = t_scp.operational.operational
+        constraints_state_seq_iter(m, n, t_scp, t_last, ts, modeltype)
     end
 end
 function constraints_state_seq_iter(
@@ -409,10 +520,11 @@ function constraints_state_seq_iter(
     modeltype::EnergyModel
 )
     for (t_prev, t) ∈ withprev(per)
-        constraints_state_seq(m, n, t, t_prev, t_last, :ref_off_b, :ref_start_b, modeltype)
-        constraints_state_seq(m, n, t, t_prev, t_last, :ref_start_b, :ref_on_b, modeltype)
-        constraints_state_seq(m, n, t, t_prev, t_last, :ref_on_b, :ref_shut_b, modeltype)
-        constraints_state_seq(m, n, t, t_prev, t_last, :ref_shut_b, :ref_off_b, modeltype)
+        ref_pers = RefPeriods(t_prev, t, t_last)
+        constraints_state_seq(m, n, ref_pers, :ref_off_b, :ref_start_b, modeltype)
+        constraints_state_seq(m, n, ref_pers, :ref_start_b, :ref_on_b, modeltype)
+        constraints_state_seq(m, n, ref_pers, :ref_on_b, :ref_shut_b, modeltype)
+        constraints_state_seq(m, n, ref_pers, :ref_shut_b, :ref_off_b, modeltype)
     end
 end
 
@@ -420,9 +532,7 @@ end
     constraints_state_seq(
         m,
         n::Reformer,
-        t,
-        t_prev,
-        t_last,
+        ref_pers::RefPeriods,
         state_a::Symbol,
         state_b::Symbol,
         modeltype::EnergyModel,
@@ -431,34 +541,20 @@ end
 Function for creating the constraints on the sequencing of the individual states when
 `state_b` has to occur after `state_a`. Both `state_a` and `state_b` refer in this case to
 binary variables included in the JuMP model.
+
+The function [`prev_op`](@ref) is used to incorporate the cyclic constraints.
 """
 function constraints_state_seq(
     m,
     n::Reformer,
-    t,
-    t_prev,
-    t_last,
+    ref_pers::RefPeriods,
     state_a::Symbol,
     state_b::Symbol,
     modeltype::EnergyModel,
 )
+    t_prev = prev_op(ref_pers)
+    t = current_op(ref_pers)
     @constraint(m, m[state_a][n, t_prev] ≥ m[state_b][n, t] - m[state_b][n, t_prev])
-end
-"""
-When the previous period `t_prev` is nothing, _i.e._, the first operational period in
-another in a `SimpleTimes` time structure, it applies the cyclic constraint using `t_last`.
-"""
-function constraints_state_seq(
-    m,
-    n::Reformer,
-    t,
-    t_prev::Nothing,
-    t_last,
-    state_a::Symbol,
-    state_b::Symbol,
-    modeltype::EnergyModel,
-)
-    @constraint(m, m[state_a][n, t_last] ≥ m[state_b][n, t] - m[state_b][n, t_last])
 end
 
 """
@@ -487,7 +583,8 @@ function constraints_state_time_iter(
 )
     for t_rp ∈ repr_periods(per)
         t_last = last(t_rp)
-        constraints_state_time_iter(m, n, t_rp, t_last, t_rp.operational.operational, modeltype)
+        ts = t_rp.operational.operational
+        constraints_state_time_iter(m, n, t_rp, t_last, ts, modeltype)
     end
 end
 """
@@ -504,7 +601,8 @@ function constraints_state_time_iter(
 )
     for t_scp ∈ opscenarios(per)
         t_last = last(t_scp)
-        constraiteants_state_time_iter(m, n, t_scp, t_last, t_scp.operational.operational, modeltype)
+        ts = t_scp.operational.operational
+        constraiteants_state_time_iter(m, n, t_scp, t_last, ts, modeltype)
     end
 end
 function constraints_state_time_iter(

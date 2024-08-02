@@ -19,10 +19,12 @@ EnergyModelsHydrogen.AbstractReformer
 
 ```@docs
 EnergyModelsHydrogen.AbstractLoadLimits
+EnergyModelsHydrogen.AbstractRampParameters
 ```
 
 ## Auxiliary type
 
 ```@docs
 EnergyModelsHydrogen.ElecPeriods
+EnergyModelsHydrogen.RefPeriods
 ```

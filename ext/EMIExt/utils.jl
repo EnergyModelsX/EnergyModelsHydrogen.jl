@@ -102,3 +102,15 @@ function EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltyp
         end
     end
 end
+
+function ramp_disjunct(m, n::Reformer, ref_pers::EMH.RefPeriods, modeltype::AbstractInvestmentModel)
+    # Extract the values from the types
+    t_prev = EMH.prev_op(ref_pers)
+    t = EMH.current_op(ref_pers)
+    if EMI.has_investment(n)
+        cap_val = EMI.max_installed(EMI.investment_data(n, :cap), t)
+    else
+        cap_val = capacity(n, t)
+    end
+    return @expression(m, cap_val * (2 - m[:ref_on_b][n, t] - m[:ref_on_b][n, t_prev]))
+end

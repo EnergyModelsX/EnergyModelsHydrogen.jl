@@ -49,7 +49,7 @@ makedocs(
             "Release notes" => "manual/NEWS.md",
         ],
         "Nodes" => Any[
-            "Electrolyser" => "nodes/electrolyser.md",
+            "Electrolyzer" => "nodes/electrolyzer.md",
             "Reformer" => "nodes/reformer.md",
         ],
         "Auxiliary functions" => Any[

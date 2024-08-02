@@ -1,25 +1,33 @@
 # Release Notes
 
-## Unversioned (breaking changes)
+## Version 0.7.0 (2024-08-02)
+
+### Feature - Ramping
+
+* Added rate of change constraints for reformer to limit its change within a given time.
+* The constraint is only active if the reformer is not switching state through implementation of a disjunction.
+* It is possible to only limit the positive or negative utilization change through the application of `AbstractRampParameters`.
 
 ### Documentation
 
 * Added external references to refer to types and methods from `EnergyModelsBase`.
-* Significantly improved the documentation through inclusion of the mathematical descriptions for the individual nodes.
+* Significantly improved the documentation through inclusion of the mathematical descriptions for the individual nodes as well as restructuring the library.
 
 ### Enhancement
 
 * Rewrote the dynamic constraints for improved potential for extensions with differing time structures and in preparation for a receding horizon framework.
 * Moved the load limits to a separate type for a reduced number of input of the different `Node`s.
 * Moved the unit commitment parameters to a separate type for a reduced number of input of the different `Node`s.
+* Reduced lines in test of checks.
 
 ### Bugfix
 
-* Fixed a bug in a system with investments in which the initial valus for the `Electrolyser` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
+* Fixed a bug in a system with investments in which the initial valus for the `Electrolyzer` binaries were not properly applied. This appraoch lead to non-investments in electrolysis.
 * Fixed an error in the function `linear_reformulation` regarding:
   1. The indexing of the bounds was wrong if the resulting variable is indexed over two time levels
   2. One of the constraints would result in wrong values if a lower bound was specified.
 * The bugs in `linear_reformulation` did not affect our results as we specified a lower bound of 0 and and a ``FixedProfile` for bounds.
+* Fixed a bug in the checks for the `degradation_rate` of `AbstractElectrolyzer` nodes.
 
 ## Version 0.6.2 (2024-07-24)
 
@@ -33,7 +41,7 @@
 
 * Adjusted to changes introduced in `TimeStruct` v0.8 (and correspondingly `EnergyModelsBase` v0.7 and `EnergyModelsInvestments` v0.6).
 
-### Implementation of Reformer node
+### Implementation of `Reformer` node
 
 * Reformer work as unit commitment nodes with minimum time for startup, shutdown and offline states with associated costs.
 * The initial version is based on the work of Erik Svendsmark for the startup shutdown technology.
@@ -53,7 +61,7 @@
 
 ## Version 0.5.0 (2024-02-14)
 
-* Adjusted to changes introduced throuch EnergyModelsBase version 0.6.
+* Adjusted to changes introduced throuch `EnergyModelsBase` v0.6.
 * Representative periods in `TimeStruct` are now included for the calculation of the efficiency penalty.
 
 ## Version 0.4.0 (2023-06-02)
@@ -61,7 +69,7 @@
 ### Switch to TimeStruct.jl
 
 * Switched the time structure representation to [`TimeStruct`](https://sintefore.github.io/TimeStruct.jl/stable/).
-* TimeStruct.jl is implemented with only the basis features that were. available in TimesStructures.jl. This implies that neither operational nor strategic uncertainty is included in the model
+* TimeStruct is implemented with only the basis features that were available in TimesStructures.jl. This implies that neither operational nor strategic uncertainty is included in the model.
 
 ## Version 0.3.0 (2023-05-31)
 
@@ -96,8 +104,8 @@ Adjustment to version 0.3.0, namely:
 
 ## Version 0.1.1 (2022-12-12)
 
-Updated Readme
+Updated Readme.
 
 ## Version 0.1.0 (2022)
 
-Initial version
+Initial version.
