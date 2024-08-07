@@ -3,6 +3,7 @@
 *.jl.mem
 
 /Manifest.toml
+examples/Manifest.toml
 docs/Manifest.toml
 test/Manifest.toml
 docs/src/manual/NEWS.md
