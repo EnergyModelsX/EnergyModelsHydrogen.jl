@@ -1,5 +1,9 @@
 # Release Notes
 
+## Unversioned
+
+* Included new examples for both reformer and electrolysis.
+
 ## Version 0.7.0 (2024-08-02)
 
 ### Feature - Ramping
