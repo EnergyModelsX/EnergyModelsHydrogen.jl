@@ -26,49 +26,54 @@ end
 
 """
     min_load(load_lim::AbstractLoadLimits)
-Returns the minimum load of `LoadLimits` load_lim.
-"""
-min_load(load_lim::AbstractLoadLimits) = load_lim.min
-"""
     min_load(load_lim::AbstractLoadLimits, t)
-Returns the minimum load of `LoadLimits` load_lim in operational period `t`.
+
+Returns the minimum load of `AbstractLoadLimits` load_lim as `TimeProfile` *or* in operational
+period `t`.
+
+!!! note
+    The default [`LoadLimits`](@ref) does not allow for time dependent load limits. In this
+    case, the function returns a `FixedProfile` of the provided value.
 """
+min_load(load_lim::AbstractLoadLimits) = FixedProfile(load_lim.min)
 min_load(load_lim::AbstractLoadLimits, t) = load_lim.min
 """
     min_load(n::EMB.Node)
-Returns the minimum load of `Node` n.
+    min_load(n::EMB.Node, t)
+
+Returns the minimum load of `Node` n as `TimeProfile` *or* in operational period `t`.
 """
 min_load(n::EMB.Node) = min_load(n.load_limits)
-"""
-    min_load(n::EMB.Node, t)
-Returns the minimum load of `Node` n in operational period `t`.
-"""
 min_load(n::EMB.Node, t) = min_load(n.load_limits, t)
 
 """
     max_load(load_lim::AbstractLoadLimits)
-Returns the maximum load of `LoadLimits` load_lim.
-"""
-max_load(load_lim::AbstractLoadLimits) = load_lim.max
-"""
     min_load(load_lim::AbstractLoadLimits, t)
-Returns the maximum load of `LoadLimits` load_lim in operational period `t`.
+
+Returns the maximum load of `AbstractLoadLimits` load_lim as `TimeProfile` *or* in operational
+period `t`.
+
+!!! note
+    The default [`LoadLimits`](@ref) does not allow for time dependent load limits. In this
+    case, the function returns a `FixedProfile` of the provided value.
 """
+max_load(load_lim::AbstractLoadLimits) = FixedProfile(load_lim.max)
 max_load(load_lim::AbstractLoadLimits, t) = load_lim.max
 """
     max_load(n::EMB.Node)
+    max_load(n::EMB.Node, t)
+
 Returns the maximum load of `Node` n.
 """
 max_load(n::EMB.Node) = max_load(n.load_limits)
-"""
-    max_load(n::EMB.Node, t)
-Returns the maximum load of `Node` n in operational period `t`.
-"""
 max_load(n::EMB.Node, t) = max_load(n.load_limits, t)
 
-""" Abstract supertype for all electrolyzer nodes."""
-abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
+"""
+    AbstractElectrolyzer <: AbstractHydrogenNetworkNode
 
+Abstract supertype for all electrolyzer nodes.
+"""
+abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
 
 """
     Electrolyzer <: AbstractElectrolyzer
@@ -179,13 +184,12 @@ degradation_rate(n::AbstractElectrolyzer) = n.degradation_rate
 
 """
     stack_replacement_cost(n::Electrolyzer)
-Returns the stack replacement costs of electrolyzer `n` as `TimeProfile`.
+    stack_replacement_cost(n::Electrolyzer, t_inv)
+
+Returns the stack replacement costs of electrolyzer `n` as `TimeProfile` *or* in strategic
+period `t_inv`.
 """
 stack_replacement_cost(n::AbstractElectrolyzer) = n.stack_replacement_cost
-"""
-    stack_replacement_cost(n::Electrolyzer, t_inv)
-Returns the stack replacement costs of electrolyzer `n` in investment period `t_inv`.
-"""
 stack_replacement_cost(n::AbstractElectrolyzer, t_inv) = n.stack_replacement_cost[t_inv]
 
 """
@@ -270,29 +274,23 @@ end
 UnionRampDown = Union{RampBi, RampDown}
 """
     ramp_down(ramp_param::UnionRampDown)
-
-Returns the maximum negative rate of change aof UnionRampDown `ramp_param` s time profile.
-"""
-ramp_down(ramp_param::UnionRampDown) = ramp_param.down
-"""
     ramp_down(ramp_param::UnionRampDown, t)
 
-Returns the maximum negative rate of change of UnionRampDown `ramp_param` in operational period `t`.
+Returns the maximum negative rate of change aof UnionRampDown `ramp_param` as `TimeProfile`
+*or* in operational period `t`.
 """
+ramp_down(ramp_param::UnionRampDown) = ramp_param.down
 ramp_down(ramp_param::UnionRampDown, t) = ramp_param.down[t]
 
 UnionRampUp = Union{RampBi, RampUp}
 """
     ramp_up(ramp_param::UnionRampUp)
-
-Returns the maximum positive rate of change of UnionRampUp `ramp_param` as time profile.
-"""
-ramp_up(ramp_param::UnionRampUp) = ramp_param.up
-"""
     ramp_up(ramp_param::UnionRampUp, t)
 
-Returns the maximum positive rate of change of UnionRampUp `ramp_param` in operational period `t`.
+Returns the maximum positive rate of change of UnionRampUp `ramp_param` as `TimeProfile`
+*or* in operational period `t`.
 """
+ramp_up(ramp_param::UnionRampUp) = ramp_param.up
 ramp_up(ramp_param::UnionRampUp, t) = ramp_param.up[t]
 
 """ Abstract supertype for all reformer nodes."""
@@ -300,28 +298,20 @@ abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
 
 """
     opex_state(com_par::CommitParameters)
-
-Returns the unit commitment OPEX as `TimeProfile`.
-"""
-opex_state(com_par::CommitParameters) = com_par.opex
-"""
     opex_state(com_par::CommitParameters, t)
 
-Returns the unit commitment OPEX in operational period `t`.
+Returns the unit commitment OPEX as `TimeProfile` *or* in operational period `t`.
 """
+opex_state(com_par::CommitParameters) = com_par.opex
 opex_state(com_par::CommitParameters, t) = com_par.opex[t]
 
 """
     time_state(com_par::CommitParameters)
-
-Returns the minimum time in the state as `TimeProfile`.
-"""
-time_state(com_par::CommitParameters) = com_par.time
-"""
     time_state(com_par::CommitParameters, t)
 
-Returns the minimum time in the state in operational period `t`.
+Returns the minimum time in the state as `TimeProfile` *or* in operational period `t`.
 """
+time_state(com_par::CommitParameters) = com_par.time
 time_state(com_par::CommitParameters, t) = com_par.time[t]
 
 """
@@ -381,80 +371,62 @@ end
 
 """
     opex_startup(n::AbstractReformer)
-
-Returns the startup OPEX of AbstractReformer `n` as `TimeProfile`.
-"""
-opex_startup(n::AbstractReformer) = opex_state(n.startup)
-"""
     opex_startup(n::AbstractReformer, t)
 
-Returns the startup OPEX of AbstractReformer `n` in operational period `t`.
+Returns the startup OPEX of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+opex_startup(n::AbstractReformer) = opex_state(n.startup)
 opex_startup(n::AbstractReformer, t) = opex_state(n.startup, t)
 
 """
     opex_shutdown(n::AbstractReformer)
-
-Returns the shutdown OPEX of AbstractReformer `n` as `TimeProfile`.
-"""
-opex_shutdown(n::AbstractReformer) = opex_state(n.shutdown)
-"""
     opex_shutdown(n::AbstractReformer, t)
 
-Returns the shutdown OPEX of AbstractReformer `n` in operational period `t`.
+Returns the shutdown OPEX of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+opex_shutdown(n::AbstractReformer) = opex_state(n.shutdown)
 opex_shutdown(n::AbstractReformer, t) = opex_state(n.shutdown, t)
 
 """
     opex_off(n::AbstractReformer)
-
-Returns the offline OPEX of AbstractReformer `n` as `TimeProfile`.
-"""
-opex_off(n::AbstractReformer) = opex_state(n.offline)
-"""
     opex_off(n::AbstractReformer, t)
 
-Returns the offline OPEX of AbstractReformer `n` in operational period `t`.
+Returns the offline OPEX of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+opex_off(n::AbstractReformer) = opex_state(n.offline)
 opex_off(n::AbstractReformer, t) = opex_state(n.offline, t)
 
 """
     time_startup(n::AbstractReformer)
-
-Returns the minimum startup time of AbstractReformer `n` as `TimeProfile`.
-"""
-time_startup(n::AbstractReformer) = time_state(n.startup)
-"""
     time_startup(n::AbstractReformer, t)
 
-Returns the minimum startup time of AbstractReformer `n` in operational period `t`.
+Returns the minimum startup time of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+time_startup(n::AbstractReformer) = time_state(n.startup)
 time_startup(n::AbstractReformer, t) = time_state(n.startup, t)
 
 """
     time_shutdown(n::AbstractReformer)
-
-Returns the minimum shutdown time of AbstractReformer `n` as `TimeProfile`.
-"""
-time_shutdown(n::AbstractReformer) = time_state(n.shutdown)
-"""
     time_shutdown(n::AbstractReformer, t)
 
-Returns the minimum shutdown time of AbstractReformer `n` in operational period `t`.
+Returns the minimum shutdown time of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+time_shutdown(n::AbstractReformer) = time_state(n.shutdown)
 time_shutdown(n::AbstractReformer, t) = time_state(n.shutdown, t)
 
 """
     time_off(n::AbstractReformer)
-
-Returns the minimum offline time of AbstractReformer `n` as `TimeProfile`.
-"""
-time_off(n::AbstractReformer) = time_state(n.offline)
-"""
     time_off(n::AbstractReformer, t)
 
-Returns the minimum offline time of AbstractReformer `n` in operational period `t`.
+Returns the minimum offline time of AbstractReformer `n` as `TimeProfile` *or* in
+in operational period `t`.
 """
+time_off(n::AbstractReformer) = time_state(n.offline)
 time_off(n::AbstractReformer, t) = time_state(n.offline, t)
 
 """
@@ -466,26 +438,20 @@ ramp_limit(n::AbstractReformer) = n.ramp_limit
 
 """
     ramp_up(n::AbstractReformer)
-
-Returns the maximum positive rate of change of AbstractReformer `n` as `TimeProfile`.
-"""
-ramp_up(n::AbstractReformer) = ramp_up(ramp_limit(n))
-"""
     ramp_up(n::AbstractReformer, t)
 
-Returns the maximum positive rate of change of AbstractReformer `n` in operational period `t`.
+Returns the maximum positive rate of change of AbstractReformer `n` as `TimeProfile` *or* in
+operational period `t`.
 """
+ramp_up(n::AbstractReformer) = ramp_up(ramp_limit(n))
 ramp_up(n::AbstractReformer, t) = ramp_up(ramp_limit(n), t)
 
 """
     ramp_down(n::AbstractReformer)
-
-Returns the maximum negative rate of change of AbstractReformer `n` as `TimeProfile`.
-"""
-ramp_down(n::AbstractReformer) = ramp_down(ramp_limit(n))
-"""
     ramp_down(n::AbstractReformer, t)
 
-Returns the maximum negative rate of change of AbstractReformer `n` in operational period `t`.
+Returns the maximum negative rate of change of AbstractReformer `n` as `TimeProfile` *or* in
+operational period `t`.
 """
+ramp_down(n::AbstractReformer) = ramp_down(ramp_limit(n))
 ramp_down(n::AbstractReformer, t) = ramp_down(ramp_limit(n), t)
