@@ -25,7 +25,8 @@ The following sections will provide you with an explanation of the individual fi
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field **`id`** is only used for providing a name to the node.
+  This is similar to the approach utilized in `EnergyModelsBase`.
 - **`cap::TimeProfile`**:\
   The installed capacity corresponds to the potential usage of the node.
   The capacity does not have to correspond to the amount of hydrogen produced.
@@ -34,11 +35,11 @@ The standard fields are given as:
   If the node should contain investments through the application of [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`opex_var::TimeProfile`**:\
-  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase var_cap).
+  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
   Hence, it is directly related to the specified `input` and `output` ratios.
   The variable operating expenses can be provided as `OperationalProfile` as well.
 - **`opex_fixed::TimeProfile`**:\
-  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)*.\
+  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
@@ -51,10 +52,10 @@ The standard fields are given as:
   In the current state of electrolysis, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
 
 !!! warning "CO₂ as output"
-    If you include CO₂ capture through the application of [`CaptureData`](@extref EnergyModelsBase.CaptureData) (explained on [*Data functions*](@extref EnergyModelsBase data_functions)), you have to add your CO₂ instance as output to the dictionary.
+    If you include CO₂ capture through the application of [`CaptureData`](@extref EnergyModelsBase.CaptureData) (explained on the page [*Data functions*](@extref EnergyModelsBase man-data_fun-emissions)), you have to add your CO₂ instance as output to the dictionary.
     The chosen value is not important, as the CO₂ outlet flow is calculated based on the CO₂ intensity of the fuel and the chosen capture rate.
 
-### [New fields for reformer nodes](@id nodes-ref-fields-new)
+### [Additional fields](@id nodes-ref-fields-new)
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the reformer plant.
@@ -66,14 +67,14 @@ The standard fields are given as:
   It is important to note that you can only use `FixedProfile`, `StrategicProfile`, or `RepresentativeProfile` for the time profiles, but not `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`rate_limit::TimeProfile`**:\
-  The `rate_limit` specifies the maximum allowed change in the relative capacity utilization of the reformer in a duration of 1 of an operational period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)*.
+  The `rate_limit` specifies the maximum allowed change in the relative capacity utilization of the reformer in a duration of 1 of an operational period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.
   Different types can be incorporated having constraints on the positive (`RampUp` and `RampBi`) or negative (`RampDown` and `RampBi`) allowed change as described in *[Change of utilization](@ref lib-pub-ramping)*.
   Constraints are only created when required by the composite type.\
   All values have to be in range ``[0,1]``.
 
 ## [Mathematical description](@id nodes-ref-math)
 
-In the following mathematical experssions, we use the name for variables and functions used in the model.
+In the following mathematical equations, we use the name for variables and functions used in the model.
 Variables are in general represented as
 
 ``\texttt{var\_example}[index_1, index_2]``
@@ -88,19 +89,19 @@ with paranthesis.
 
 #### [Standard variables](@id nodes-ref-math-var-stand)
 
-The reformer node types utilize all standard variables from the `RefNetworkNode`, as described on the page *[Optimization variables](@extref EnergyModelsBase optimization_variables)*.
+The reformer node types utilize all standard variables from the `RefNetworkNode`, as described on the page *[Optimization variables](@extref EnergyModelsBase man-opt_var)*.
 The variables include:
 
-- [``\texttt{opex\_var}``](@extref EnergyModelsBase var_opex)
-- [``\texttt{opex\_fixed}``](@extref EnergyModelsBase var_opex)
-- [``\texttt{cap\_use}``](@extref EnergyModelsBase var_cap)
-- [``\texttt{cap\_inst}``](@extref EnergyModelsBase var_cap)
-- [``\texttt{flow\_in}``](@extref EnergyModelsBase var_flow)
-- [``\texttt{flow\_out}``](@extref EnergyModelsBase var_flow)
+- [``\texttt{opex\_var}``](@extref EnergyModelsBase man-opt_var-opex)
+- [``\texttt{opex\_fixed}``](@extref EnergyModelsBase man-opt_var-opex)
+- [``\texttt{cap\_use}``](@extref EnergyModelsBase man-opt_var-cap)
+- [``\texttt{cap\_inst}``](@extref EnergyModelsBase man-opt_var-cap)
+- [``\texttt{flow\_in}``](@extref EnergyModelsBase man-opt_var-flow)
+- [``\texttt{flow\_out}``](@extref EnergyModelsBase man-opt_var-flow)
 
 #### [Additional variables](@id nodes-ref-math-add)
 
-Rerformer nodes declare in addition several variables through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref) for including the unit commitment constraints.
+Reformer nodes declare in addition several variables through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref) for including the unit commitment constraints.
 These variables are for reformer node ``n_{ref}`` in operational period ``t``:
 
 - ``\texttt{ref\_off\_b}[n_{ref}, t]``: Offline indicator,
@@ -119,38 +120,46 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 
 #### [Standard constraints](@id nodes-ref-math-con-stand)
 
-The Reformer nodes utilizes only a small set of the standard constraints described on *[Constraint functions](@extref EnergyModelsBase constraint_functions)*.
+Reformer nodes utilize only a small set of the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)*.
 These standard constraints are:
 
 - `constraints_capacity_installed`:
+
   ```math
   \texttt{cap\_inst}[n_{ref}, t] = capacity(n_{ref}, t)
   ```
+
 - `constraints_flow_in`:
+
   ```math
   \texttt{flow\_in}[n_{ref}, t, p] = inputs(n_{ref}, p) \times \texttt{cap\_use}[n_{ref}, t]
   \qquad \forall p \in inputs(n_{ref})
   ```
+
 - `constraints_flow_out`:
+
   ```math
   \texttt{flow\_out}[n_{ref}, t, p] =
   outputs(n_{ref}, p) \times \texttt{cap\_use}[n_{ref}, t]
-  \qquad \forall p \in outputs(n_{ref})
+  \qquad \forall p \in outputs(n_{ref}) \setminus \{\text{CO}_2\}
   ```
+
 - `constraints_opex_fixed`:
+
   ```math
   \texttt{opex\_fixed}[n_{ref}, t_{inv}] = opex\_fixed(n_{ref}, t_{inv}) \times \texttt{cap\_inst}[n_{ref}, first(t_{inv})]
   ```
+
 - `constraints_data`:\
   This function is only called for specified data of the reformer, see above.
 
 The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
 Nodes with investments are then no longer constrained by the parameter capacity.
 
-The variable ``\texttt{cap\_inst}`` is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase var_cap)* for further explanations).
+The variable ``\texttt{cap\_inst}`` is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
 Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacity in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
-The function `constraints_capacity` is extended with a new method for a reformer node to account for the minimum and maximum load:
+The function `constraints_capacity` is extended with a new method for reformer nodes to account for the minimum and maximum load:
 
 ```math
 \begin{aligned}

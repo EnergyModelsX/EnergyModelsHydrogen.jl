@@ -23,7 +23,8 @@ Instead, it utilizes it only for stack replacement calculations to avoid bilinea
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field **`id`** is only used for providing a name to the node.
+  This is similar to the approach utilized in `EnergyModelsBase`.
 - **`cap::TimeProfile`**:\
   The installed capacity of the electrolysis node corresponds to the potential usage of the node.
   The capacity does not have to correspond to the amount of hydrogen produced.
@@ -31,11 +32,11 @@ The standard fields are given as:
   If the node should contain investments through the application of [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`opex_var::TimeProfile`**:\
-  The variable operational expenses of an electrolysis node are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase var_cap).
+  The variable operational expenses of an electrolysis node are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
   Hence, it is directly related to the specified `input` and `output` ratios.
   The variable operating expenses can be provided as `OperationalProfile` as well.
 - **`opex_fixed::TimeProfile`**:\
-  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)*.\
+  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
@@ -44,7 +45,7 @@ The standard fields are given as:
   All values have to be non-negative.
 - **`data::Vector{Data}`**:\
   An entry for providing additional data to the model.
-  In the current state of electrolysis, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
+  In the current version of electrolysis, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
 
 !!! warning "Capacity, opex, input and output"
     The fields `capacity` `opex_var`, `opex_fixed`, `input` and `output` dictionaries are directly linked.
@@ -62,7 +63,7 @@ The standard fields are given as:
 
     As the variable OPEX is defined _via_ the produced hydrogen, it is crucial to include the efficiency in the calculation as the model bases the calculation on a value of 1 in the input or output dictionary.
 
-### [New fields for electrolyser nodes](@id nodes-elec-fields-new)
+### [Additional fields](@id nodes-elec-fields-new)
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the electrolyzer.
@@ -70,7 +71,7 @@ The standard fields are given as:
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`degradation_rate::Real`**:\
   The degradation rate is the reduction in efficiency of the electrolyser due to utilization.
-  It has to be provided as a percentage drop in efficiency in 1000 time the length of an operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)* for an explanation).
+  It has to be provided as a percentage drop in efficiency in 1000 time the length of an operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
   If a duration of 1 in an operational period corresponds to an hour, then the unit is %/1000h.\
   The degradation rate has to be given as ``[0, 1)``
 - **`stack_replacement_cost::TimeProfile`**:\
@@ -81,12 +82,12 @@ The standard fields are given as:
   In addition, all values have to be non-negative.
 - **`stack_lifetime::Real`**:\
   The stack lifetime affects when the stack has to be replaced.
-  The lifetime is given as multiple of the operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)* for an explanation).
+  The lifetime is given as multiple of the operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
   A typical value is in the range of 60000-100000 h in the case of an operational duration of 1 h.
 
 ## [Mathematical description](@id nodes-elec-math)
 
-In the following mathematical experssions, we use the name for variables and functions used in the model.
+In the following mathematical equations, we use the name for variables and functions used in the model.
 Variables are in general represented as
 
 ``\texttt{var\_example}[index_1, index_2]``
@@ -101,15 +102,15 @@ with paranthesis.
 
 #### [Standard variables](@id nodes-elec-math-var-stand)
 
-The electrolyser node types utilize all standard variables from the `RefNetworkNode`, as described on the page *[Optimization variables](@extref EnergyModelsBase optimization_variables)*.
+The electrolyser node types utilize all standard variables from the `RefNetworkNode`, as described on the page *[Optimization variables](@extref EnergyModelsBase man-opt_var)*.
 The variables include:
 
-- [``\texttt{opex\_var}``](@extref EnergyModelsBase var_opex)
-- [``\texttt{opex\_fixed}``](@extref EnergyModelsBase var_opex)
-- [``\texttt{cap\_use}``](@extref EnergyModelsBase var_cap)
-- [``\texttt{cap\_inst}``](@extref EnergyModelsBase var_cap)
-- [``\texttt{flow\_in}``](@extref EnergyModelsBase var_flow)
-- [``\texttt{flow\_out}``](@extref EnergyModelsBase var_flow)
+- [``\texttt{opex\_var}``](@extref EnergyModelsBase man-opt_var-opex)
+- [``\texttt{opex\_fixed}``](@extref EnergyModelsBase man-opt_var-opex)
+- [``\texttt{cap\_use}``](@extref EnergyModelsBase man-opt_var-cap)
+- [``\texttt{cap\_inst}``](@extref EnergyModelsBase man-opt_var-cap)
+- [``\texttt{flow\_in}``](@extref EnergyModelsBase man-opt_var-flow)
+- [``\texttt{flow\_out}``](@extref EnergyModelsBase man-opt_var-flow)
 
 The variable ``\texttt{opex\_fixed}`` also includes the cost of stack replacement in the strategic periods in which stack replacement occurs.
 
@@ -161,7 +162,7 @@ These variables are:
 
 !!! note "Units for usage variables"
     The variables ``\texttt{elect\_previous\_usage}[n_{el}, t]``, ``\texttt{elect\_usage\_sp}[n_{el}, t_{inv}]``, and ``\texttt{elect\_usage\_rp}[n_{el}, t_{rp}]`` have the same unit.
-    The units of the variables are given in 1000 times the operational duration of 1 (see *[Utilize `TimeStruct`](@extref EnergyModelsBase utilize_timestruct)* for an explanation).
+    The units of the variables are given in 1000 times the operational duration of 1 (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
     If you use an hourly resolution, they would hence correspond to 1000 h.
 
 ### [Constraints](@id nodes-elec-math-con)
@@ -172,22 +173,28 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 
 #### [Standard constraints](@id nodes-elec-math-con-stand)
 
-The different electrolyzer nodes utilize only a small set of the standard constraints described on *[Constraint functions](@extref EnergyModelsBase constraint_functions)*.
+The different electrolyzer nodes utilize only a small set of the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)*.
 These standard constraints are:
 
 - `constraints_capacity_installed`:
+
   ```math
   \texttt{cap\_inst}[n_{el}, t] = capacity(n_{el}, t)
   ```
+
 - `constraints_flow_in`:
+
   ```math
   \texttt{flow\_in}[n_{el}, t, p] = inputs(n_{el}, p) \times \texttt{cap\_use}[n_{el}, t]
   \qquad \forall p \in inputs(n_{el})
   ```
+
 - `constraints_opex_var`:
+
   ```math
   \texttt{opex\_var}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}} opex_var(n_{el}, t) \times \texttt{cap\_use}[n_{el}, t] \times EMB.multiple(t_{inv}, t)
   ```
+
 - `constraints_data`:\
   This function is only called for specified data of the reformer, see above.
 
@@ -197,12 +204,12 @@ Nodes with investments are then no longer constrained by the parameter capacity.
 The function [``EMB.multiple(t_{inv}, t)``](@extref EnergyModelsBase.multiple) calculates the scaling factor between operational and strategic periods.
 It also takes into accoun potential operational scenarios and their probability as well as representative periods.
 
-The [`SimpleElectrolyzer`](@ref) node utilizes in addition the function `constraints_flow_out`:
+The [`SimpleElectrolyzer`](@ref) node utilizes in addition the default function `constraints_flow_out`:
 
 ```math
 \texttt{flow\_out}[n_{el}, t, p] =
 outputs(n_{el}, p) \times \texttt{cap\_use}[n_{el}, t]
-\qquad \forall p \in outputs(n_{el})
+\qquad \forall p \in outputs(n_{el}) \setminus \{\text{CO}_2\}
 ```
 
 while the [`Electrolyzer`](@ref) node dispatches on the  function `constraints_flow_out` to incorporate the efficiency penalty:
@@ -283,7 +290,7 @@ There are two contributors to the fixed operating expenses,
 2. the cost for stack replacement.
 
 The first contributions requires to access the installed capacity ``\texttt{cap\_inst}``.
-This variable is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase var_cap)* for further explanations).
+This variable is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
 Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacity in the first operational period of given strategic period ``t_{inv}``.
 
 The second contribution corresponds to the cost of stack replacement.

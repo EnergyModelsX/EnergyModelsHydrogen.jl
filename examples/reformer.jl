@@ -125,7 +125,7 @@ function generate_refomer_example_data()
     ]
 
     # Connect all nodes for the overall energy/mass balance
-    # Another possibility would be to instead couple the nodes with an `Availability` hode
+    # Another possibility would be to instead couple the nodes with an `Availability` node
     links = [
         Direct("el_source-reformer", nodes[1], nodes[3], Linear())
         Direct("ng_source-reformer", nodes[2], nodes[3], Linear())
@@ -174,7 +174,7 @@ function process_results(m, case)
         m[:ref_shut_b][reformer, collect(sp1)];
         header=[:t, :shutdown]
     )
-    offline = JuMP.Containers.rowtable(            # Indicator for the offline state
+    offline = JuMP.Containers.rowtable(             # Indicator for the offline state
         value,
         m[:ref_off_b][reformer, collect(sp1)];
         header=[:t, :offline]

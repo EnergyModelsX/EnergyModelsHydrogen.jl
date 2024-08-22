@@ -1,7 +1,7 @@
 # EnergyModelsHydrogen
 
-[![Pipeline: passing](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/badges/main/pipeline.svg)](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/-/jobs)
-[![Docs: stable](https://img.shields.io/badge/docs-stable-4495d1.svg)](https://clean_export.pages.sintef.no/energymodelshydrogen.jl)
+[![Build Status](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/badges/main/pipeline.svg)](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/-/jobs)
+[![Stable](https://img.shields.io/badge/docs-stable-4495d1.svg)](https://clean_export.pages.sintef.no/energymodelshydrogen.jl)
 
 `EnergyModelsHydrogen` is a package extending `EnergyModelsBase` to model hydrogen production in greater detail.
 It provides new types for both electrolysis and reformer technologies.
@@ -21,7 +21,7 @@ The examples are minimum working examples highlighting how to build simple energ
 
 ## Cite
 
-If you find `EnergyModelsBase` useful in your work, we kindly request that you cite the following [publication](https://doi.org/10.21105/joss.06619):
+If you find `EnergyModelsHydrogen` useful in your work, we kindly request that you cite the following [publication](https://doi.org/10.21105/joss.06619):
 
 ```bibtex
 @article{hellemo2024energymodelsx,
