@@ -7,7 +7,7 @@ How to add packages is explained in the *[Quick start](https://clean_export.page
 You can run from the Julia REPL the following code:
 
 ```julia
-# Import EnergyModelsBase
+# Import EnergyModelsHydrogen
 using EnergyModelsHydrogen
 
 # Get the path of the examples directory

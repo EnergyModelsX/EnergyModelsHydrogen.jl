@@ -15,14 +15,14 @@ EnergyModelsHydrogen.AbstractElectrolyzer
 EnergyModelsHydrogen.AbstractReformer
 ```
 
-## Parameter sypertypes
+## Parameter supertypes
 
 ```@docs
 EnergyModelsHydrogen.AbstractLoadLimits
 EnergyModelsHydrogen.AbstractRampParameters
 ```
 
-## Auxiliary type
+## Auxiliary types
 
 ```@docs
 EnergyModelsHydrogen.ElecPeriods

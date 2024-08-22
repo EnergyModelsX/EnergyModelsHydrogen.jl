@@ -1,5 +1,5 @@
 """
-    EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel)
+    EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
 This method checks that an `AbstractElectrolyzer` node is valid.
 
@@ -72,7 +72,7 @@ function EMB.check_node(
     )
 end
 """
-    EMB.check_node(n::AbstractReformer, 𝒯, modeltype::EnergyModel)
+    EMB.check_node(n::AbstractReformer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
 This method checks that a `AbstractReformer` node is valid.
 
@@ -101,7 +101,7 @@ function EMB.check_node(
     n::AbstractReformer,
     𝒯,
     modeltype::EnergyModel,
-    check_timeprofiles::Bool
+    check_timeprofiles::Bool,
 )
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 

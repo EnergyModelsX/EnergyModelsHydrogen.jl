@@ -40,7 +40,7 @@ function generate_electrolyzer_example_data()
 
     # The total time within a strategic period is given by 8760 h
     # This implies that the individual operational period are scaled:
-    # Each operational period is scaled with a factor of 8760/2/10 = 876
+    # Each operational period is scaled with a factor of 8760/2/5 = 876
     op_per_strat = 8760
 
     # Creation of the time structure and global data
@@ -86,7 +86,7 @@ function generate_electrolyzer_example_data()
     ]
 
     # Connect all nodes for the overall energy/mass balance
-    # Another possibility would be to instead couple the nodes with an `Availability` hode
+    # Another possibility would be to instead couple the nodes with an `Availability` node
     links = [
         Direct("el_source-electrolyzer", nodes[1], nodes[2], Linear())
         Direct("electrolyzer-h2_demand", nodes[2], nodes[3], Linear())
@@ -114,24 +114,24 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_results(m, case)
     # Extract the nodes and the strategic periods from the data
-    elect  = case[:nodes][2]
+    elect = case[:nodes][2]
     𝒯ᴵⁿᵛ = strategic_periods(case[:T])
 
     # Extract the first operational period of each strategic period
     first_op = [first(t_inv) for t_inv ∈ 𝒯ᴵⁿᵛ]
 
-    # Reformer variables
+    # Electrolyzer variables
     stack_replacement = JuMP.Containers.rowtable(   # Stack replacement
         value,
         m[:elect_stack_replacement_sp_b][elect, :];
         header=[:t, :stack_replacement]
     )
-    prev_usage = JuMP.Containers.rowtable(          # PRevious usage up to this state
+    prev_usage = JuMP.Containers.rowtable(          # Previous usage up to this state
         value,
         m[:elect_previous_usage][elect, first_op];
         header=[:t, :previous_usage]
     )
-    penalty = JuMP.Containers.rowtable(          # PRevious usage up to this state
+    penalty = JuMP.Containers.rowtable(             # Efficiency penalty
         value,
         m[:elect_efficiency_penalty][elect, first_op];
         header=[:t, :penalty]
