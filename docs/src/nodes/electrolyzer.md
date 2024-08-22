@@ -67,7 +67,7 @@ The standard fields are given as:
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the electrolyzer.
-  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-load_limit)*.\
+  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-add-load_limit)*.\
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`degradation_rate::Real`**:\
   The degradation rate is the reduction in efficiency of the electrolyser due to utilization.

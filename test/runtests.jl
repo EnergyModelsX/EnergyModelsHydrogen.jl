@@ -23,6 +23,10 @@ include("utils.jl")
         include("test_reformer.jl")
     end
 
+    @testset "Hydrogen | H₂ storage" begin
+        include("test_h2_storage.jl")
+    end
+
     @testset "Hydrogen | Checks" begin
         include("test_checks.jl")
     end

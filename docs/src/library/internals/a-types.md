@@ -1,28 +1,29 @@
 
-# Types
+# [Types](@id lib-int-types)
 
-## Index
+## [Index](@id lib-int-types-idx)
 
 ```@index
 Pages = ["a-types.md"]
 ```
 
-## Nodal supertypes
+## [Nodal supertypes](@id lib-int-types-node)
 
 ```@docs
 EnergyModelsHydrogen.AbstractHydrogenNetworkNode
 EnergyModelsHydrogen.AbstractElectrolyzer
 EnergyModelsHydrogen.AbstractReformer
+EnergyModelsHydrogen.AbstractH2Storage
 ```
 
-## Parameter supertypes
+## [Parameter supertypes](@id lib-int-types-para)
 
 ```@docs
 EnergyModelsHydrogen.AbstractLoadLimits
 EnergyModelsHydrogen.AbstractRampParameters
 ```
 
-## Auxiliary types
+## [Auxiliary types](@id lib-int-types-aux)
 
 ```@docs
 EnergyModelsHydrogen.ElecPeriods

@@ -1,12 +1,12 @@
-# Methods - Internal
+# [Methods - Internal](@id lib-int-met)
 
-## Index
+## [Index](@id lib-int-met-idx)
 
 ```@index
 Pages = ["c-methods-EMH.md"]
 ```
 
-## Constraint methods
+## [Constraint methods](@id lib-int-met-con)
 
 ```@docs
 EnergyModelsHydrogen.constraints_usage
@@ -20,7 +20,7 @@ EnergyModelsHydrogen.constraints_state_seq
 EnergyModelsHydrogen.constraints_state_time_iter
 ```
 
-## Utility methods
+## [Utility methods](@id lib-int-met-util)
 
 ```@docs
 EnergyModelsHydrogen.linear_reformulation
