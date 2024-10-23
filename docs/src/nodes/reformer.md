@@ -25,7 +25,7 @@ The following sections will provide you with an explanation of the individual fi
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node.
+  The field `id` is only used for providing a name to the node.
   This is similar to the approach utilized in `EnergyModelsBase`.
 - **`cap::TimeProfile`**:\
   The installed capacity corresponds to the potential usage of the node.
@@ -129,6 +129,10 @@ These standard constraints are:
   \texttt{cap\_inst}[n_{ref}, t] = capacity(n_{ref}, t)
   ```
 
+  !!! tip "Using investments"
+      The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
+      Nodes with investments are then no longer constrained by the parameter capacity.
+
 - `constraints_flow_in`:
 
   ```math
@@ -149,6 +153,10 @@ These standard constraints are:
   ```math
   \texttt{opex\_fixed}[n_{ref}, t_{inv}] = opex\_fixed(n_{ref}, t_{inv}) \times \texttt{cap\_inst}[n_{ref}, first(t_{inv})]
   ```
+
+  !!! tip "Why do we use `first()`"
+      The variables ``\texttt{stor\_level\_inst}`` are declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
+      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 - `constraints_data`:\
   This function is only called for specified data of the reformer, see above.
@@ -201,9 +209,13 @@ opex\_var(n_{ref}, t) \times \texttt{cap\_inst}[n_{ref}, t] + \\ &
 opex\_startup(n_{ref}, t) \times \texttt{cap\_inst}[n_{ref}, t] \times \texttt{ref\_start\_b}[n_{ref}, t] + \\ &
 opex\_shutdown_(n_{ref}, t) \times \texttt{cap\_inst}[n_{ref}, t] \times \texttt{ref\_shut\_b}[n_{ref}, t] + \\ &
 opex\_off(n_{ref}, t) \times \texttt{cap\_inst}[n_{ref}, t] \times \texttt{ref\_off\_b}[n_{ref}, t] \\ &
-) \times EMB.multiple(t_{inv}, t)
+) \times scale\_op\_sp(t_{inv}, t)
 \end{aligned}
 ```
+
+!!! tip "The function `scale_op_sp`"
+    The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
+    It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 The linear reformulation is also explained in *[Linear reformulation](@ref  aux-lin_reform-bin_con)*, as explained previously.
 Similarly, ``\texttt{cap\_inst}[n_{ref}, t]`` is replaced with ``capacity(n_{ref}, t)`` if the node does not have the potential for investments.

@@ -16,7 +16,7 @@ Creates the following additional variables for **ALL** electrolyzer nodes:
 - `:elect_efficiency_penalty` - coefficient that accounts for drop in efficiency at
   each operational period due to degradation in the electrolyzer. Starts at 1.
 """
-function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{AbstractElectrolyzer}, 𝒯, modeltype::EnergyModel)
+function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{<:AbstractElectrolyzer}, 𝒯, modeltype::EnergyModel)
 
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)

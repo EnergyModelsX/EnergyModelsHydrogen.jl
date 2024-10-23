@@ -65,7 +65,7 @@ It returns the product `var_aux[𝒯ᵃ, 𝒯ᵇ]` with
 
 
 !!! note
-    𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel`, `StratPeriods`,
+    𝒯ᵃ and 𝒯ᵇ must be of the same type, that is either, *e.g.* a `TwoLevel`, `AbstractStratPers`,
     `StratReprPeriods`, or comparable.
     This is enforced through the parametric type `T`.
 

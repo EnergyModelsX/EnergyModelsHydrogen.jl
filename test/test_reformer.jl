@@ -89,7 +89,7 @@ end
             SingleInvData(
                 FixedProfile(9e5),
                 FixedProfile(200),
-                0,
+                FixedProfile(0),
                 ContinuousInvestment(
                     FixedProfile(0),
                     FixedProfile(100),
@@ -207,7 +207,7 @@ end
             SingleInvData(
                 FixedProfile(9e5),
                 FixedProfile(200),
-                0,
+                FixedProfile(0),
                 ContinuousInvestment(
                     FixedProfile(0),
                     FixedProfile(100),

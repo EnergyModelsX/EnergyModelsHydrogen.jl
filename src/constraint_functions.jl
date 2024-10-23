@@ -15,7 +15,7 @@ function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype:
         # Calculation of hte usage within a strategic period
         @constraint(m,
             m[:elect_usage_sp][n, t_inv] * 1000 ==
-                sum(m[:elect_on_b][n, t] * EMB.multiple(t_inv, t) for t ∈ t_inv)
+                sum(m[:elect_on_b][n, t] * scale_op_sp(t_inv, t) for t ∈ t_inv)
         )
 
         # Creation of the iterator and call of the iterator function -
@@ -84,7 +84,7 @@ function constraints_usage_iterate(
     # Constraint for the total usage in a given representative period
     @constraint(m, [t_rp ∈ 𝒯ʳᵖ],
         m[:elect_usage_rp][n, t_rp] * 1000 ==
-            sum(m[:elect_on_b][n, t] * EMB.multiple(per, t) for t ∈ t_rp)
+            sum(m[:elect_on_b][n, t] * scale_op_sp(per, t) for t ∈ t_rp)
     )
 
     # Iterate through the operational structure
@@ -151,7 +151,7 @@ function constraints_usage_iterate(
                     m[:elect_previous_usage][n, t] +
                     m[:elect_usage_sp][n, t_inv]*(duration_strat(t_inv) - 1)
                 )
-                * 1000 + m[:elect_on_b][n, t] * EMB.multiple(t_inv, t)
+                * 1000 + m[:elect_on_b][n, t] * scale_op_sp(t_inv, t)
         )
     end
 
@@ -170,7 +170,7 @@ end
         m,
         n::AbstractElectrolyzer,
         prev_pers::PreviousPeriods,
-        t_inv::TS.AbstractStrategicPeriod,
+        elec_pers::ElecPeriods,
         t::OperationalPeriod,
         prev_usage,
         modeltype::EnergyModel,
@@ -271,7 +271,7 @@ end
         modeltype::EnergyModel
     )
 
-Function for creating operational limits off an `AbstractHydrogenNetworkNode`.
+Function for creating operational limits of an `AbstractHydrogenNetworkNode`.
 
 The operational limits limit the capacity usage of the electrolyzer node between a minimimum
 and maximum load based on the installed capacity.
@@ -341,7 +341,7 @@ function EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::Ener
                     opex_shutdown(n, t) * prod_shut[t] +
                     opex_off(n, t) * prod_off[t]
                 )
-                * EMB.multiple(t_inv, t)
+                * scale_op_sp(t_inv, t)
                 for t ∈ t_inv)
         )
     end

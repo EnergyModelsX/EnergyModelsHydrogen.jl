@@ -4,14 +4,14 @@
 Contains information for calculating the constraints for `AbstractElectrolyzer` node types.
 
 # Fields
-- **`sps::TS.StratPeriods`** are the strategic periods of the `TimeStructure`.
+- **`sps::TS.AbstractStratPers`** are the strategic periods of the `TimeStructure`.
 - **`sp::TS.AbstractStrategicPeriod`** is the current strategic period.
 - **`op::TS.AbstractStrategicPeriod`** is the current operational period.
 - **`last::Bool`** is a boolean indicator of the last period. It is used for calculating the
   bounds for the last operational periods within a strategic period.
 """
 mutable struct ElecPeriods
-    sps::TS.StratPeriods
+    sps::TS.AbstractStratPers
     sp::TS.AbstractStrategicPeriod
     op::EMB.NothingPeriod
     last::Bool
