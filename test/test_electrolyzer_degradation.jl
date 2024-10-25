@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 # The optimization model expects these default keys
 params_dict = Dict(
     :deficit_cost => FixedProfile(0),
@@ -203,17 +205,19 @@ end
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
 
-    # Test that there are no quadratic constraints for SimpleElectrolyzer types
+    # Test that there are quadratic constraints for Electrolyzer types
     @test length(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64})) ==
         params_elec[:num_op] * params_elec[:num_sp]
 
     # Test that the penalty is correctly calculated
     # - EMB.constraints_flow_out(m, n::Electrolyzer, 𝒯::TimeStructure, modeltype::EnergyModel)
-    @test sum(
-                value.(m[:flow_out][elect, t, hydrogen]) ≈
-                value.(m[:cap_use][elect, t]) * outputs(elect, hydrogen) *
-                value.(m[:elect_efficiency_penalty][elect, t]) for t ∈ 𝒯, atol=TEST_ATOL
-            ) == length(𝒯)
+    @test all(
+        norm(
+            value.(m[:flow_out][elect, t, hydrogen]) -
+            value.(m[:cap_use][elect, t]) * outputs(elect, hydrogen) *
+            value.(m[:elect_efficiency_penalty][elect, t])
+        ) ≤ TEST_ATOL for t ∈ 𝒯
+    )
 
 
     finalize(backend(m).optimizer.model)

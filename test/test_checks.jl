@@ -75,7 +75,7 @@ EMB.TEST_ENV = true
         return create_model(case, model), case, model
     end
 
-    # Test that the fields of a NetworkNode are correctly checked
+    # Test that the fields of a AbstractElectrolyzenr are correctly checked
     # - EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel)
     @testset "Test checks - AbstractElectrolyzer" begin
 
@@ -113,7 +113,7 @@ EMB.TEST_ENV = true
         @test_throws AssertionError simple_graph_elec(;stack_lifetime=-10)
     end
 
-    # Function for setting up the system for testing an `AbstractElectrolyzer` node
+    # Function for setting up the system for testing a `Reformer` node
     function simple_graph_ref(;
         cap = FixedProfile(-25),  # Installed capacity [MW]
         opex_var = FixedProfile(5),    # Variable Opex

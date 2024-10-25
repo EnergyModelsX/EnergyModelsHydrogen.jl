@@ -25,7 +25,7 @@ both.
 
 !!! note "Parametric type"
     `LoadLimits` is a [Parametric Composite Type](https://docs.julialang.org/en/v1/manual/types/#man-parametric-composite-types).
-    This implies that the values for min and max have to be of the same type (_e.g._, buth have to be Float or Integer)
+    This implies that the values for min and max have to be of the same type (_e.g._, both have to be Float or Integer)
 
 Load limits are incorporated for both electrolyser nodes as well as the reformer node.
 

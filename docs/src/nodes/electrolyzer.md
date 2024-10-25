@@ -23,7 +23,7 @@ Instead, it utilizes it only for stack replacement calculations to avoid bilinea
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node.
+  The field `id` is only used for providing a name to the node.
   This is similar to the approach utilized in `EnergyModelsBase`.
 - **`cap::TimeProfile`**:\
   The installed capacity of the electrolysis node corresponds to the potential usage of the node.
@@ -182,6 +182,10 @@ These standard constraints are:
   \texttt{cap\_inst}[n_{el}, t] = capacity(n_{el}, t)
   ```
 
+  !!! tip "Using investments"
+      The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
+      Nodes with investments are then no longer constrained by the parameter capacity.
+
 - `constraints_flow_in`:
 
   ```math
@@ -192,17 +196,15 @@ These standard constraints are:
 - `constraints_opex_var`:
 
   ```math
-  \texttt{opex\_var}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}} opex_var(n_{el}, t) \times \texttt{cap\_use}[n_{el}, t] \times EMB.multiple(t_{inv}, t)
+  \texttt{opex\_var}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}} opex_var(n_{el}, t) \times \texttt{cap\_use}[n_{el}, t] \times scale\_op\_sp(t_{inv}, t)
   ```
+
+  !!! tip "The function `scale_op_sp`"
+      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
+      It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
   This function is only called for specified data of the reformer, see above.
-
-The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
-Nodes with investments are then no longer constrained by the parameter capacity.
-
-The function [``EMB.multiple(t_{inv}, t)``](@extref EnergyModelsBase.multiple) calculates the scaling factor between operational and strategic periods.
-It also takes into accoun potential operational scenarios and their probability as well as representative periods.
 
 The [`SimpleElectrolyzer`](@ref) node utilizes in addition the default function `constraints_flow_out`:
 
@@ -283,6 +285,10 @@ opex\_fixed(n_{el}, t_{inv}) \times \texttt{cap\_inst}[n_{el}, first(t_{inv})] +
 \texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}] \times capacity[n_{el}, t_{inv}] \times  \\ &stack\_replacement\_cost(n_{el}, t_{inv}) / duration\_strat(t_{inv})
 \end{aligned}
 ```
+
+!!! tip "Why do we use `first()`"
+    The variables ``\texttt{cap\_inst}`` are declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
+    Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 There are two contributors to the fixed operating expenses,
 
@@ -395,14 +401,14 @@ Subsequently, the usage in each strategic period ``t_{inv}`` is calculated:
 
 ```math
 \texttt{elect\_usage\_sp}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}}\texttt{elect\_on\_b}[n_{el}, t]
-\times EMB.multiple(t_{inv}, t)
+\times scale\_op\_sp(t_{inv}, t)
 ```
 
 If the `TImeStructure` includes representative periods, then the usage in each representative period ``t_{rp}`` is calculated (in the function `constraints_usage_iterate`):
 
 ```math
 \texttt{elect\_usage\_rp}[n_{el}, t_{rp}] = \sum_{t \in t_{rp}}\texttt{elect\_on\_b}[n_{el}, t]
-\times EMB.multiple(t_{inv}, t)
+\times scale\_op\_sp(t_{inv}, t)
 ```
 
 In addition, if we are in the last operational period (of the last representative period) of a strategic period, we calculate (for each operational scenario) the constraint
@@ -412,7 +418,7 @@ In addition, if we are in the last operational period (of the last representativ
 stack\_&lifetime(n) \geq \\ &
 \texttt{elect\_previous\_usage}[n_{el}, t] \times 1000 + \\ &
 \texttt{elect\_usage\_sp}[n_{el}, t_{inv}] \times (duration\_strat(t_{inv}) - 1) \times 1000 + \\
-& \texttt{elect\_on\_b}[n_{el}, t] \times EMB.multiple(t_{inv}, t)
+& \texttt{elect\_on\_b}[n_{el}, t] \times scale\_op\_sp(t_{inv}, t)
 \end{aligned}
 ```
 
