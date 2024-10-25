@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 # The optimization model expects these default keys
 params_dict = Dict(
     :deficit_cost => FixedProfile(0),
