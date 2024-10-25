@@ -1,8 +1,10 @@
 # Release Notes
 
-## Unversioned
+## Version 0.7.1 (2024-10-24)
 
 * Included new examples for both reformer and electrolysis.
+* Minor updates on docstrings and descriptions.
+* Adjusted to [`EnergyModelsBase` v0.8.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.8.1).
 
 ## Version 0.7.0 (2024-08-02)
 
