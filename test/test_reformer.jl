@@ -42,10 +42,10 @@ end
     ops = collect(𝒯)
 
     # Test that always a single state is active
-    @test sum(
+    @test all(
             value.(m[:ref_on_b][ref, t]) + value.(m[:ref_off_b][ref, t]) +
             value.(m[:ref_start_b][ref, t]) + value.(m[:ref_shut_b][ref, t])
-        ≈ 1 for t ∈ 𝒯) ≈ length(𝒯)
+        ≈ 1 for t ∈ 𝒯)
 
     # Test that the states have at least a given time
     # Note that the system can choose to not supply
@@ -75,7 +75,7 @@ end
 
         # Test that the system is limited by the minimum and maximum usage
         @test value.(m[:cap_use][ref, ops[15]]) ≈ 10
-        @test sum(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯) == length(𝒯)
+        @test all(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯)
 
         # Release the environment
         finalize(backend(m).optimizer.model)
@@ -110,7 +110,7 @@ end
 
         # Test that the system is limited by the minimum and maximum usage
         @test value.(m[:cap_use][ref, ops[15]]) ≈ 10
-        @test sum(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯) == length(𝒯)
+        @test all(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯)
 
         # Release the environment
         finalize(backend(m).optimizer.model)
@@ -142,15 +142,15 @@ end
         @test sum(value.(m[:cap_use][ref, t]) ≈ 10 for t ∈ 𝒯) == 9
 
         # Test that the system is limited by the rate of change constraint
-        @test sum(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
+        @test all(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
                     capacity(ref, t) * EMH.ramp_down(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
         @test value.(m[:cap_use][ref, last(𝒯)]) - value.(m[:cap_use][ref, first(𝒯)]) ⪅
                 capacity(ref, first(𝒯)) * EMH.ramp_down(ref, first(𝒯)) * params_used[:dur_op]
 
-        @test sum(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
+        @test all(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
                     capacity(ref, t) * EMH.ramp_up(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
         @test value.(m[:cap_use][ref, first(𝒯)]) - value.(m[:cap_use][ref, last(𝒯)]) ⪅
                 capacity(ref, first(𝒯)) * EMH.ramp_up(ref, first(𝒯)) * params_used[:dur_op]
 
@@ -183,12 +183,12 @@ end
 
         # Test that the system is limited by the rate of change constraint except when
         # turned off in the last period
-        @test sum(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
+        @test all(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
                     capacity(ref, t) * EMH.ramp_down(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
-        @test sum(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
+        @test all(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
                     capacity(ref, t) * EMH.ramp_up(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
         @test value.(m[:cap_use][ref, last(𝒯)]) - value.(m[:cap_use][ref, first(𝒯)]) ⪆
                 capacity(ref, first(𝒯)) * EMH.ramp_up(ref, first(𝒯)) * params_used[:dur_op]
 
@@ -236,17 +236,17 @@ end
 
         # Test that the system is limited by the rate of change constraint except when
         # turned off in the last period
-        @test sum(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
+        @test all(value.(m[:cap_use][ref, t_prev]) - value.(m[:cap_use][ref, t]) ⪅
                     capacity(ref, t) * EMH.ramp_down(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
-        @test sum(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
+        @test all(value.(m[:cap_use][ref, t]) - value.(m[:cap_use][ref, t_prev]) ⪅
                     capacity(ref, t) * EMH.ramp_up(ref, t) * params_used[:dur_op]
-                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)) == length(𝒯)-1
+                    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
         @test value.(m[:cap_use][ref, last(𝒯)]) - value.(m[:cap_use][ref, first(𝒯)]) ⪆
                 capacity(ref, first(𝒯)) * EMH.ramp_up(ref, first(𝒯)) * params_used[:dur_op]
 
         # Test that the system is limited by the maximum installed
-        @test sum(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯) == length(𝒯)
+        @test all(value.(m[:cap_use][ref, t]) ⪅ 50 for t ∈ 𝒯)
 
         # Release the environment
         finalize(backend(m).optimizer.model)
