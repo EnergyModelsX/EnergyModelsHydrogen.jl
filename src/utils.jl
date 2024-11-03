@@ -39,7 +39,7 @@ function linear_reformulation(
         [t ∈ 𝒯], var_aux[t] ≥ lb[t] * var_binary[t]
         [t ∈ 𝒯], var_aux[t] ≥ ub[t] * (var_binary[t]-1) + var_continuous[t]
         [t ∈ 𝒯], var_aux[t] ≤ ub[t] * var_binary[t]
-        [t ∈ 𝒯], var_aux[t] ≤ lb[t] * (1-var_binary[t]) + var_continuous[t]
+        [t ∈ 𝒯], var_aux[t] ≤ lb[t] * (var_binary[t]-1) + var_continuous[t]
     end)
 
     return var_aux
@@ -97,7 +97,7 @@ function linear_reformulation(
         [t_a ∈ 𝒯ᵃ, t_b ∈ 𝒯ᵇ],
             var_aux[t_a, t_b] ≤ ub[t_b] * var_binary[t_a, t_b]
         [t_a ∈ 𝒯ᵃ, t_b ∈ 𝒯ᵇ],
-            var_aux[t_a, t_b] ≤ lb[t_b] * (1-var_binary[t_a, t_b]) + var_continuous[t_b]
+            var_aux[t_a, t_b] ≤ lb[t_b] * (var_binary[t_a, t_b]-1) + var_continuous[t_b]
     end)
 
     return var_aux

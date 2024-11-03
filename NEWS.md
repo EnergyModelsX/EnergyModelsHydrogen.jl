@@ -1,5 +1,12 @@
 # Release Notes
 
+## Version 0.7.2 (2024-11-03)
+
+### Bugfix
+
+* Reverted change included in 0.7.0 point 2 as the rpevious implementation was after all correct.
+* The error did not have any impact on the results if the lower bound was specified as larger than 0. It would however impact the linear relaxation as the constraints were not as tight.
+
 ## Version 0.7.1 (2024-10-24)
 
 * Included new examples for both reformer and electrolysis.
