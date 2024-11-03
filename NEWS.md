@@ -2,6 +2,10 @@
 
 ## Version 0.7.2 (2024-11-03)
 
+### Enhancement
+
+* Provide the correct lower and upper bounds for the lienar reformulation.
+
 ### Bugfix
 
 * Reverted change included in 0.7.0 point 2 as the rpevious implementation was after all correct.
