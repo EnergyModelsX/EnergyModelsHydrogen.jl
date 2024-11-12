@@ -16,7 +16,7 @@ include("utils.jl")
 
 @testset "Hydrogen" begin
     @testset "Hydrogen | Electrolyzer" begin
-        include("test_electrolyzer_degradation.jl")
+        include("test_electrolyzer.jl")
     end
 
     @testset "Hydrogen | Reformer" begin
@@ -29,5 +29,9 @@ include("utils.jl")
 
     @testset "Hydrogen | examples" begin
         include("test_examples.jl")
+    end
+
+    @testset "Hydrogen | utils" begin
+        include("test_utils.jl")
     end
 end

@@ -1,5 +1,10 @@
 # Release Notes
 
+## Version 0.7.3 (2024-11-11)
+
+* Fixed a bug when providing a lower bound in linear refomulation enforcing in this case 100 % usage of the node.
+* Added tests for linear reformulation to avoid any future issues.
+
 ## Version 0.7.2 (2024-11-03)
 
 ### Enhancement
