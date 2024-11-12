@@ -30,7 +30,7 @@ function linear_reformulation(
     )
 
     # Declaration of the auxiliary variable
-    var_aux = @variable(m, [t ∈ 𝒯], lower_bound = lb[t], upper_bound = ub[t])
+    var_aux = @variable(m, [t ∈ 𝒯], lower_bound = minimum([0, lb[t]]), upper_bound = ub[t])
 
     # Constraints for the linear reformulation. The constraints are based on the
     # McCormick envelopes which result in an exact reformulation for the multiplication
@@ -84,7 +84,10 @@ function linear_reformulation(
     ) where {T}
 
     # Decleration of the auxiliary variable
-    var_aux = @variable(m, [𝒯ᵃ, t_b ∈ 𝒯ᵇ], lower_bound = lb[t_b], upper_bound = ub[t_b])
+    var_aux = @variable(m, [𝒯ᵃ, t_b ∈ 𝒯ᵇ],
+        lower_bound = minimum([0, lb[t_b]]),
+        upper_bound = ub[t_b]
+    )
 
     # Constraints for the linear reformulation. The constraints are based on the
     # McCormick envelopes which result in an exact reformulation for the multiplication

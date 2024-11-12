@@ -67,7 +67,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
             FixedProfile(0),    # Fixed Opex
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            params[:data],              # Data
+            params[:data],      # Data
             LoadLimits(0, 1),   # Minimum and maximum load
             params[:degradation_rate],  # Degradation rate
             params[:stack_cost],        # Stack replacement costs
@@ -81,7 +81,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
             FixedProfile(0),    # Fixed Opex
             Dict(Power => 1),   # Input: Ratio of Input flows to characteristic throughput
             Dict(H2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-            params[:data],              # Data
+            params[:data],      # Data
             LoadLimits(0, 1),   # Minimum and maximum load
             params[:degradation_rate],  # Degradation rate
             params[:stack_cost],        # Stack replacement costs
