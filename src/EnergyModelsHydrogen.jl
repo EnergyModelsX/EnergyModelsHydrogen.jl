@@ -16,10 +16,11 @@ const TS  = TimeStruct
 
 include(joinpath("structures", "node.jl"))
 include(joinpath("structures", "misc.jl"))
+include(joinpath("constraints", "general.jl"))
+include(joinpath("constraints", "electrolyzer.jl"))
+include(joinpath("constraints", "reformer.jl"))
 include("model.jl")
-include("user_interface.jl")
 include("checks.jl")
-include("constraint_functions.jl")
 include("utils.jl")
 
 export SimpleElectrolyzer, Electrolyzer
