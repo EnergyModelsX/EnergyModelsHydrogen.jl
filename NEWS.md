@@ -1,5 +1,14 @@
 # Release Notes
 
+## Unversioned
+
+### Misc
+
+* Split file `constraint_functions.jl`:
+  * `constraint/general.jl` for methods dispatching on `EnergyModelsBase` constraints,
+  * `constraint/electrolyzer.jl` for functions introduced for `AbstractElectrolyzer` types, and
+  * `constraint/reformer.jl` for functions introduced for `Reformer` nodes.
+
 ## Version 0.7.3 (2024-11-11)
 
 * Fixed a bug when providing a lower bound in linear refomulation enforcing in this case 100 % usage of the node.
