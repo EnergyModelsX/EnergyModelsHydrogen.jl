@@ -18,4 +18,7 @@ include(joinpath(exdir, "reformer.jl"))
 
 # Include the following code into the Julia REPL to run the electrolyzer example
 include(joinpath(exdir, "electrolyzer.jl"))
+
+# Include the following code into the Julia REPL to run the H₂ storage example
+include(joinpath(exdir, "h2_storage.jl"))
 ```
