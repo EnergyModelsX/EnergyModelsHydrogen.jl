@@ -20,6 +20,13 @@ EnergyModelsHydrogen.constraints_state_seq
 EnergyModelsHydrogen.constraints_state_time_iter
 ```
 
+## [Check methods](@id lib-int-met-check)
+
+```@docs
+EnergyModelsHydrogen.check_load_lim
+EnergyModelsHydrogen.check_commitment_profile
+```
+
 ## [Utility methods](@id lib-int-met-util)
 
 ```@docs
@@ -27,4 +34,6 @@ EnergyModelsHydrogen.linear_reformulation
 EnergyModelsHydrogen.multiplication_variables
 EnergyModelsHydrogen.fix_elect_on_b
 EnergyModelsHydrogen.ramp_disjunct
+EnergyModelsHydrogen.compression_energy
+EnergyModelsHydrogen.energy_curve
 ```

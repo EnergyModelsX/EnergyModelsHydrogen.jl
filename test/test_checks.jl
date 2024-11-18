@@ -314,5 +314,107 @@ end
     @test_throws AssertionError simple_graph_simple_stor(;level_charge=-0.5)
     @test_throws AssertionError simple_graph_simple_stor(;level_charge=1000.0)
 end
+
+# Function for setting up the system for testing a `HydrogenStorage` node
+function simple_graph_h2_stor(;
+    charge_cap = FixedProfile(10),          # Installed capacity [MW]
+    level_cap = FixedProfile(1000),         # Installed capacity [MWh]
+    charge_opex_fixed = FixedProfile(5),    # Fixed Opex
+    level_opex_fixed = FixedProfile(5),     # Fixed Opex
+    discharge_charge = 2.0,     # Maximum discharge rate to charge capacity ratio
+    level_charge = 100.0,       # Maximum level capacity to charge capacity ratio
+    p_min = 30.0,               # Minimum pressure
+    p_charge = 30.0,            # Charging pressure
+    p_max = 150.0,              # Maximum pressure
+)
+
+    # Used source, reformer, and sink
+    source = RefSource(
+        "source",
+        FixedProfile(4),
+        FixedProfile(10),
+        FixedProfile(0),
+        Dict(H2 => 1),
+    )
+
+    storage = HydrogenStorage{CyclicStrategic}(
+        "Storage",
+        StorCapOpexFixed(charge_cap, charge_opex_fixed),
+        StorCapOpexFixed(level_cap, level_opex_fixed),
+        H2,
+        Power,
+        discharge_charge,
+        level_charge,
+        p_min,
+        p_charge,
+        p_max
+    )
+
+    sink = RefSink(
+        "sink",
+        FixedProfile(3),
+        Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
+        Dict(H2 => 1),
+    )
+
+    resources = [H2, CO2]
+    ops = SimpleTimes(1, 2)
+    T = TwoLevel(1, 2, ops; op_per_strat=10)
+
+    nodes = [source, storage, sink]
+    links = [
+        Direct(12, source, storage)
+        Direct(23, storage, sink)
+        ]
+
+    model = OperationalModel(
+        Dict(CO2 => FixedProfile(1e5)),
+        Dict(CO2 => FixedProfile(0)),
+        CO2,
+    )
+    case = Dict(
+                :T => T,
+                :nodes => nodes,
+                :links => links,
+                :products => resources,
+    )
+    return create_model(case, model), case, model
+end
+
+# Test that the fields of a NetworkNode are correctly checked
+# - EMB.check_node(n::HydrogenStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+@testset "Test checks - HydrogenStorage" begin
+
+    # Test that a wrong capacity is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;charge_cap=FixedProfile(-25))
+    @test_throws AssertionError simple_graph_h2_stor(;level_cap=FixedProfile(-25))
+
+    # Test that a wrong fixed OPEX is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;charge_opex_fixed=FixedProfile(-100))
+    @test_throws AssertionError simple_graph_h2_stor(;level_opex_fixed=FixedProfile(-100))
+
+    # Test that a wrong discharge to charge ratio is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;discharge_charge=-0.5)
+
+    # Test that a wrong level to charge ratio is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;level_charge=-0.5)
+    @test_throws AssertionError simple_graph_h2_stor(;level_charge=1000.0)
+
+    # Test that a wrong minimum pressure is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;p_min=-0.5)
+    @test_throws AssertionError simple_graph_h2_stor(;p_min=160.5)
+
+    # Test that a wrong minimum pressure is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;p_min=-0.5)
+    @test_throws AssertionError simple_graph_h2_stor(;p_min=160.5)
+
+    # Test that a wrong charge pressure is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;p_charge=-0.5)
+    @test_throws AssertionError simple_graph_h2_stor(;p_charge=160.5)
+
+    # Test that a wrong maximum pressure is caught by the checks
+    @test_throws AssertionError simple_graph_h2_stor(;p_max=-0.5)
+end
+
 # Set the global again to false
 EMB.TEST_ENV = false

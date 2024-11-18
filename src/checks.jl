@@ -214,6 +214,98 @@ function EMB.check_node(
         "The value of the field `level_charge` is required to be positive",
     )
 end
+"""
+    EMB.check_node(n::HydrogenStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+
+This method checks that a [`HydrogenStorage`](@ref) node is valid.
+
+## Checks
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
+  to be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
+  to be non-negative`.
+- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
+  accessible through a `StrategicPeriod` as outlined in the function
+  [`check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen composite
+  type.
+- The values of the dictionary `input` are required to be non-negative.
+- The values of the dictionary `output` are required to be non-negative.
+- The value of the field `discharge_charge` is required to be positive.
+- The value of the field `level_charge` is required to be positive. The provided capacities
+  in the [`AbstractStorageParameters`](@extref EnergyModelsBase.AbstractStorageParameters)
+  `charge` and `level cannot violate the value.
+- The values of the fields `p_min`, `p_charge`, and `p_max` are required to be positive.
+- The values of the fields `p_min` and `p_charge` must be smaller than `p_max`.
+- The value of the field `p_charge` must be smaller than `p_min`.
+"""
+function EMB.check_node(
+    n::HydrogenStorage,
+    𝒯,
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
+)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    par_charge = charge(n)
+    par_level = level(n)
+
+    @assert_or_log(
+        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
+        "The charge capacity must be non-negative."
+    )
+    @assert_or_log(
+        all(capacity(par_charge, t) * level_charge(n) ≤ capacity(par_level, t) for t ∈ 𝒯),
+        "The charge capacity cannot be larger than the the level capacity devided by the " *
+        "value of the field `level_charge`."
+    )
+    if isa(par_charge, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    @assert_or_log(
+        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
+        "The level capacity must be non-negative."
+    )
+    if isa(par_level, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    @assert_or_log(
+        all(inputs(n, p) ≥ 0 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be non-negative."
+    )
+    @assert_or_log(
+        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be non-negative."
+    )
+    @assert_or_log(
+        discharge_charge(n) > 0,
+        "The value of the field `discharge_charge` is required to be positive",
+    )
+    @assert_or_log(
+        level_charge(n) > 0,
+        "The value of the field `level_charge` is required to be positive",
+    )
+    @assert_or_log(
+        p_min(n) > 0,
+        "The value of the field `p_min` is required to be positive",
+    )
+    @assert_or_log(
+        p_charge(n) > 0,
+        "The value of the field `p_charge` is required to be positive",
+    )
+    @assert_or_log(
+        p_max(n) > 0,
+        "The value of the field `p_max` is required to be positive",
+    )
+    @assert_or_log(
+        p_max(n) > p_min(n),
+        "The value of the field `p_max` is required to be larger than the value of the " *
+        "field `p_min`",
+    )
+    @assert_or_log(
+        p_max(n) > p_charge(n),
+        "The value of the field `p_max` is required to be larger than the value of the " *
+        "field `p_charge`",
+    )
+end
 
 """
     check_commitment_profile(

@@ -19,6 +19,7 @@ Reformer
 
 ```@docs
 SimpleHydrogenStorage
+HydrogenStorage
 ```
 
 ## [Additional types](@id lib-pub-add)

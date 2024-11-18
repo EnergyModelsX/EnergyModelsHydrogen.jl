@@ -259,3 +259,85 @@ function ramp_disjunct(m, n::Reformer, ref_pers::RefPeriods, modeltype::EnergyMo
     t = current_op(ref_pers)
     return @expression(m, capacity(n, t) * (2 - m[:ref_on_b][n, t] - m[:ref_on_b][n, t_prev]))
 end
+
+"""
+    compression_energy(p₁, p₂; T₁=298.15, κ=1.41, η=0.75)
+
+Returns the required compression energy for a compression from pressure `p₁` to `p₂`.
+The compression energy is in principle based on isentropic compression.
+The unit of the compression energy is J/mol.
+
+# Arguments
+- `p₁` is the inlet pressure to the compressor. The unit for pressure is not relevant.
+- `p₂` is the outlet pressure from the compressor. The unit for pressure is not relevant,
+  but it **must** be the same unit as `p₁`.
+
+# Keyword arguments
+- `T₁` is the inlet temperature to the compressor.
+- `κ` is the ratio of specific heats. Using a value of [1, κ] would correspond hence to
+  polytropic compression.
+- `η` is the efficiency of the compressor.
+"""
+function compression_energy(p₁, p₂; T₁=298.15, κ=1.41, η = 0.75)
+    # Physical input parameters
+    R = 8.31446261815324
+
+    # Calculation of the energy requirement for compression
+    return (κ * R * T₁) / (κ-1) * ((p₂/p₁)^((κ-1)/κ)-1) / η
+end
+
+"""
+    energy_curve(
+        p::Float64,
+        pᵢₙ::Float64,
+        PR::Float64,
+        n_comp::Int,
+        M::Float64,
+        LHV::Float64
+    )
+
+Returns the relative compression energy requirement for a multi-stage compression train.
+
+# Arguments
+- `p::Float64` is the delivery pressure.
+- `pᵢₙ::Float64` is the inlet pressure.
+- `PR::Float64` is the compression rate of each compressor in the train.
+- `n_comp::Int` is the number of compressors in the train.
+- `M::Float64` is molecular mass of the compressed gas.
+- `LHV::Float64` is the mass lower heating value of the compressed gas.
+
+# Keyword arguments
+- `T₁` is the inlet temperature to the compressor.
+- `κ` is the ratio of specific heats. Using a value of [1, κ] would correspond hence to
+  polytropic compression.
+- `η` is the efficiency of the compressor.
+
+!!! warning "Units"
+    The units have to be consistent. This implies that both `p` and `pᵢₙ` require to have
+    the same unit. The molecular mass should be provided in g/mol while the lower heating
+    value should be given in MJ/kg.
+"""
+function energy_curve(
+    p::Float64,
+    pᵢₙ::Float64,
+    PR::Float64,
+    n_comp::Int,
+    M::Float64,
+    LHV::Float64;
+    T₁::Float64 = 298.15,
+    κ::Float64 = 1.41,
+    η::Float64 = 0.7,
+)
+    if p > pᵢₙ
+        p₁ = [pᵢₙ*PR^i for i ∈ 0:n_comp-1 if p > pᵢₙ*PR^i]
+        p₂ = [pᵢₙ*PR^i for i ∈ 1:n_comp if p > pᵢₙ*PR^i]
+        push!(p₂, p)
+        W = (
+            sum(compression_energy(p_1, p_2; T₁, κ, η) for (p_1, p_2) ∈ zip(p₁, p₂)) /
+            (M * LHV * 1000)
+        )
+    else
+        W = 0
+    end
+    return W
+end

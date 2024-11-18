@@ -78,6 +78,79 @@ function EMB.constraints_capacity(
 end
 
 """
+    EMB.constraints_flow_in(m, n::HydrogenStorage, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the inlet flow to a [`HydrogenStorage`](@ref) node.
+
+It differs from the reference description by considering the dependency of the compression
+power on the storage level.
+
+This is achieved through calling the subfunction [`energy_curve`]
+"""
+function EMB.constraints_flow_in(m, n::HydrogenStorage, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    p_el = electricity_resource(n)
+    p_stor = storage_resource(n)
+
+    # Physical input parameters
+    pᵢₙ = p_charge(n)
+    pₘᵢₙ = p_min(n)
+    pₘₐₓ = p_max(n)
+    PRₘₐₓ = 2.5
+
+    # Component specific input data
+    M = 2.02
+    HHV = 141.9
+    LHV = 120.0
+
+    # Calculation of the required pressure ratios for compression
+    PRₜₒₜ = pₘₐₓ/pᵢₙ
+    n_comp = Int(ceil(log(PRₜₒₜ)/log(PRₘₐₓ)))
+    PR = PRₜₒₜ^(1/n_comp)
+
+    # Calculation of the breakpoints based on the specified maximum pressure ratio
+    # The breakpoints are pure;y based on the differences.
+    # It can be that the individual breakpoints are limited based on the charge and minimum
+    # pressure
+    tmp = [[pₘᵢₙ]]
+    append!(tmp, [[pᵢₙ*PR^i, (1/3*PR+2/3)*pᵢₙ*PR^i] for i ∈ 0:n_comp-1])
+    p̂ = unique(reduce(vcat, push!(tmp, [pₘₐₓ])))
+    filter!(p -> p ≥ pₘᵢₙ, p̂)
+    sort!(p̂)
+    n_p = length(p̂)
+
+    # Calculation the relative energy demand at the different pressure break points
+    Ŵ = [energy_curve(p, pᵢₙ, PR, n_comp, M, LHV) for p ∈ p̂]
+
+    # Add the auxiliary variables for the piecewise linear reformulation
+    Wₚ = @variable(m, [𝒯])
+    λ = @variable(m, [𝒯, 1:n_p], lower_bound = 0, upper_bound = 1)
+    # Constraints for the equality at given points
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level][n, t] ==
+            sum(λ[t, i_p] * (p̂[i_p] - pₘᵢₙ) / (pₘₐₓ - pₘᵢₙ) for i_p ∈ 1:n_p) *
+            capacity(level(n), t)
+    )
+    @constraint(m, [t ∈ 𝒯], Wₚ[t] == sum(λ[t, i_p] * Ŵ[i_p] for i_p ∈ 1:n_p))
+    # Constraints for λ variables to enforce SOS2 constraints
+    @constraints(m, begin
+        [t ∈ 𝒯], sum(λ[t, :]) == 1
+        [t ∈ 𝒯], λ[t, :] in SOS2()
+    end)
+
+    # Constraint for the electricity requirement for the compression
+    @constraint(m, [t ∈ 𝒯],
+        m[:flow_in][n, t, p_el] ==
+            m[:flow_in][n, t, p_stor] * Wₚ[t]
+    )
+
+    # Constraint for the hydrogen flow into the storage node
+    @constraint(m, [t ∈ 𝒯],
+        m[:flow_in][n, t, p_stor] == m[:stor_charge_use][n, t]
+    )
+end
+
+"""
     EMB.constraints_flow_out(m, n::Electrolyzer, 𝒯::TimeStructure, modeltype::EnergyModel)
 
 Function for creating the constraint on the outlet flow from an `Electrolyzer` node.

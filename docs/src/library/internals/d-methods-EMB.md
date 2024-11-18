@@ -17,6 +17,7 @@ EnergyModelsBase.create_node
 
 ```@docs
 EnergyModelsBase.constraints_capacity
+EnergyModelsBase.constraints_flow_in
 EnergyModelsBase.constraints_flow_out
 EnergyModelsBase.constraints_opex_var
 ```
@@ -25,6 +26,12 @@ EnergyModelsBase.constraints_opex_var
 
 ```@docs
 EnergyModelsBase.check_node
-EnergyModelsHydrogen.check_load_lim
-EnergyModelsHydrogen.check_commitment_profile
+EnergyModelsBase.check_node_data
+```
+
+## [Field extraction methods](@id lib-int-met_emb-field)
+
+```@docs
+EnergyModelsBase.inputs
+EnergyModelsBase.outputs
 ```

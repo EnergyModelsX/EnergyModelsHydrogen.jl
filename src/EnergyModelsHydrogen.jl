@@ -3,7 +3,7 @@ Main module for `EnergyModelsHydrogen`.
 
 This module implements constraints for describing electrolysis through the types
 `SimpleElectrolyzer` and `Electrolyzer`, natural gas reforming through the type `Reformer`,
-and Hydrogen storage through the type `SimpleHydrogenStorage`.
+and Hydrogen storage through the types `SimpleHydrogenStorage` and `HydrogenStorage`.
 """
 module EnergyModelsHydrogen
 
@@ -25,7 +25,7 @@ include("utils.jl")
 
 export SimpleElectrolyzer, Electrolyzer
 export Reformer
-export SimpleHydrogenStorage
+export SimpleHydrogenStorage, HydrogenStorage
 
 export LoadLimits, CommitParameters
 

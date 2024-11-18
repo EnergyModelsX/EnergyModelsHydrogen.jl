@@ -293,9 +293,6 @@ Returns the maximum positive rate of change of UnionRampUp `ramp_param` as `Time
 ramp_up(ramp_param::UnionRampUp) = ramp_param.up
 ramp_up(ramp_param::UnionRampUp, t) = ramp_param.up[t]
 
-""" Abstract supertype for all reformer nodes."""
-abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
-
 """
     opex_state(com_par::CommitParameters)
     opex_state(com_par::CommitParameters, t)
@@ -313,6 +310,9 @@ Returns the minimum time in the state as `TimeProfile` *or* in operational perio
 """
 time_state(com_par::CommitParameters) = com_par.time
 time_state(com_par::CommitParameters, t) = com_par.time[t]
+
+""" Abstract supertype for all reformer nodes."""
+abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
 
 """
     Reformer <: AbstractReformer
@@ -456,6 +456,26 @@ operational period `t`.
 ramp_down(n::AbstractReformer) = ramp_down(ramp_limit(n))
 ramp_down(n::AbstractReformer, t) = ramp_down(ramp_limit(n), t)
 
+# """
+#     mutable struct PhysicalParameters
+
+# The `PhysicalParameters` correspond to the parameters required for the compression
+# calculations
+# """
+# mutable struct PhysicalParameters
+#     T::Float64
+#     p_min::Float64
+#     p_charge::Float64
+#     p_max::Float64
+#     M::Float64
+#     κ::Float64
+#     lhv::Float64
+#     hhv::Float64
+#     PR::Float64
+#     PRₘₐₓ::Float64
+
+# end
+
 """
     AbstractH2Storage{T} <: Storage{T}
 
@@ -527,6 +547,83 @@ function SimpleHydrogenStorage{T}(
     )
 end
 
+"""
+    HydrogenStorage{T} <: AbstractH2Storage{T}
+
+`Storage` node in which the maximum discharge usage is directly linked to the charge
+capacity, that is it is not possbible to have a larger discharge usage than the charge
+capacity and a multiplier `discharge_charge`.
+
+It differs from [`SimpleHydrogenStorage`](@ref) through incorporation of a piecewise linear
+curve for the electricity demand, depending on the current storage level and the defined
+upper (field `p_max`) and charge pressure (field `p_charge`) of the node.
+
+# Fields
+- **`id`** is the name/identifier of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `SimpleHydrogenStorage` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`stor_res::Resource`** is the stored [`Resource`](@extref EnergyModelsBase.Resource).
+- **`el_res::Resource`** is the [`Resource`](@extref EnergyModelsBase.Resource)
+  representing electricity. It **must** be specified explicitly for the proper calculation
+  of the electricity demand for compression.
+- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments). The field `data`
+  is conditional through usage of a constructor.
+- **`discharge_charge::Float64`** is the multiplier for specifying the maximum discharge
+  rate relative to the charge rate. A value of `2.0` would imply that it is possible to have
+  double the discharge rate compared to the installed charge capacity.
+- **`level_charge::Float64`** is the multiplier for specifying the installed storage
+  level capacity relative to the installed storage charge capacity. It is used for
+  checking input data in the case of a generic model and for limiting investments in
+  the case of an [`AbstractInvestmentModel`](@extref EnergyModelsBase.AbstractInvestmentModel).
+- **`p_min::Float64`** is the minimum pressure in the storage.
+- **`p_charge::Float64`** is the charging pressure into the storage.
+- **`p_max::Float64`** is the maximum pressure in the storage.
+
+!!! warning "Units for pressure"
+    The unit for the pressure inputs `p_min`, `p_charge`, and `p_max` are not relevant as the
+    isentropic compression is only dependent on the pressure ratio. It is however necessary
+    that all pressures use the same unit, *e.g.*, bar or Pa.
+"""
+struct HydrogenStorage{T} <: AbstractH2Storage{T}
+    id::Any
+    charge::EMB.UnionCapacity
+    level::EMB.UnionCapacity
+    stor_res::Resource
+    el_res::Resource
+    data::Vector{<:Data}
+    discharge_charge::Float64
+    level_charge::Float64
+    p_min::Float64
+    p_charge::Float64
+    p_max::Float64
+end
+function HydrogenStorage{T}(
+    id::Any,
+    charge::EMB.UnionCapacity,
+    level::EMB.UnionCapacity,
+    stor_res::Resource,
+    el_res::Resource,
+    discharge_charge::Float64,
+    level_charge::Float64,
+    p_min::Float64,
+    p_charge::Float64,
+    p_max::Float64,
+) where {T<:EMB.StorageBehavior}
+    return HydrogenStorage{T}(
+        id,
+        charge,
+        level,
+        stor_res,
+        el_res,
+        Data[],
+        discharge_charge,
+        level_charge,
+        p_min,
+        p_charge,
+        p_max,
+    )
+end
 
 """
     discharge_charge(n::AbstractH2Storage)
@@ -541,3 +638,56 @@ discharge_charge(n::AbstractH2Storage) = n.discharge_charge
 Returns the level to charge ratio of AbstractH2Storage `n`.
 """
 level_charge(n::AbstractH2Storage) = n.level_charge
+
+"""
+    el_res(n::HydrogenStorage)
+
+Returns the resource of [`HydrogenStorage`](@ref), `n` which corresponds to electricity in
+the system.
+"""
+electricity_resource(n::HydrogenStorage) = n.el_res
+
+"""
+    p_min(n::HydrogenStorage)
+
+Returns the minimum pressure of [`HydrogenStorage`](@ref), `n`. This pressure corresponds to
+an empty storage.
+"""
+p_min(n::HydrogenStorage) = n.p_min
+
+"""
+    p_charge(n::HydrogenStorage)
+
+Returns the charging pressure of [`HydrogenStorage`](@ref), `n`. This pressure corresponds
+to the inlet pressure of the node, that is the pressure used for calculating the energy
+demand.
+"""
+p_charge(n::HydrogenStorage) = n.p_charge
+
+"""
+    p_max(n::HydrogenStorage)
+
+Returns the maximum pressure of [`HydrogenStorage`](@ref), `n`. This pressure corresponds to
+a full storage.
+"""
+p_max(n::HydrogenStorage) = n.p_max
+
+"""
+    inputs(n::HydrogenStorage)
+    inputs(n::HydrogenStorage, p::Resource)
+
+When the node `n` is a [`HydrogenStorage`](@ref), the function returns either both the
+stored and the electricity resource or a value of 1, if a resource `p` is specified.
+"""
+EMB.inputs(n::HydrogenStorage) = [storage_resource(n), electricity_resource(n)]
+EMB.inputs(n::HydrogenStorage, p::Resource) = 1
+
+"""
+    outputs(n::HydrogenStorage)
+    outputs(n::HydrogenStorage, p::Resource)
+
+When the node `n` is a [`HydrogenStorage`](@ref), the function returns either the stored
+resource or a value of 1, if a resource `p` is specified.
+"""
+EMB.outputs(n::HydrogenStorage) = [storage_resource(n)]
+EMB.outputs(n::HydrogenStorage, p::Resource) = 1

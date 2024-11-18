@@ -27,11 +27,20 @@ EnergyModelsHydrogen.time_off
 EnergyModelsHydrogen.ramp_limit
 ```
 
-## [`AbstractH2Storage` types](@id lib-int-met_field-h2_stor)
+## [`AbstractH2Storage` types](@id lib-int-met_field-abst_h2_stor)
 
 ```@docs
 EnergyModelsHydrogen.discharge_charge
 EnergyModelsHydrogen.level_charge
+```
+
+## [`HydrogenStorage` types](@id lib-int-met_field-h2_stor)
+
+```@docs
+EnergyModelsHydrogen.p_charge
+EnergyModelsHydrogen.p_min
+EnergyModelsHydrogen.p_max
+EnergyModelsHydrogen.electricity_resource
 ```
 
 ## [`LoadLimit` and `Node` types](@id lib-int-met_field-loadlim)

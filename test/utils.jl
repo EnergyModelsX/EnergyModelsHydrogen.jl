@@ -2,8 +2,11 @@ const TEST_ATOL = 1e-6
 ⪆(x, y) = x > y || isapprox(x, y; atol = TEST_ATOL)
 ⪅(x, y) = x < y || isapprox(x, y; atol = TEST_ATOL)
 
-const OPTIMIZER = optimizer_with_attributes(SCIP.Optimizer,
-                                         MOI.Silent() => true)
+const OPTIMIZER = optimizer_with_attributes(
+    SCIP.Optimizer,
+    "limits/gap" => 1e-4,
+    MOI.Silent() => true,
+)
 
 """
 Returns `(JuMP.model, case)` dictionary of default model that uses an electrolyzer
@@ -411,6 +414,19 @@ function build_run_h2_storage_model(params)
             Dict(H2 => 1),      # Ouput: Ratio of Output flow to characteristic throughput
             2.0,                # Discharge to charge ratio
             20.0,               # Level to charge ratio
+        )
+    else
+        h2_storage = HydrogenStorage{CyclicStrategic}(
+            "Storage",
+            StorCapOpexVar(FixedProfile(5), FixedProfile(1)),   # Charge parameters
+            StorCap(FixedProfile(100)),                         # Level parameters
+            H2,                 # Stored resource
+            Power,              # Electricity resource
+            2.0,                # Discharge to charge ratio
+            20.0,               # Level to charge ratio
+            params[:p_min],
+            params[:p_charge],
+            params[:p_max],
         )
     end
 
