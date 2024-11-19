@@ -59,16 +59,16 @@ The standard fields are given as:
 
 - **`load_limits::LoadLimits`**:\
   The `load_limits` specify the lower and upper limit for operating the reformer plant.
-  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-load_limit)*.\
+  These limits are included through the type [`LoadLimits`](@ref) and correspond to a fraction of the installed capacity as described in *[Limiting the load](@ref lib-pub-add-load_limit)*.\
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`startup::CommitParameters`**, **`shutdown::CommitParameters`**, and **`offline::CommitParameters`**:\
   The fields `startup`, `shutdown`, and `offline` specify the required parameters for unit commitment.
-  These parameters are included through the type [`CommitParameters`](@ref) and correspond to both a stage cost and minium time in a stage as described in *[Unit commitment](@ref lib-pub-unit_commit)*.\
+  These parameters are included through the type [`CommitParameters`](@ref) and correspond to both a stage cost and minium time in a stage as described in *[Unit commitment](@ref lib-pub-add-unit_commit)*.\
   It is important to note that you can only use `FixedProfile`, `StrategicProfile`, or `RepresentativeProfile` for the time profiles, but not `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`rate_limit::TimeProfile`**:\
   The `rate_limit` specifies the maximum allowed change in the relative capacity utilization of the reformer in a duration of 1 of an operational period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.
-  Different types can be incorporated having constraints on the positive (`RampUp` and `RampBi`) or negative (`RampDown` and `RampBi`) allowed change as described in *[Change of utilization](@ref lib-pub-ramping)*.
+  Different types can be incorporated having constraints on the positive (`RampUp` and `RampBi`) or negative (`RampDown` and `RampBi`) allowed change as described in *[Change of utilization](@ref lib-pub-add-ramping)*.
   Constraints are only created when required by the composite type.\
   All values have to be in range ``[0,1]``.
 
@@ -115,7 +115,7 @@ A value of 1 corresponds to an operation in the given stage while a value of 0 i
 ### [Constraints](@id nodes-ref-math-con)
 
 The following sections omit the direction inclusion of the vector of reformer nodes.
-Instead, it is implicitly assumed that the constraints are valid ``\forall n_{ref} ∈ N^{Ref}`` for all [`AbstractReformer`](@ref) types if not stated differently.
+Instead, it is implicitly assumed that the constraints are valid ``\forall n_{ref} ∈ N^{Ref}`` for all [`Reformer`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
 
 #### [Standard constraints](@id nodes-ref-math-con-stand)

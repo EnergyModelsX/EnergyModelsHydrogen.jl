@@ -108,11 +108,11 @@ optimizer = optimizer_with_attributes(SCIP.Optimizer, MOI.Silent() => true)
 m = run_model(case, model, optimizer)
 
 """
-    process_results(m, case)
+    process_elec_results(m, case)
 
 Function for processing the results to be represented in the a table afterwards.
 """
-function process_results(m, case)
+function process_elec_results(m, case)
     # Extract the nodes and the strategic periods from the data
     elect = case[:nodes][2]
     𝒯ᴵⁿᵛ = strategic_periods(case[:T])
@@ -149,7 +149,7 @@ function process_results(m, case)
 end
 
 # Display some results
-table = process_results(m, case)
+table = process_elec_results(m, case)
 
 @info(
     "Individual results from the electrolyzer node:\n" *

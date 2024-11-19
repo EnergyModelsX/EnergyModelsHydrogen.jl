@@ -51,9 +51,11 @@ makedocs(
         "Nodes" => Any[
             "Electrolyzer" => "nodes/electrolyzer.md",
             "Reformer" => "nodes/reformer.md",
+            "H₂ storage" => "nodes/h2_storage.md",
         ],
         "Auxiliary functions" => Any[
             "Linear reformulation" => "aux-fun/lin-reform.md",
+            "Compression energy" => "aux-fun/pressure_calc.md",
         ],
         "Library" => Any[
             "Public" => "library/public.md",

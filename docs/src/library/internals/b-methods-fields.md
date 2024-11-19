@@ -1,13 +1,13 @@
 
-# Methods - Accessing fields
+# [Methods - Accessing fields](@id lib-int-met_field)
 
-## Index
+## [Index](@id lib-int-met_field-idx)
 
 ```@index
 Pages = ["b-methods-fields.md"]
 ```
 
-## `AbstractElectrolyzer`
+## [`AbstractElectrolyzer` types](@id lib-int-met_field-elec)
 
 ```@docs
 EnergyModelsHydrogen.degradation_rate
@@ -15,7 +15,7 @@ EnergyModelsHydrogen.stack_replacement_cost
 EnergyModelsHydrogen.stack_lifetime
 ```
 
-## `AbstractReformer`
+## [`AbstractReformer` types](@id lib-int-met_field-ref)
 
 ```@docs
 EnergyModelsHydrogen.opex_startup
@@ -27,28 +27,44 @@ EnergyModelsHydrogen.time_off
 EnergyModelsHydrogen.ramp_limit
 ```
 
-## `LoadLimit` and `Node`
+## [`AbstractH2Storage` types](@id lib-int-met_field-abst_h2_stor)
+
+```@docs
+EnergyModelsHydrogen.discharge_charge
+EnergyModelsHydrogen.level_charge
+```
+
+## [`HydrogenStorage` types](@id lib-int-met_field-h2_stor)
+
+```@docs
+EnergyModelsHydrogen.p_charge
+EnergyModelsHydrogen.p_min
+EnergyModelsHydrogen.p_max
+EnergyModelsHydrogen.electricity_resource
+```
+
+## [`LoadLimit` and `Node` types](@id lib-int-met_field-loadlim)
 
 ```@docs
 EnergyModelsHydrogen.min_load
 EnergyModelsHydrogen.max_load
 ```
 
-## `AbstractRampParameters` and `AbstractReformer`
+## [`AbstractRampParameters` and `AbstractReformer` types](@id lib-int-met_field-ramp)
 
 ```@docs
 EnergyModelsHydrogen.ramp_up
 EnergyModelsHydrogen.ramp_down
 ```
 
-## `CommitParameters`
+## [`CommitParameters` types](@id lib-int-met_field-commit)
 
 ```@docs
 EnergyModelsHydrogen.opex_state
 EnergyModelsHydrogen.time_state
 ```
 
-## `ElecPeriods`
+## [`ElecPeriods` types](@id lib-int-met_field-elec_per)
 
 ```@docs
 TimeStruct.strat_periods
@@ -57,7 +73,7 @@ EnergyModelsHydrogen.op_per
 EnergyModelsHydrogen.is_last
 ```
 
-## `RefPeriods`
+## [`RefPeriods` types](@id lib-int-met_field-ref_per)
 
 ```@docs
 EnergyModelsHydrogen.prev_op

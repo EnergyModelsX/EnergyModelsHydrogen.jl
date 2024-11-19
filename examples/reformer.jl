@@ -23,9 +23,9 @@ const TS = TimeStruct
 
 Generate the data for an example consisting of an electricity source, a natural gas source,
 a reformer with CO₂ capture, a time varying hydrogen demand, and CO₂ storage node, modelled,
-as RefSource node
+as `RefSink` node
 
-It illustrates the restrictions on the source node related to both shutdown, offline, and
+It illustrates the restrictions on the reformer node related to both shutdown, offline, and
 startup times, as well as the minimum usage constraint.
 """
 function generate_refomer_example_data()
@@ -72,22 +72,22 @@ function generate_refomer_example_data()
         RefSource(
             "electricity source",   # Node id
             FixedProfile(100),      # Installed capacity in MW
-            FixedProfile(30),       # Variable OPEX in €/MW
-            FixedProfile(0),        # Fixed OPEX in €/a
+            FixedProfile(30),       # Variable OPEX in €/MWh
+            FixedProfile(0),        # Fixed OPEX in €/MW/a
             Dict(Power => 1),       # Output from the node, in this case, Power
         ),
         RefSource(
             "natural gas source",   # Node id
             FixedProfile(100),      # Installed capacity in MW
-            FixedProfile(9),        # Variable OPEX in €/MW
-            FixedProfile(0),        # Fixed OPEX in €/a
+            FixedProfile(9),        # Variable OPEX in €/MWh
+            FixedProfile(0),        # Fixed OPEX in €/MW/a
             Dict(NG => 1),          # Output from the node, in this case, natural gas (NG)
         ),
         Reformer(
             "reformer",             # Node id
             FixedProfile(50),       # Installed capacity in MW
-            FixedProfile(5),        # Variable OPEX in €/MW
-            FixedProfile(0),        # Fixed OPEX in €/a
+            FixedProfile(5),        # Variable OPEX in €/MWh
+            FixedProfile(0),        # Fixed OPEX in €/MW/a
             Dict(NG => 1.25, Power => 0.11),    # Input to the node with input ratio
             Dict(H2 => 1.0, CO2 => 0),          # Output from the node with output ratio
             # Line above: CO2 is required as output for variable definition, but the
@@ -144,11 +144,11 @@ function generate_refomer_example_data()
 end
 
 """
-    process_results(m, case)
+    process_ref_results(m, case)
 
 Function for processing the results to be represented in the a table afterwards.
 """
-function process_results(m, case)
+function process_ref_results(m, case)
     # Extract the nodes and the first strategic period from the data
     reformer, demand = case[:nodes][[3,4]]          # Extract the reformer and demand node
     sp1 = collect(strategic_periods(case[:T]))[1]   # Extract the first strategic period
@@ -208,7 +208,7 @@ optimizer = optimizer_with_attributes(SCIP.Optimizer, MOI.Silent() => true)
 m = run_model(case, model, optimizer)
 
 # Display some results
-table = process_results(m, case)
+table = process_ref_results(m, case)
 @info(
     "Capacity usage of the reformer in the operational periods 1-5 illustrating the\n" *
     "transition form `shutdown` to `offline` state.\n" *

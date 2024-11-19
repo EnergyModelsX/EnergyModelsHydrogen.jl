@@ -35,6 +35,19 @@ If you find `EnergyModelsHydrogen` useful in your work, we kindly request that y
 }
 ```
 
+If you utilize the `Reformer` node, we kindly request that you cite the following [publication](https://doi.org/10.1016/j.apenergy.2024.124130) explaining the implementation:
+
+```bibtex
+@article{svendsmark2024,
+  title = {Developing hydrogen energy hubs: {T}he role of H$_2$ prices, wind power and infrastructure investments in Northern Norway},
+  author = {Erik Svendsmark and Julian Straus and Pedro {Crespo del Granado}},
+  journal = {Applied Energy},
+  volume = {376},
+  pages = {124130},
+  year = {2024},
+  }
+```
+
 For earlier work, see our [paper in Applied Energy](https://www.sciencedirect.com/science/article/pii/S0306261923018482):
 
 ```bibtex

@@ -1,23 +1,30 @@
-# [Public interface](@id sec_lib_public)
+# [Public interface](@id lib-pub)
 
-## Node types
+## [Node types](@id lib-pub-nodes)
 
-### Electrolyzer nodes
+### [Electrolyzer nodes](@id lib-pub-nodes-elect)
 
 ```@docs
 SimpleElectrolyzer
 Electrolyzer
 ```
 
-### Reformer nodes
+### [Reformer nodes](@id lib-pub-nodes-ref)
 
 ```@docs
 Reformer
 ```
 
-## Additional types
+### [Hydrogen storage nodes](@id lib-pub-nodes-h2_stor)
 
-### [Limiting the load](@id lib-pub-load_limit)
+```@docs
+SimpleHydrogenStorage
+HydrogenStorage
+```
+
+## [Additional types](@id lib-pub-add)
+
+### [Limiting the load](@id lib-pub-add-load_limit)
 
 The load of a `Node` can be constrained to an upper and lower bound.
 This is achieved through the type `LoadLimits` which incorporates the values for
@@ -33,7 +40,7 @@ Load limits are incorporated for both electrolyser nodes as well as the reformer
 LoadLimits
 ```
 
-### [Unit commitment](@id lib-pub-unit_commit)
+### [Unit commitment](@id lib-pub-add-unit_commit)
 
 Unit commitment implies in the context of EMX to parameters that provide information on the stage cost and the minimum time in a stage.
 They are currently only implemented for the `Reformer` node, but can be generalized for other node types, if desired.
@@ -42,7 +49,7 @@ They are currently only implemented for the `Reformer` node, but can be generali
 CommitParameters
 ```
 
-### [Change of utilization](@id lib-pub-ramping)
+### [Change of utilization](@id lib-pub-add-ramping)
 
 Change of utilization constraints, also called ramping constraints, require different types to allow for both constraints on the positive change of utilization (ramp up) and negative change of utilization (ramp down).
 They are currently only implemented for the `Reformer` node, but can be generalized for other node types, if desired.
