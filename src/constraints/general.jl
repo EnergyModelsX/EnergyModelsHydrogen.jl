@@ -85,7 +85,8 @@ Function for creating the constraint on the inlet flow to a [`HydrogenStorage`](
 It differs from the reference description by considering the dependency of the compression
 power on the storage level.
 
-This is achieved through calling the subfunction [`energy_curve`]
+This is achieved through calling the subfunction [`energy_curve`](@ref) for the different
+breakpoints in the compression curve.
 """
 function EMB.constraints_flow_in(m, n::HydrogenStorage, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets

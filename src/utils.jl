@@ -239,7 +239,7 @@ end
 """
     ramp_disjunct(m, n::Reformer, ref_pers::RefPeriods, modeltype::EnergyModel)
 
-Function for calculation disjunction contribution for the ramping constraints of a reformer.
+Function for calculating the disjunction contribution for the ramping constraints of a reformer.
 
 
     modeltype::EnergyModel

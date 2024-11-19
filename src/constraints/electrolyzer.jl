@@ -124,7 +124,7 @@ In the case of `SimpleTimes`, the iterator function is at its lowest level. In t
 situation,the previous level is calculated using the function
 [`constraints_previous_usage`](@ref). The approach for calculating the
 constraints is depending on the types in the parameteric type
-[`EMB.PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
+[`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 """
 function constraints_usage_iterate(
     m,
@@ -177,7 +177,7 @@ end
     )
 
 Returns the previous usage of an `AbstractElectrolyzer` node depending on the type of
-[`PreviousPeriods`](@ref).
+[`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 
 The basic functionality is used in the case when the previous operational period is a
 `TimePeriod`, in which case it just returns the previous operational period.
