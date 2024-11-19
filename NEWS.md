@@ -2,6 +2,15 @@
 
 ## Unversioned
 
+### Hydrogen storage
+
+* Developed two nodes for hydrogen storage:
+  1. `SimpleHydrogenStorage` incorporates a constraint on the maximum discharge through a multiplier of the charge capacity as well as providing an upper bound for the maximum charge capacity as a function of the storage level capacity.
+  2. `HydrogenStorage` includes a storage level dependent term for the compression electricity requirement using a piecewise linear representation of the non-linear compression curves through SOS2 constraints and a bilinear term.
+    Investment are not possible for this node.
+* Included checks, documentations, and tests for both nodes.
+* Included an example for `HydrogenStorage`.
+
 ### Misc
 
 * Split file `constraint_functions.jl`:
