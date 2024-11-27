@@ -143,9 +143,9 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
         @debug "flow_in $(value.(m[:flow_in]))"
         @debug "flow_out $(value.(m[:flow_out]))"
         @debug "elect_on_b $(value.(m[:elect_on_b]))"
-        @debug "elect_previous_usage $(value.(m[:elect_previous_usage]))"
-        @debug "elect_usage_sp $(value.(m[:elect_usage_sp]))"
-        @debug "elect_stack_replacement_sp_b $(value.(m[:elect_stack_replacement_sp_b]))"
+        @debug "elect_prev_use $(value.(m[:elect_prev_use]))"
+        @debug "elect_use_sp $(value.(m[:elect_use_sp]))"
+        @debug "elect_stack_replace_sp_b $(value.(m[:elect_stack_replace_sp_b]))"
         @debug "elect_efficiency_penalty $(value.(m[:elect_efficiency_penalty]))"
     end
     return (m, case)
@@ -156,14 +156,16 @@ end
 
 Test function for analysing that the previous operational period has an efficiency
 penalty that is at least as large as the one of the current period as well as that
-the lifetime constraint.
+the previous usage with stack replacement is correctly calculated.
 """
 function penalty_test(m, case, params)
 
     # Reassign types and variables
     elect = case[:nodes][3]
-    𝒯     = case[:T]
+    𝒯 = case[:T]
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     penalty = m[:elect_efficiency_penalty]
+    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
 
     # Calculation of the penalty
     @test sum(
@@ -171,9 +173,23 @@ function penalty_test(m, case, params)
             value.(penalty[elect, t]) ≈ value.(penalty[elect, t_prev])
             for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)
         ) == length(𝒯) - params[:num_sp] * (params[:rep]+1)
-    @test sum(
-            value.(m[:elect_previous_usage][elect, t]) ⪅ params[:stack_lifetime] for t ∈ 𝒯
-        ) == length(𝒯)
+    @test all(
+        value.(m[:elect_prev_use][elect, t]) ⪅ params[:stack_lifetime] for t ∈ 𝒯
+    )
+    @test all(
+        value.(penalty[elect, t]) ≈
+            1 - params[:degradation_rate]/100 * value.(m[:elect_prev_use][elect, t])
+    for t ∈ 𝒯)
+
+    # Test that the previous usage is correctly calculated
+    @test all(isapprox(
+        value.(m[:elect_prev_use_sp][elect, t_inv]),
+        (
+            value.(m[:elect_prev_use_sp][elect, t_inv_prev]) +
+            value.(m[:elect_use_sp][elect, t_inv_prev]) * 2
+        ) * (1 - value.(stack_replace[t_inv])),
+        atol = TEST_ATOL)
+    for (t_inv_prev, t_inv) ∈ withprev(𝒯ᴵⁿᵛ) if !isnothing(t_inv_prev))
 end
 
 """

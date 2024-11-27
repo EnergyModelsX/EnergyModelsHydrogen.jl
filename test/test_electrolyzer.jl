@@ -85,40 +85,20 @@ end
     elect = data[:nodes][3]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replacement_sp_b][elect, :]
-    stack_mult   = m[:elect_usage_mult_sp_b][elect, :, :]
+    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
 
+    # Test that the previus usage is correctly calculated for all periods
+    @test all(
+        value.(m[:elect_prev_use])[elect, t] ≈
+            value.(m[:elect_prev_use])[elect, t_prev] +
+            value.(m[:elect_on_b])[elect, t_prev] * duration(t_prev) / 1e3
+    for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev))
+
     # Test that there are no quadratic constraints for SimpleElectrolyzer types
     @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
-
-    # Test for the multiplier matrix that it is 0 for the block if there was a stack
-    # replacement. It will reset the block via the variable `t_replace` to the new
-    # `t_inv`, if the variable`:elect_stack_replacement_sp_b` is 1
-    @testset "Multiplier test" begin
-        t_replace = nothing
-        logic     = false
-        for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
-            if value.(stack_replace[t_inv]) ≈ 1
-                t_replace = t_inv
-                logic = true
-            elseif t_inv.sp == 1
-                t_replace = t_inv
-                logic = false
-            end
-            if logic
-                if isless(t_inv_pre, t_replace)
-                    @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 0 atol = TEST_ATOL
-                else
-                    @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 1
-                end
-            else
-                @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 1
-            end
-        end
-    end
 
     finalize(backend(m).optimizer.model)
 end
@@ -142,40 +122,13 @@ end
     elect = data[:nodes][3]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replacement_sp_b][elect, :]
-    stack_mult   = m[:elect_usage_mult_sp_b][elect, :, :]
+    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
 
     # Test that there are no quadratic constraints for SimpleElectrolyzer types
     @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
-
-    # Test for the multiplier matrix that it is 0 for the block if there was a stack
-    # replacement. It will reset the block via the variable `t_replace` to the new
-    # `t_inv`, if the variable`:elect_stack_replacement_sp_b` is 1
-    @testset "Multiplier test" begin
-        t_replace = nothing
-        logic     = false
-        for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
-            if value.(stack_replace[t_inv]) ≈ 1
-                t_replace = t_inv
-                logic = true
-            elseif t_inv.sp == 1
-                t_replace = t_inv
-                logic = false
-            end
-            if logic
-                if isless(t_inv_pre, t_replace)
-                    @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 0 atol = TEST_ATOL
-                else
-                    @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 1
-                end
-            else
-                @test value.(stack_mult[t_inv, t_inv_pre]) ≈ 1
-            end
-        end
-    end
 
     finalize(backend(m).optimizer.model)
 end
@@ -199,8 +152,7 @@ end
     hydrogen = data[:products][2]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replacement_sp_b][elect, :]
-    stack_mult   = m[:elect_usage_mult_sp_b][elect, :, :]
+    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
@@ -218,7 +170,6 @@ end
             value.(m[:elect_efficiency_penalty][elect, t])
         ) ≤ TEST_ATOL for t ∈ 𝒯
     )
-
 
     finalize(backend(m).optimizer.model)
 end

@@ -123,12 +123,12 @@ function process_elec_results(m, case)
     # Electrolyzer variables
     stack_replacement = JuMP.Containers.rowtable(   # Stack replacement
         value,
-        m[:elect_stack_replacement_sp_b][elect, :];
+        m[:elect_stack_replace_sp_b][elect, :];
         header=[:t, :stack_replacement]
     )
     prev_usage = JuMP.Containers.rowtable(          # Previous usage up to this state
         value,
-        m[:elect_previous_usage][elect, first_op];
+        m[:elect_prev_use][elect, first_op];
         header=[:t, :previous_usage]
     )
     penalty = JuMP.Containers.rowtable(             # Efficiency penalty

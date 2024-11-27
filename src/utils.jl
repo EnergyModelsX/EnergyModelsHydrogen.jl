@@ -163,7 +163,7 @@ end
     fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Fixes the variable `:elect_on_b`  in operational periods without capacity and the variable
-`:elect_stack_replacement_sp_b` in strategic periods without capacity to 0 to simplify the
+`:elect_stack_replace_sp_b` in strategic periods without capacity to 0 to simplify the
 optimziation problem.
 
 Provides start values to the variables in all other periods as well as start values for
@@ -184,14 +184,13 @@ function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Energ
 
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    mult_sp_aux_b = m[:elect_mult_sp_aux_b][n,:,:,:]
 
     # Fixing the value to 0 if no capacity is installed
     cap_bool = true
     for t_inv ∈ 𝒯ᴵⁿᵛ
         if capacity(n, t_inv) == 0 && cap_bool
-            JuMP.fix(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
-            set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
+            JuMP.fix(m[:elect_stack_replace_sp_b][n, t_inv], 0)
+            set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
             for t ∈ t_inv
                 JuMP.fix(m[:elect_on_b][n, t], 0)
                 set_start_value(m[:elect_on_b][n, t], 0)
@@ -199,42 +198,39 @@ function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Energ
         else
             cap_bool = false
             if isfirst(t_inv)
-                set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 0)
+                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
             else
-                set_start_value(m[:elect_stack_replacement_sp_b][n, t_inv], 1)
+                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 1)
             end
             for t ∈ t_inv
                 set_start_value(m[:elect_on_b][n, t], 1)
             end
         end
     end
-
-    # Set starting values with stack replacement multipliers in each strategic period
-    cap_bool = true
-    for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ
-        if capacity(n, t_inv) == 0 && cap_bool
-            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 1)
-        elseif isless(t_inv_pre, t_inv)
-            cap_bool = false
-            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 0)
-        else
-            cap_bool = false
-            set_start_value(m[:elect_usage_mult_sp_b][n, t_inv, t_inv_pre], 1)
-        end
-    end
-    cap_bool = true
-    for t_inv ∈ 𝒯ᴵⁿᵛ, t_inv_pre ∈ 𝒯ᴵⁿᵛ, t_inv_post ∈ 𝒯ᴵⁿᵛ
-        if capacity(n, t_inv) == 0 && cap_bool
-            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 1)
-        elseif isless(t_inv_pre, t_inv) && t_inv_post.sp ≥ t_inv.sp
-            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 0)
-            cap_bool = false
-        else
-            set_start_value(mult_sp_aux_b[t_inv, t_inv_post, t_inv_pre], 1)
-            cap_bool = false
-        end
-    end
 end
+
+
+"""
+    capacity_max(n::AbstractElectrolyzer, t_inv, modeltype::EnergyModel)
+
+Function for calculating the maximum capacity.
+
+    modeltype::EnergyModel
+
+When the modeltype is an `EnergyModel`, it returns the capacity of the
+`AbstractElectrolyzer`.
+
+    modeltype::AbstractInvestmentModel
+
+When the modeltype is an `AbstractInvestmentModel`, it returns the maximum installed capacity.
+
+!!! note
+    If the [`AbstractElectrolyzer`](@ref) node does not have investments, it reuses the
+    default function.
+"""
+capacity_max(n::AbstractElectrolyzer, t_inv, modeltype::EnergyModel) =
+    capacity(n, t_inv)
+
 
 """
     ramp_disjunct(m, n::Reformer, ref_pers::RefPeriods, modeltype::EnergyModel)

@@ -10,7 +10,7 @@ Pages = ["c-methods-EMH.md"]
 
 ```@docs
 EnergyModelsHydrogen.constraints_usage
-EnergyModelsHydrogen.constraints_usage_aux
+EnergyModelsHydrogen.constraints_usage_sp
 EnergyModelsHydrogen.constraints_usage_iterate
 EnergyModelsHydrogen.constraints_previous_usage
 EnergyModelsHydrogen.constraints_rate_of_change_iterate
@@ -30,6 +30,7 @@ EnergyModelsHydrogen.check_commitment_profile
 ## [Utility methods](@id lib-int-met-util)
 
 ```@docs
+EnergyModelsHydrogen.capacity_max
 EnergyModelsHydrogen.linear_reformulation
 EnergyModelsHydrogen.multiplication_variables
 EnergyModelsHydrogen.fix_elect_on_b
