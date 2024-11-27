@@ -2,6 +2,12 @@
 
 ## Unversioned
 
+### Rework of stack replacement
+
+* Replaced the formulation in stack replacement with an approach reducing the number of binary variables.
+* The approach is equivalent to the previous with respect to the results.
+* The documentation is updated with the new formulation.
+
 ### Hydrogen storage
 
 * Developed two nodes for hydrogen storage:

@@ -27,7 +27,7 @@ a hydrogen storage, and a time varying hydrogen demand
 It illustrates the dependency of the electricity requirement on the storage level, and hence,
 utilizes the bilinear-piecewise linear formulation.
 """
-function generate_refomer_example_data()
+function generate_h2_storage_example_data()
     @info "Generate case data - Reformer example"
 
     # Define the different resources and their emission intensity in t CO₂/MWh
@@ -185,7 +185,7 @@ function process_h2_stor_results(m, case)
 end
 
 # Generate the case and model data and run the model
-case, model = generate_refomer_example_data()
+case, model = generate_h2_storage_example_data()
 optimizer = optimizer_with_attributes(
     SCIP.Optimizer,
     "limits/gap" => 1e-3,
