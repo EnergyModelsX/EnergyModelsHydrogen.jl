@@ -23,6 +23,7 @@
   * `constraint/general.jl` for methods dispatching on `EnergyModelsBase` constraints,
   * `constraint/electrolyzer.jl` for functions introduced for `AbstractElectrolyzer` types, and
   * `constraint/reformer.jl` for functions introduced for `Reformer` nodes.
+* Updated the checks with the new functionality from `EnergyModelsBase` v0.8.3.
 
 ## Version 0.7.3 (2024-11-11)
 
