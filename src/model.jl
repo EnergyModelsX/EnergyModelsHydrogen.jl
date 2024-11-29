@@ -16,7 +16,7 @@ Creates the following additional variables for **ALL** electrolyzer nodes:
 - `elect_use_rp[n, t_rp]` is the total time of usage of electrolyzer `n` in representative
   period `t_rp`, declared if the `TimeStructure` includes `RepresentativePeriods`. The value
   is provided in 1000 operational periods duration to avoid a too large matrix range.
-- `elect_stack_replace_sp_b`[n, t_inv] is a binary variable to indicate if electrolyzer `n`
+- `elect_stack_replace_b`[n, t_inv] is a binary variable to indicate if electrolyzer `n`
   has stack replacement (value of 1) in investment period `t_inv`. In this case, the
   efficiency penalty is reset to 0.
 - `elect_efficiency_penalty[n, t]` is a coefficient that accounts for drop in efficiency of
@@ -38,7 +38,7 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{<:AbstractElectrolyzer}, 𝒯,
         𝒯ʳᵖ = repr_periods(𝒯)
         @variable(m, elect_use_rp[𝒩ᴱᴸ, 𝒯ʳᵖ])
     end
-    @variable(m, elect_stack_replace_sp_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ], Bin)
+    @variable(m, elect_stack_replace_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, 0.0 ≤ elect_efficiency_penalty[𝒩ᴱᴸ, 𝒯] ≤ 1.0)
 end
 
@@ -96,7 +96,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
     # Calculation of auxiliary variables used in the calculation of the usage bound and
     # stack replacement
     prod_on = multiplication_variables(m, n, 𝒯, m[:elect_on_b][n, :], modeltype)
-    stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, m[:elect_stack_replace_sp_b][n, :], modeltype)
+    stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, m[:elect_stack_replace_b][n, :], modeltype)
 
     # Constraint for the maximum and minimum production volume
     constraints_capacity(m, n, 𝒯, prod_on, modeltype)

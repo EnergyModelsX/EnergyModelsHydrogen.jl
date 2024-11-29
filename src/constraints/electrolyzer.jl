@@ -76,8 +76,8 @@ function constraints_usage_sp(
     # of a binary and a continuous variable.
     @constraints(m, begin
         m[:elect_prev_use_sp][n, t_inv] ≥ 0
-        m[:elect_prev_use_sp][n, t_inv] ≥ ub * ((1 - m[:elect_stack_replace_sp_b][n, t_inv]) - 1) + aux_var
-        m[:elect_prev_use_sp][n, t_inv] ≤ ub * (1 - m[:elect_stack_replace_sp_b][n, t_inv])
+        m[:elect_prev_use_sp][n, t_inv] ≥ ub * ((1 - m[:elect_stack_replace_b][n, t_inv]) - 1) + aux_var
+        m[:elect_prev_use_sp][n, t_inv] ≤ ub * (1 - m[:elect_stack_replace_b][n, t_inv])
         m[:elect_prev_use_sp][n, t_inv] ≤ aux_var
     end)
 end

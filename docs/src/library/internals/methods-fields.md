@@ -4,7 +4,7 @@
 ## [Index](@id lib-int-met_field-idx)
 
 ```@index
-Pages = ["b-methods-fields.md"]
+Pages = ["methods-fields.md"]
 ```
 
 ## [`AbstractElectrolyzer` types](@id lib-int-met_field-elec)

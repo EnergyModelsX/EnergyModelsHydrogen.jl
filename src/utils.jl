@@ -163,7 +163,7 @@ end
     fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Fixes the variable `:elect_on_b`  in operational periods without capacity and the variable
-`:elect_stack_replace_sp_b` in strategic periods without capacity to 0 to simplify the
+`:elect_stack_replace_b` in strategic periods without capacity to 0 to simplify the
 optimziation problem.
 
 Provides start values to the variables in all other periods as well as start values for
@@ -189,8 +189,8 @@ function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Energ
     cap_bool = true
     for t_inv ∈ 𝒯ᴵⁿᵛ
         if capacity(n, t_inv) == 0 && cap_bool
-            JuMP.fix(m[:elect_stack_replace_sp_b][n, t_inv], 0)
-            set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
+            JuMP.fix(m[:elect_stack_replace_b][n, t_inv], 0)
+            set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
             for t ∈ t_inv
                 JuMP.fix(m[:elect_on_b][n, t], 0)
                 set_start_value(m[:elect_on_b][n, t], 0)
@@ -198,9 +198,9 @@ function fix_elect_on_b(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Energ
         else
             cap_bool = false
             if isfirst(t_inv)
-                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
+                set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
             else
-                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 1)
+                set_start_value(m[:elect_stack_replace_b][n, t_inv], 1)
             end
             for t ∈ t_inv
                 set_start_value(m[:elect_on_b][n, t], 1)

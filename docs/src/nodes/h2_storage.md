@@ -144,7 +144,7 @@ The variables of both [`SimpleHydrogenStorage`](@ref) and [`HydrogenStorage`](@r
 
 The following sections omit the direct inclusion of the vector of hydrogen storage nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N`` for all [`SimpleHydrogenStorage`](@ref) or [`HydrogenStorage`](@ref) types if not stated differently.
-In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
+In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all investment periods).
 
 #### [Standard constraints](@id nodes-h2_storage-math-con-stand)
 
@@ -192,7 +192,7 @@ These standard constraints are:
 
   !!! tip "Why do we use `first()`"
       The variables ``\texttt{stor\_level\_inst}`` are declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
-      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
+      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given investment period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 - `constraints_opex_var`:
 
@@ -205,7 +205,7 @@ These standard constraints are:
   ```
 
   !!! tip "The function `scale_op_sp`"
-      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
+      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and investment periods.
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
@@ -283,7 +283,7 @@ It is calculated through the function `previous_level`.
 
 In the case of hydropower node, we can distinguish the following cases:
 
-1. The first operational period in the first representative period in any strategic period (given by ``typeof(t_{prev}) = typeof(t_{rp, prev})`` and ``typeof(t_{inv,prev}) = NothingPeriod``).
+1. The first operational period in the first representative period in any investment period (given by ``typeof(t_{prev}) = typeof(t_{rp, prev})`` and ``typeof(t_{inv,prev}) = NothingPeriod``).
    In this situation, we can distinguish three cases, the time structure does not include representative periods:
 
    ```math
@@ -306,7 +306,7 @@ In the case of hydropower node, we can distinguish the following cases:
    \end{aligned}
    ```
 
-2. The first operational period in subsequent representative periods in any strategic period (given by ``typeof(t_{prev}) = nothing``) f the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
+2. The first operational period in subsequent representative periods in any investment period (given by ``typeof(t_{prev}) = nothing``) f the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
 
    ```math
    \begin{aligned}

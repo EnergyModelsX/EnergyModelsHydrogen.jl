@@ -145,7 +145,7 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
         @debug "elect_on_b $(value.(m[:elect_on_b]))"
         @debug "elect_prev_use $(value.(m[:elect_prev_use]))"
         @debug "elect_use_sp $(value.(m[:elect_use_sp]))"
-        @debug "elect_stack_replace_sp_b $(value.(m[:elect_stack_replace_sp_b]))"
+        @debug "elect_stack_replace_b $(value.(m[:elect_stack_replace_b]))"
         @debug "elect_efficiency_penalty $(value.(m[:elect_efficiency_penalty]))"
     end
     return (m, case)
@@ -165,7 +165,7 @@ function penalty_test(m, case, params)
     𝒯 = case[:T]
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     penalty = m[:elect_efficiency_penalty]
-    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
+    stack_replace = m[:elect_stack_replace_b][elect, :]
 
     # Calculation of the penalty
     @test sum(
