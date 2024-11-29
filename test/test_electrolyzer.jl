@@ -85,7 +85,7 @@ end
     elect = data[:nodes][3]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
+    stack_replace = m[:elect_stack_replace_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
@@ -122,7 +122,7 @@ end
     elect = data[:nodes][3]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
+    stack_replace = m[:elect_stack_replace_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6
@@ -152,7 +152,7 @@ end
     hydrogen = data[:products][2]
     𝒯     = data[:T]
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    stack_replace = m[:elect_stack_replace_sp_b][elect, :]
+    stack_replace = m[:elect_stack_replace_b][elect, :]
 
     # General test for the number of stack_replacements
     @test sum(value.(stack_replace[t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 𝒯.len - 6

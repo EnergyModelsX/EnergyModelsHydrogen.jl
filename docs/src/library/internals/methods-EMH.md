@@ -3,7 +3,7 @@
 ## [Index](@id lib-int-met-idx)
 
 ```@index
-Pages = ["c-methods-EMH.md"]
+Pages = ["methods-EMH.md"]
 ```
 
 ## [Constraint methods](@id lib-int-met-con)

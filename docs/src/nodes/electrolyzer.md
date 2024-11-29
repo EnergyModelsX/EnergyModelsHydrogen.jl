@@ -132,7 +132,7 @@ These variables are:
   This variable denotes the total usage within an investment period.
 - ``\texttt{elect\_use\_rp}[n_{el}, t_{rp}]``: Usage of electrolyser node ``n_{el}`` in representative period ``t_{rp}``.\
   This variable denotes the total usage within a representative period, if the chosen `TimeStructure` includes `RepresentativePeriods`.
-- ``\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}]``: Indicator variable of electrolyser node ``n_{el}`` in investment period ``t_{inv}`` for stack replacement.\
+- ``\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}]``: Indicator variable of electrolyser node ``n_{el}`` in investment period ``t_{inv}`` for stack replacement.\
   This variable is a **_binary_** variable which indiciates whether stack replacement is occuring at the beginning of  investment period ``t_{inv}`` (1) or not (0).
 - ``\texttt{elect\_efficiency\_penalty}[n_{el}, t]``: Efficiency penalty of electrolyser node ``n_{el}`` in operational period ``t``.\
   The efficiency penalty is calculated irrespectively whether you use a [`SimpleElectrolyzer`](@ref) or an [`Electrolyzer`](@ref) node.
@@ -260,7 +260,7 @@ The fixed operating expenses include the stack replacement:
 \begin{aligned}
 \texttt{opex\_fixed}&[n_{el}, t_{inv}] = \\ &
 opex\_fixed(n_{el}, t_{inv}) \times \texttt{cap\_inst}[n_{el}, first(t_{inv})] + \\ &
-\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}] \times capacity[n_{el}, t_{inv}] \times  \\ &stack\_replacement\_cost(n_{el}, t_{inv}) / duration\_strat(t_{inv})
+\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}] \times capacity[n_{el}, t_{inv}] \times  \\ &stack\_replacement\_cost(n_{el}, t_{inv}) / duration\_strat(t_{inv})
 \end{aligned}
 ```
 
@@ -285,7 +285,7 @@ In the case of investment potential in the node, the stack replacement cost is r
 \begin{aligned}
 \texttt{opex\_fixed}&[n_{el}, t_{inv}] = \\ &
 opex\_fixed(n_{el}, t_{inv}) \times \texttt{cap\_inst}[n_{el}, first(t_{inv})] + \\ &
-\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}] \times \texttt{cap\_current}[n_{el}, t_{inv}] \times \\ &stack\_replacement\_cost(n_{el}, t_{inv}) / duration\_strat(t_{inv})
+\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}] \times \texttt{cap\_current}[n_{el}, t_{inv}] \times \\ &stack\_replacement\_cost(n_{el}, t_{inv}) / duration\_strat(t_{inv})
 \end{aligned}
 ```
 
@@ -331,7 +331,7 @@ The previous usage in the subsequent investment periods is then given by
 ```math
 \begin{aligned}
 \texttt{elect\_prev\_use\_sp}&[n_{el}, t_{inv}] = \\ &
-  \texttt{aux\_var}[n_{el}, t_{inv}] \times (1-\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}]) \\
+  \texttt{aux\_var}[n_{el}, t_{inv}] \times (1-\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}]) \\
 \end{aligned}
 ```
 
@@ -342,18 +342,18 @@ using a direct implememtation of the linear reformulation explained in the secti
 \texttt{elect\_prev\_use\_sp}&[n_{el}, t_{inv}] \geq 0 \\
 
 \texttt{elect\_prev\_use\_sp}&[n_{el}, t_{inv}] \geq \\ &
-  ub(t_{inv}) \times ((1-\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}]) - 1) + \\ &
+  ub(t_{inv}) \times ((1-\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}]) - 1) + \\ &
   \texttt{aux\_var}[n_{el}, t_{inv}] \\
 
 \texttt{elect\_prev\_use\_sp}&[n_{el}, t_{inv}] \leq \\ &
-  ub(t_{inv}) \times (1-\texttt{elect\_stack\_replacement\_b}[n_{el}, t_{inv}]) \\
+  ub(t_{inv}) \times (1-\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}]) \\
 
 \texttt{elect\_prev\_use\_sp}&[n_{el}, t_{inv}] \leq \texttt{aux\_var}[n_{el}, t_{inv}] \\
 \end{aligned}
 ```
 
 in which the upper bound ``ub`` is either the installed capacity or the maximum installed capacity, depending on whether the electrolyzer includes investments, or not.
-These constraints enforce that if stack replacement occurs, that is ``\texttt{elect\_stack\_replacement\_b} = 1``, ``\texttt{elect\_prev\_use\_sp}`` is reset to a value of 0.
+These constraints enforce that if stack replacement occurs, that is ``\texttt{elect\_stack\_replace\_b} = 1``, ``\texttt{elect\_prev\_use\_sp}`` is reset to a value of 0.
 
 If the `TimeStructure` includes representative periods, then the usage in each representative period ``t_{rp}`` is calculated (in the function `constraints_usage_sp_iterate`):
 

@@ -18,7 +18,7 @@ The following sections will provide you with an explanation of the individual fi
 
 !!! danger "Reformer with changing capacities"
     The unit commitment, minimum usage, and rate of change constraints are for the installed capacity.
-    This implies that if you include changing capacities over the course of time or if you include investments, it is required to include a separate node for each strategic period with a changing capacity.
+    This implies that if you include changing capacities over the course of time or if you include investments, it is required to include a separate node for each investment period with a changing capacity.
 
 ### [Standard fields](@id nodes-ref-fields-stand)
 
@@ -39,7 +39,7 @@ The standard fields are given as:
   Hence, it is directly related to the specified `input` and `output` ratios.
   The variable operating expenses can be provided as `OperationalProfile` as well.
 - **`opex_fixed::TimeProfile`**:\
-  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.\
+  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of an investment period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
@@ -116,7 +116,7 @@ A value of 1 corresponds to an operation in the given stage while a value of 0 i
 
 The following sections omit the direction inclusion of the vector of reformer nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n_{ref} ∈ N^{Ref}`` for all [`Reformer`](@ref) types if not stated differently.
-In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
+In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all investment periods).
 
 #### [Standard constraints](@id nodes-ref-math-con-stand)
 
@@ -156,7 +156,7 @@ These standard constraints are:
 
   !!! tip "Why do we use `first()`"
       The variables ``\texttt{stor\_level\_inst}`` are declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
-      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
+      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given investment period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 - `constraints_data`:\
   This function is only called for specified data of the reformer, see above.
@@ -165,7 +165,7 @@ The function `constraints_capacity_installed` is also used in [`EnergyModelsInve
 Nodes with investments are then no longer constrained by the parameter capacity.
 
 The variable ``\texttt{cap\_inst}`` is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
-Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacity in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
+Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacity in the first operational period of a given investment period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 The function `constraints_capacity` is extended with a new method for reformer nodes to account for the minimum and maximum load:
 
@@ -214,7 +214,7 @@ opex\_off(n_{ref}, t) \times \texttt{cap\_inst}[n_{ref}, t] \times \texttt{ref\_
 ```
 
 !!! tip "The function `scale_op_sp`"
-    The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
+    The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and investment periods.
     It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 The linear reformulation is also explained in *[Linear reformulation](@ref  aux-lin_reform-bin_con)*, as explained previously.
@@ -233,9 +233,9 @@ This is enforced through a single constraint given as
 
 ##### [Constraints through separate functions](@id nodes-ref-math-con-add-fun)
 
-Within the function `create_node`, we iterate the through the strategic periods to call three functions, [`EnergyModelsHydrogen.constraints_rate_of_change_iterate`](@ref) for enforcing the limit on the rate of change, [`EnergyModelsHydrogen.constraints_state_seq_iter`](@ref) for enforcing the correct sequencing of the individual states, and [`EnergyModelsHydrogen.constraints_state_time_iter`](@ref) for enforcing the minimum time a node has to be in a given state.
-All functions iterate through the individual time structures (strategic periods, representative periods, operational scenarios) to calculate the proper constraints based on the chosen time structure.
-All functions utilize a cyclic approach in which the last operational period ``t_{last}`` within a strategic period (representative period, if included, or operational scenario, if included) is required to be passed to the constraint.
+Within the function `create_node`, we iterate the through the investment periods to call three functions, [`EnergyModelsHydrogen.constraints_rate_of_change_iterate`](@ref) for enforcing the limit on the rate of change, [`EnergyModelsHydrogen.constraints_state_seq_iter`](@ref) for enforcing the correct sequencing of the individual states, and [`EnergyModelsHydrogen.constraints_state_time_iter`](@ref) for enforcing the minimum time a node has to be in a given state.
+All functions iterate through the individual time structures (investment periods, representative periods, operational scenarios) to calculate the proper constraints based on the chosen time structure.
+All functions utilize a cyclic approach in which the last operational period ``t_{last}`` within an investment period (representative period, if included, or operational scenario, if included) is required to be passed to the constraint.
 
 As outlined, the function `constraints_rate_of_change_iterate` iterates through the time structure to determine the correct last operational period.
 Both the previous, the current, and the last operational periods are then passed to a instance of the parametric type  [`EnergyModelsHydrogen.RefPeriods`](@ref) which allows to either extract the last or previous period using the function  [`EnergyModelsHydrogen.prev_op`](@ref), depending on whether the previous period ``t_{prev}`` is `nothing`.

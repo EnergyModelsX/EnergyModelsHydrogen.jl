@@ -48,17 +48,17 @@ function EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltyp
                 (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
                 (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
             )
-            JuMP.fix(m[:elect_stack_replace_sp_b][n, t_inv], 0)
-            set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
+            JuMP.fix(m[:elect_stack_replace_b][n, t_inv], 0)
+            set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
             for t ∈ t_inv
                 JuMP.fix(m[:elect_on_b][n, t], 0)
                 set_start_value(m[:elect_on_b][n, t], 0)
             end
         else
             if isfirst(t_inv)
-                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 0)
+                set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
             else
-                set_start_value(m[:elect_stack_replace_sp_b][n, t_inv], 1)
+                set_start_value(m[:elect_stack_replace_b][n, t_inv], 1)
             end
             for t ∈ t_inv
                 set_start_value(m[:elect_on_b][n, t], 1)
