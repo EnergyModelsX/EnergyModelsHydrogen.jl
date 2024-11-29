@@ -1,7 +1,11 @@
 """
     EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that an `AbstractElectrolyzer` node is valid.
+This method checks that an *[`AbstractElectrolyzer`](@ref)* node is valid.
+
+It reuses the standard checks of a `NetworkNode` node through calling the function
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The field `cap` is required to be non-negative.
@@ -29,19 +33,7 @@ function EMB.check_node(
 )
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
-    @assert_or_log(
-        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
-        "The capacity must be non-negative."
-    )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(
-        all(inputs(n, p) ≥ 0 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-    @assert_or_log(
-        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
-    )
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     check_load_lim(n, 𝒯)
     @assert_or_log(
         0 ≤ degradation_rate(n) < 100,
@@ -74,7 +66,11 @@ end
 """
     EMB.check_node(n::AbstractReformer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that a `AbstractReformer` node is valid.
+This method checks that an *[`AbstractReformer`](@ref)* node is valid.
+
+It reuses the standard checks of a `NetworkNode` node through calling the function
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The field `cap` is required to be non-negative.
@@ -103,21 +99,7 @@ function EMB.check_node(
     modeltype::EnergyModel,
     check_timeprofiles::Bool,
 )
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-
-    @assert_or_log(
-        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
-        "The capacity must be non-negative."
-    )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(
-        all(inputs(n, p) ≥ 0 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-    @assert_or_log(
-        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
-    )
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     check_load_lim(n, 𝒯)
     @assert_or_log(
         all(opex_startup(n, t) ≥ 0 for t ∈ 𝒯),
@@ -150,7 +132,11 @@ end
 """
     EMB.check_node(n::SimpleHydrogenStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that a `SimpleHydrogenStorage` node is valid.
+This method checks that a *[`SimpleHydrogenStorage`](@ref)* node is valid.
+
+It reuses the standard checks of a `Storage` node through calling the function
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
@@ -174,36 +160,14 @@ function EMB.check_node(
     modeltype::EnergyModel,
     check_timeprofiles::Bool
 )
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     par_charge = charge(n)
     par_level = level(n)
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
 
-    @assert_or_log(
-        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
-        "The charge capacity must be non-negative."
-    )
     @assert_or_log(
         all(capacity(par_charge, t) * level_charge(n) ≤ capacity(par_level, t) for t ∈ 𝒯),
         "The charge capacity cannot be larger than the the level capacity devided by the " *
         "value of the field `level_charge`."
-    )
-    if isa(par_charge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
-        "The level capacity must be non-negative."
-    )
-    if isa(par_level, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(inputs(n, p) ≥ 0 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-    @assert_or_log(
-        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
     )
     @assert_or_log(
         discharge_charge(n) > 0,
@@ -217,7 +181,11 @@ end
 """
     EMB.check_node(n::HydrogenStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that a [`HydrogenStorage`](@ref) node is valid.
+This method checks that a *[`HydrogenStorage`](@ref)* node is valid.
+
+It reuses the standard checks of a `Storage` node through calling the function
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
@@ -244,36 +212,14 @@ function EMB.check_node(
     modeltype::EnergyModel,
     check_timeprofiles::Bool,
 )
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     par_charge = charge(n)
     par_level = level(n)
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
 
-    @assert_or_log(
-        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
-        "The charge capacity must be non-negative."
-    )
     @assert_or_log(
         all(capacity(par_charge, t) * level_charge(n) ≤ capacity(par_level, t) for t ∈ 𝒯),
         "The charge capacity cannot be larger than the the level capacity devided by the " *
         "value of the field `level_charge`."
-    )
-    if isa(par_charge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
-        "The level capacity must be non-negative."
-    )
-    if isa(par_level, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(inputs(n, p) ≥ 0 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-    @assert_or_log(
-        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
     )
     @assert_or_log(
         discharge_charge(n) > 0,

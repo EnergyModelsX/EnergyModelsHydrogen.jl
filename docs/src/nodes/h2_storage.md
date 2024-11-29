@@ -56,7 +56,7 @@ The fields of both storage nodes are given as:
       However, the chosen value for the electricity resource impacts the required compression energy.
 
       [`HydrogenStorage`](@ref) do not have the fields input and output.
-      The individual resources used as input and output are instead obtained through dispatching on the functions [`inputs`](@extref EnergyModelsBase.inputs) and [`outputs`](@extref EnergyModelsBase.outputs).
+      The individual resources used as input and output are instead obtained through dispatching on the functions [`inputs`](@extref EnergyModelsBase.inputs-Tuple{EnergyModelsBase.Node}) and [`outputs`](@extref EnergyModelsBase.outputs-Tuple{EnergyModelsBase.Node}).
       The inputs correspond in this case to the field `stor_res` and `el_res`.
       The latter is explained the following section.
 - **`data::Vector{Data}`**:\
