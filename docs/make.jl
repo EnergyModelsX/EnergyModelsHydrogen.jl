@@ -53,6 +53,9 @@ makedocs(
             "Reformer" => "nodes/reformer.md",
             "H₂ storage" => "nodes/h2_storage.md",
         ],
+        "How to" => Any[
+            "Contribute to EnergyModelsHydrogen" => "how-to/contribute.md",
+        ],
         "Auxiliary functions" => Any[
             "Linear reformulation" => "aux-fun/lin-reform.md",
             "Compression energy" => "aux-fun/pressure_calc.md",

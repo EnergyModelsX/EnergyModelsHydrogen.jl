@@ -44,6 +44,15 @@ Pages = [
 Depth = 1
 ```
 
+## How to guides
+
+```@contents
+Pages = [
+    "how-to/contribute.md",
+]
+Depth = 1
+```
+
 ## Auxiliary functions
 
 ```@contents

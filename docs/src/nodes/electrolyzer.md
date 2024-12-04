@@ -73,7 +73,7 @@ The standard fields are given as:
   The degradation rate is the reduction in efficiency of the electrolyser due to utilization.
   It has to be provided as a percentage drop in efficiency in 1000 time the length of an operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
   If a duration of 1 in an operational period corresponds to an hour, then the unit is %/1000h.\
-  The degradation rate has to be given as ``[0, 1)``
+  The degradation rate has to be given as ``[0, 1)``.
 - **`stack_replacement_cost::TimeProfile`**:\
   The stack replacement cost corresponds to the costs associated with stack replacement.
   It is smaller than the capital expenditures as only the stack has to be replaced.
