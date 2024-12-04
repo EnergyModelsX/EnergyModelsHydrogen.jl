@@ -24,6 +24,7 @@
   * `constraint/electrolyzer.jl` for functions introduced for `AbstractElectrolyzer` types, and
   * `constraint/reformer.jl` for functions introduced for `Reformer` nodes.
 * Updated the checks with the new functionality from `EnergyModelsBase` v0.8.3.
+* Included a *how to contribute* section to documentation.
 
 ## Version 0.7.3 (2024-11-11)
 
@@ -38,7 +39,7 @@
 
 ### Bugfix
 
-* Reverted change included in 0.7.0 point 2 as the rpevious implementation was after all correct.
+* Reverted change included in 0.7.0 point 2 as the previous implementation was after all correct.
 * The error did not have any impact on the results if the lower bound was specified as larger than 0. It would however impact the linear relaxation as the constraints were not as tight.
 
 ## Version 0.7.1 (2024-10-24)
@@ -130,7 +131,7 @@
 
 ### Adjustmends to updates in EnergyModelsBase
 
-Adjustment to version 0.3.0, namely:
+Adjustment to version `EnergyModelsBase` 0.3.0, namely:
 
 * The removal of emissions from `Node` type definition that do not require them. In this case, this is the type `Electrolyzer` and all tests.
 * Adjustment of the changes in the call of `variables_node`.

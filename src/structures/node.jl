@@ -276,7 +276,7 @@ UnionRampDown = Union{RampBi, RampDown}
     ramp_down(ramp_param::UnionRampDown)
     ramp_down(ramp_param::UnionRampDown, t)
 
-Returns the maximum negative rate of change aof UnionRampDown `ramp_param` as `TimeProfile`
+Returns the maximum negative rate of change of UnionRampDown `ramp_param` as `TimeProfile`
 *or* in operational period `t`.
 """
 ramp_down(ramp_param::UnionRampDown) = ramp_param.down

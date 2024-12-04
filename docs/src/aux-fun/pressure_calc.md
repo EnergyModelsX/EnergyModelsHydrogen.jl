@@ -44,6 +44,6 @@ The total compression energy requirement (without unit, as fraction of the store
 W = \frac{\sum_{i} W_p(p_{i,1}, p_{i,2})}{1000 M \times \text{LHV}}
 ```
 
-using the molar mass ``M`` (in g/mol) and the lower heating value LHV (in MJ/kg)
+using the molar mass ``M`` (in g/mol) and the lower heating value LHV (in MJ/kg).
 
 The energy demand in a compressor train is implemented through the function [`energy_curve`](@ref EnergyModelsHydrogen.energy_curve).

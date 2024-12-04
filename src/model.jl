@@ -48,14 +48,14 @@ end
 Set all constraints for an `AbstractElectrolyzer`. Can serve as fallback option for all
 unspecified subtypes of `AbstractElectrolyzer`.
 
-It differs from the function for a standard `Storage` node through both calling additional
-functions as well as for calculations within the function.
+It differs from the function for a standard [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode)
+node through both calling additional functions as well as for calculations within the function.
 
 # Called constraint functions
 - [`constraints_usage`](@ref),
+- [`constraints_data`](@extref EnergyModelsBase.constraints_data) for all `node_data(n)`,
 - [`constraints_flow_in`](@extref EnergyModelsBase.constraints_flow_in),
 - [`constraints_flow_out`](@extref EnergyModelsBase.constraints_flow_out),
-- [`constraints_data`](@extref EnergyModelsBase.constraints_data) for all `node_data(n)`,
 - [`constraints_capacity`](@extref EnergyModelsBase.constraints_capacity), and
 - [`constraints_opex_var`](@extref EnergyModelsBase.constraints_opex_var).
 """
@@ -139,9 +139,10 @@ end
 """
     EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
 
-Set all constraints for an `Reformer`.
-It differs from the function for a standard `Storage` node through both calling additional
-functions as well as for calculations within the function.
+Set all constraints for a `Reformer`.
+
+It differs from the function for a standard [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode)
+node through both calling additional functions as well as for calculations within the function.
 
 # Called constraint functions
 - [`constraints_flow_in`](@extref EnergyModelsBase.constraints_flow_in),
@@ -162,8 +163,8 @@ function EMB.create_node(m, n::Reformer, 𝒯, 𝒫, modeltype::EnergyModel)
     constraints_flow_in(m, n, 𝒯, modeltype)
     constraints_flow_out(m, n, 𝒯, modeltype)
 
-        # Iterate through all data and set up the constraints corresponding to the data
-        for data ∈ node_data(n)
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
         constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
     end
 
