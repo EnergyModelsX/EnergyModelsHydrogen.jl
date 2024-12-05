@@ -73,5 +73,5 @@ makedocs(
 )
 
 deploydocs(;
-    repo = "github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl.git",
+    repo = "github.com/EnergyModelsX/EnergyModelsHydrogen.jl.git",
 )
