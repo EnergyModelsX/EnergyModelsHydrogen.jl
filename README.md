@@ -1,18 +1,16 @@
 # EnergyModelsHydrogen
 
-[![Build Status](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/badges/main/pipeline.svg)](https://gitlab.sintef.no/clean_export/energymodelshydrogen.jl/-/jobs)
-[![Stable](https://img.shields.io/badge/docs-stable-4495d1.svg)](https://clean_export.pages.sintef.no/energymodelshydrogen.jl)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06619/status.svg)](https://doi.org/10.21105/joss.06619)
+[![Build Status](https://github.com/EnergyModelsX/EnergyModelsHydrogen.jl/workflows/CI/badge.svg)](https://github.com/EnergyModelsX/EnergyModelsHydrogen.jl/actions?query=workflow%3ACI)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://energymodelsx.github.io/EnergyModelsHydrogen.jl/stable/)
+[![In Development](https://img.shields.io/badge/docs-dev-blue.svg)](https://energymodelsx.github.io/EnergyModelsHydrogen.jl/dev/)
 
 `EnergyModelsHydrogen` is a package extending `EnergyModelsBase` to model hydrogen production in greater detail.
 It provides new types for both electrolysis and reformer technologies.
 
-> **Note**
->
-> This is an internal pre-release not intended for distribution outside the project consortium.
-
-> **Warning**
->
-> This package needs a non-linear non-convex solver to run the tests. Examples of supported solvers are SCIP and Gurobi.
+> [!IMPORTANT]
+> Some nodes of the package (`Electrolyzer` and `HydrogenStorage`) require a solver supporting `MOI.ScalarQuadraticFunction{Float64}` in `MOI.EqualTo{Float64}`  of `MathOptInterface` due to the implementation of bilinear equations.
+> Examples of supported solvers are *[SCIP](https://github.com/scipopt/SCIP.jl)* and *[Gurobi](https://github.com/jump-dev/Gurobi.jl)*.
 
 ## Usage
 
@@ -66,4 +64,4 @@ For earlier work, see our [paper in Applied Energy](https://www.sciencedirect.co
 
 ## Project Funding
 
-The development of `EnergyModelsBase` was funded by the Norwegian Research Council in the project [Clean Export](https://www.sintef.no/en/projects/2020/cleanexport/), project number [308811](https://prosjektbanken.forskningsradet.no/project/FORISS/308811)
+The development of `EnergyModelsBase` was funded by the Norwegian Research Council in the project [Clean Export](https://www.sintef.no/en/projects/2020/cleanexport/), project number [308811](https://prosjektbanken.forskningsradet.no/project/FORISS/308811) as well as the Horizon Europe project [iDesignRES](https://idesignres.eu/), Grant Agreement No. 101095849.

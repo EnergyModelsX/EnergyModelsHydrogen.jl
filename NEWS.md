@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unversioned
+## Version 0.8.0 (2024-12-05)
 
 ### Rework of stack replacement
 

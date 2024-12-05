@@ -103,7 +103,7 @@ Boths nodes have the following fields:
   It corresponds to the pressure at the boundaries of the storage node.
 - **`p_max::Float64`**:\
   The maximum pressure in the vessel is also required for stability purposes.
-  Depending on the storage type, this pressure is either defined through the wall properties (when considering small on-site storage) or through the depth (when considering storage in salt caverns),
+  Depending on the storage type, this pressure is either defined through the wall properties (when considering small on-site storage) or through the depth (when considering storage in salt caverns).
 
 !!! note "Allowed values and units"
     All pressures have to be positive.
