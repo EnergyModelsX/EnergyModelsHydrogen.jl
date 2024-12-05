@@ -9,7 +9,7 @@
    ```
 
    These packages are required as we do not only use them internally, but also for building a model.
-3. Install the package [`EnergyModelsHydrogen`](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/)
+3. Install the package [`EnergyModelsHydrogen`](https://energymodelsx.github.io/EnergyModelsHydrogen.jl/)
 
    ```julia
    ] add EnergyModelsHydrogen
