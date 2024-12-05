@@ -28,6 +28,7 @@ The mathematical description can be found on the page *[Hydrogen storage nodes](
 ```@contents
 Pages = [
     "manual/quick-start.md",
+    "manual/simple-example.md",
     "manual/NEWS.md",
 ]
 Depth = 1

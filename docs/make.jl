@@ -45,6 +45,7 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
+            "Examples" => "manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
         ],
         "Nodes" => Any[
