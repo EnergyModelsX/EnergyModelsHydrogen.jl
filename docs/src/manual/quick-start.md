@@ -12,7 +12,7 @@
 3. Install the package [`EnergyModelsHydrogen`](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/)
 
    ```julia
-   ] add You have to add the package `EnergyModelsHydrogen` to your current project in order to run the examples.
+   ] add EnergyModelsHydrogen
    ```
 
 You also have to install a solver for solving the optimization problem.
