@@ -23,13 +23,14 @@ If you find `EnergyModelsHydrogen` useful in your work, we kindly request that y
 
 ```bibtex
 @article{hellemo2024energymodelsx,
-  title={EnergyModelsX: Flexible Energy Systems Modelling with Multiple Dispatch},
-  author={Hellemo, Lars and B{\o}dal, Espen Flo and Holm, Sigmund Eggen and Pinel, Dimitri and Straus, Julian},
-  journal={Journal of Open Source Software},
-  volume={9},
-  number={97},
-  pages={6619},
-  year={2024}
+  title = {EnergyModelsX: Flexible Energy Systems Modelling with Multiple Dispatch},
+  author = {Hellemo, Lars and B{\o}dal, Espen Flo and Holm, Sigmund Eggen and Pinel, Dimitri and Straus, Julian},
+  journal = {Journal of Open Source Software},
+  volume = {9},
+  number = {97},
+  pages = {6619},
+  year = {2024},
+  doi = {https://doi.org/10.21105/joss.06619},
 }
 ```
 
@@ -37,12 +38,13 @@ If you utilize the `Reformer` node, we kindly request that you cite the followin
 
 ```bibtex
 @article{svendsmark2024,
-  title = {Developing hydrogen energy hubs: {T}he role of H$_2$ prices, wind power and infrastructure investments in Northern Norway},
+  title = {Developing hydrogen energy hubs: {T}he role of {H}$_2$ prices, wind power and infrastructure investments in {N}orthern {N}orway},
   author = {Erik Svendsmark and Julian Straus and Pedro {Crespo del Granado}},
   journal = {Applied Energy},
   volume = {376},
   pages = {124130},
   year = {2024},
+  doi = {https://doi.org/10.1016/j.apenergy.2024.124130}
   }
 ```
 
