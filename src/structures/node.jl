@@ -456,26 +456,6 @@ operational period `t`.
 ramp_down(n::AbstractReformer) = ramp_down(ramp_limit(n))
 ramp_down(n::AbstractReformer, t) = ramp_down(ramp_limit(n), t)
 
-# """
-#     mutable struct PhysicalParameters
-
-# The `PhysicalParameters` correspond to the parameters required for the compression
-# calculations
-# """
-# mutable struct PhysicalParameters
-#     T::Float64
-#     p_min::Float64
-#     p_charge::Float64
-#     p_max::Float64
-#     M::Float64
-#     κ::Float64
-#     lhv::Float64
-#     hhv::Float64
-#     PR::Float64
-#     PRₘₐₓ::Float64
-
-# end
-
 """
     AbstractH2Storage{T} <: Storage{T}
 

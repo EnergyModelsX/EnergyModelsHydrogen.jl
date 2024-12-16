@@ -45,12 +45,12 @@ The fields of both storage nodes are given as:
       Similarly, you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
       The variable operating expenses can be provided as `OperationalProfile` as well.
       In addition, all capacity and fixed OPEX values have to be non-negative.
-- **`stor_res::ResourceEmit`**:\
+- **`stor_res::ResourceCarrier`**:\
   The `stor_res` is the stored [`Resource`](@extref EnergyModelsBase.Resource).
 - **`input::Dict{<:Resource,<:Real}`** and **`output::Dict{<:Resource,<:Real}`**:\
   Both fields describe the `input` and `output` [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
   All values have to be non-negative.
-  !!! indo "Meaning in both nodes"
+  !!! info "Meaning in both nodes"
       In the case of a [`SimpleHydrogenStorage`](@ref), the input should correspond to the hydogen and electricity resources.
       The chosen value in the dictionary for the hydrogen resource is not relevant.
       However, the chosen value for the electricity resource impacts the required compression energy.

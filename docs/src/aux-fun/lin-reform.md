@@ -2,7 +2,7 @@
 
 ## [Product of continuous and binary variable](@id aux-lin_reform-bin_con)
 
-### General approach
+### [General approach](@id aux-lin_reform-bin_con-gen)
 
 Consider the product ``z`` between a continuous variable ``x`` and a binary variable ``y`` with ``x`` being constrained as ``x \in [lb, ub]``.
 In this case, it is possible to reformulate the product through linear inequality constraints:
@@ -18,7 +18,7 @@ The first line enforces that if ``y = 1``, then ``z \in [lb, ub]``, otherwise, `
 The second line enforces that ``z = x`` if ``y = 1``.
 The constraint is inactive if ``y = 0``.
 
-### Indexing in `EnergyModelsHydrogen`
+### [Indexing in `EnergyModelsHydrogen`](@id aux-lin_reform-bin_con-idx)
 
 `EnergyModelsHydrogen` provides two functions for the linear reformulation which differ with respect to the indexing of the individual variables.
 It would be also possible to include the indexing within the function call, but it is preferable to create the anonymous auxiliary variables within a single call.
@@ -49,5 +49,3 @@ z & \geq \sum_{i=1}^n x_i - (n-1)
 ```
 
 This reformulation is exact.
-The reformulation is not implemented as an auxiliary function.
-Instead it is directly included in the `EMB.create_node()` function for `AbtractElectrolyzer` nodes.
