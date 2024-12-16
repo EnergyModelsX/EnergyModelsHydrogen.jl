@@ -4,7 +4,7 @@
 ## [Index](@id lib-int-types-idx)
 
 ```@index
-Pages = ["types.md"]
+Pages = ["types-EMH.md"]
 ```
 
 ## [Nodal supertypes](@id lib-int-types-node)
