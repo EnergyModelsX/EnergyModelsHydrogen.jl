@@ -54,8 +54,8 @@ end
     penalty_test(m, data, params_inv)
 
     # Reassign types
-    elect = data[:nodes][3]
-    𝒯     = data[:T]
+    elect = get_nodes(data)[3]
+    𝒯     = get_time_struct(data)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
 
     # Test that there are no quadratic constraints for SimpleElectrolyzer types
@@ -82,8 +82,8 @@ end
     penalty_test(m, data, params_stack)
 
     # Reassign types
-    elect = data[:nodes][3]
-    𝒯     = data[:T]
+    elect = get_nodes(data)[3]
+    𝒯     = get_time_struct(data)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
     stack_replace = m[:elect_stack_replace_b][elect, :]
 
@@ -119,8 +119,8 @@ end
     penalty_test(m, data, params_rep)
 
     # Reassign types
-    elect = data[:nodes][3]
-    𝒯     = data[:T]
+    elect = get_nodes(data)[3]
+    𝒯     = get_time_struct(data)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
     stack_replace = m[:elect_stack_replace_b][elect, :]
 
@@ -148,9 +148,9 @@ end
     penalty_test(m, data, params_elec)
 
     # Reassign types
-    elect = data[:nodes][3]
-    hydrogen = data[:products][2]
-    𝒯     = data[:T]
+    elect = get_nodes(data)[3]
+    hydrogen = get_products(data)[2]
+    𝒯     = get_time_struct(data)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
     stack_replace = m[:elect_stack_replace_b][elect, :]
 

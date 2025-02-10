@@ -111,13 +111,8 @@ function build_run_electrolyzer_model(params; cap=FixedProfile(100))
         Direct("l4", Central_node, End_hydrogen_consumer)
     ]
 
-    # Step 6: Include all parameters in a single dictionary
-    case = Dict(
-        :T => T,
-        :products => products,
-        :nodes => Array{EMB.Node}(nodes),
-        :links => Array{EMB.Link}(links),
-    )
+    # Step 6: Include all parameters in the input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
     # B Formulating and running the optimization problem
     if EMI.has_investment(PEM_electrolyzer)
@@ -161,8 +156,8 @@ the previous usage with stack replacement is correctly calculated.
 function penalty_test(m, case, params)
 
     # Reassign types and variables
-    elect = case[:nodes][3]
-    𝒯 = case[:T]
+    elect = get_nodes(case)[3]
+    𝒯 = get_time_struct(case)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     penalty = m[:elect_efficiency_penalty]
     stack_replace = m[:elect_stack_replace_b][elect, :]
@@ -311,13 +306,8 @@ function build_run_reformer_model(params)
     end
 
 
-    # Step 7: Include all parameters in a single dictionary
-    case = Dict(
-        :T => T,
-        :products => products,
-        :nodes => Array{EMB.Node}(nodes),
-        :links => Array{EMB.Link}(links),
-    )
+    # Step 7: Include all parameters in the input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
     # B Formulating and running the optimization problem
 
@@ -352,8 +342,8 @@ Test function for analysing that the reformer is producing at least in a single 
 """
 function reformer_test(m, case, params)
 
-    𝒯 = case[:T]
-    ref = case[:nodes][3]
+    𝒯 = get_time_struct(case)
+    ref = get_nodes(case)[3]
 
     @test termination_status(m) == MOI.OPTIMAL
     @test sum(value.(m[:ref_on_b][ref, t]) for t ∈ 𝒯) > 0
@@ -466,13 +456,8 @@ function build_run_h2_storage_model(params)
         Direct("h2_source-h2_sink", h2_source, h2_sink)
     ]
 
-    # Step 7: Include all parameters in a single dictionary
-    case = Dict(
-        :T => T,
-        :products => products,
-        :nodes => Array{EMB.Node}(nodes),
-        :links => Array{EMB.Link}(links),
-    )
+    # Step 7: Include all parameters in parameters in the input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
     # B Formulating and running the optimization problem
     model = OperationalModel(

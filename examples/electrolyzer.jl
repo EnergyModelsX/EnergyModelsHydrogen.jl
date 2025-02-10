@@ -92,13 +92,9 @@ function generate_electrolyzer_example_data()
         Direct("electrolyzer-h2_demand", nodes[2], nodes[3], Linear())
     ]
 
-    # WIP data structure
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T,
-    )
+
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -114,8 +110,8 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_elec_results(m, case)
     # Extract the nodes and the strategic periods from the data
-    elect = case[:nodes][2]
-    𝒯ᴵⁿᵛ = strategic_periods(case[:T])
+    elect = get_nodes(case)[2]
+    𝒯ᴵⁿᵛ = strategic_periods(get_time_struct(case))
 
     # Extract the first operational period of each strategic period
     first_op = [first(t_inv) for t_inv ∈ 𝒯ᴵⁿᵛ]
