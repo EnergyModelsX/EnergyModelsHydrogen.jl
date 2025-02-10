@@ -37,8 +37,8 @@ end
     reformer_test(m, case, params_used)
 
     # Extract the required parameters
-    𝒯 = case[:T]
-    ref = case[:nodes][3]
+    𝒯 = get_time_struct(case)
+    ref = get_nodes(case)[3]
     ops = collect(𝒯)
 
     # Test that always a single state is active
@@ -69,8 +69,8 @@ end
         reformer_test(m, case, params_used)
 
         # Extract the required parameters
-        𝒯 = case[:T]
-        ref = case[:nodes][3]
+        𝒯 = get_time_struct(case)
+        ref = get_nodes(case)[3]
         ops = collect(𝒯)
 
         # Test that the system is limited by the minimum and maximum usage
@@ -104,8 +104,8 @@ end
         reformer_test(m, case, params_used)
 
         # Extract the required parameters
-        𝒯 = case[:T]
-        ref = case[:nodes][3]
+        𝒯 = get_time_struct(case)
+        ref = get_nodes(case)[3]
         ops = collect(𝒯)
 
         # Test that the system is limited by the minimum and maximum usage
@@ -130,8 +130,8 @@ end
         reformer_test(m, case, params_used)
 
         # Extract the required parameters
-        𝒯 = case[:T]
-        ref = case[:nodes][3]
+        𝒯 = get_time_struct(case)
+        ref = get_nodes(case)[3]
         ops = collect(𝒯)
 
         # Test that the system is behavioung exactly the way it should
@@ -169,8 +169,8 @@ end
         reformer_test(m, case, params_used)
 
         # Extract the required parameters
-        𝒯 = case[:T]
-        ref = case[:nodes][3]
+        𝒯 = get_time_struct(case)
+        ref = get_nodes(case)[3]
         ops = collect(𝒯)
 
         # Test that the system is behavioung exactly the way it should
@@ -222,8 +222,8 @@ end
         reformer_test(m, case, params_used)
 
         # Extract the required parameters
-        𝒯 = case[:T]
-        ref = case[:nodes][3]
+        𝒯 = get_time_struct(case)
+        ref = get_nodes(case)[3]
         ops = collect(𝒯)
 
         # Test that the system is behavioung exactly the way it should

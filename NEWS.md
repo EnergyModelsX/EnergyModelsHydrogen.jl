@@ -1,5 +1,12 @@
 # Release Notes
 
+## Version 0.8.1 (2025-02-10)
+
+* Adjusted to [`EnergyModelsBase` v0.9.0](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.0):
+  * Increased version nubmer for EMB.
+  * Model worked without adjustments.
+  * Adjustments only required for simple understanding of changes.
+
 ## Version 0.8.0 (2024-12-05)
 
 ### Rework of stack replacement

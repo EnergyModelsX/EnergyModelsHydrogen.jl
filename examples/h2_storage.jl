@@ -110,13 +110,8 @@ function generate_h2_storage_example_data()
         Direct("h2_storage-h2_demand", nodes[3], nodes[4], Linear())
     ]
 
-    # WIP data structure
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T,
-    )
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -127,9 +122,9 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_h2_stor_results(m, case)
     # Extract the nodes and the first strategic period from the data
-    supply, h2_stor = case[:nodes][[2,3]]           # Extract the h2 supply and storage node
-    Power = case[:products][1]                      # Extract the electricity resource
-    sp1 = collect(strategic_periods(case[:T]))[1]   # Extract the first strategic period
+    supply, h2_stor = get_nodes(case)[[2,3]]           # Extract the h2 supply and storage node
+    Power = get_products(case)[1]                      # Extract the electricity resource
+    sp1 = collect(strategic_periods(get_time_struct(case)))[1]   # Extract the first strategic period
 
     # Extracting the different pressures and calculate the multiplier
     pₘᵢₙ = EMH.p_min(h2_stor)

@@ -133,13 +133,8 @@ function generate_refomer_example_data()
         Direct("reformer-co2_storage", nodes[3], nodes[5], Linear())
     ]
 
-    # WIP data structure
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T,
-    )
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -150,8 +145,8 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_ref_results(m, case)
     # Extract the nodes and the first strategic period from the data
-    reformer, demand = case[:nodes][[3,4]]          # Extract the reformer and demand node
-    sp1 = collect(strategic_periods(case[:T]))[1]   # Extract the first strategic period
+    reformer, demand = get_nodes(case)[[3,4]]          # Extract the reformer and demand node
+    sp1 = collect(strategic_periods(get_time_struct(case)))[1]   # Extract the first strategic period
 
     # Reformer variables
     load = JuMP.Containers.rowtable(                # Capacity utilization

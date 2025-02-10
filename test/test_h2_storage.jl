@@ -22,12 +22,10 @@ params_dict = Dict(
     (m, case) = build_run_h2_storage_model(params_used)
 
     # Extract the sets and variables
-    power = case[:products][1]
-    h2 = case[:products][2]
-    h2_stor = case[:nodes][3]
-    h2_demand = case[:nodes][4]
+    power, h2 = get_products(case)[[1,2]]
+    h2_stor, h2_demand = get_nodes(case)[[3,4]]
     flow_in = value.(m[:flow_in][h2_stor, :, :])
-    𝒯 = case[:T]
+    𝒯 = get_time_struct(case)
 
     # Test that the electricity demand is correctly included
     # (showing that we do not need a new function)
@@ -94,12 +92,10 @@ end
         (m, case) = build_run_h2_storage_model(params_used)
 
         # Extract the sets and variables
-        power = case[:products][1]
-        h2 = case[:products][2]
-        h2_stor = case[:nodes][3]
-        h2_demand = case[:nodes][4]
+        power, h2 = get_products(case)[[1,2]]
+        h2_stor, h2_demand = get_nodes(case)[[3,4]]
         flow_in = value.(m[:flow_in][h2_stor, :, :])
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
 
         # Save the results
         flow_el[:equal] = [flow_in[t, power] for t ∈ 𝒯]
@@ -130,12 +126,10 @@ end
         (m, case) = build_run_h2_storage_model(params_used)
 
         # Extract the sets and variables
-        power = case[:products][1]
-        h2 = case[:products][2]
-        h2_stor = case[:nodes][3]
-        h2_demand = case[:nodes][4]
+        power, h2 = get_products(case)[[1,2]]
+        h2_stor, h2_demand = get_nodes(case)[[3,4]]
         flow_in = value.(m[:flow_in][h2_stor, :, :])
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
 
         # Save the results
         flow_el[:lower] = [flow_in[t, power] for t ∈ 𝒯]
@@ -170,12 +164,10 @@ end
         (m, case) = build_run_h2_storage_model(params_used)
 
         # Extract the sets and variables
-        power = case[:products][1]
-        h2 = case[:products][2]
-        h2_stor = case[:nodes][3]
-        h2_demand = case[:nodes][4]
+        power, h2 = get_products(case)[[1,2]]
+        h2_stor, h2_demand = get_nodes(case)[[3,4]]
         flow_in = value.(m[:flow_in][h2_stor, :, :])
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
 
         # Save the results
         flow_el[:higher] = [flow_in[t, power] for t ∈ 𝒯]
