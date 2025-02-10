@@ -1,7 +1,7 @@
 name = "EnergyModelsHydrogen"
 uuid = "44855f8b-b147-4985-ac18-48817d03c548"
 authors = ["Julian Straus <Julian.Straus@sintef.no>, Avinash Subramanian"]
-version = "0.8.0"
+version = "0.8.1"
 
 [deps]
 EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
