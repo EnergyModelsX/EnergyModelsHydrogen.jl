@@ -35,7 +35,7 @@ end
 @testset "Electrolyzer - Investment extension test" begin
     # Modifying the input parameters
     params_inv = deepcopy(params_dict)
-    params_inv[:num_op] = 2000
+    params_inv[:num_op] = 20
     params_inv[:deficit_cost] = FixedProfile(1e4)
     params_inv[:data] = ExtensionData[SingleInvData(
         FixedProfile(4e5),

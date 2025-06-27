@@ -2,6 +2,12 @@
 
 ## Unversioned
 
+### Bugfix
+
+* Fixed a bug when using `OperationalScenarios` with `Reformer` nodes.
+
+### Other
+
 * Renamed `Data` to `ExtensionData` as introduced in [`EnergyModelsBase` v0.9.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.1).
 
 ## Version 0.8.1 (2025-02-10)
