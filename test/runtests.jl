@@ -21,8 +21,6 @@ const OPTIMIZER = optimizer_with_attributes(
     MOI.Silent() => true,
 )
 
-include("utils.jl")
-
 @testset "Hydrogen" begin
     @testset "Hydrogen | Electrolyzer" begin
         include("test_electrolyzer.jl")
