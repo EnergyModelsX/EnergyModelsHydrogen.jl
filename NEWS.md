@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unversioned
+## Version 0.8.2 (2025-06-27)
 
 ### Bugfix
 
@@ -8,6 +8,8 @@
 
 ### Other
 
+* Reworked the test set to be consistent with the other packages.
+* Added missing tests.
 * Renamed `Data` to `ExtensionData` as introduced in [`EnergyModelsBase` v0.9.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.1).
 
 ## Version 0.8.1 (2025-02-10)

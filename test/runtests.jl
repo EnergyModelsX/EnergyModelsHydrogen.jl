@@ -11,8 +11,15 @@ const EMB = EnergyModelsBase
 const EMI = EnergyModelsInvestments
 const EMH = EnergyModelsHydrogen
 
+const TEST_ATOL = 1e-6
+⪆(x, y) = x > y || isapprox(x, y; atol = TEST_ATOL)
+⪅(x, y) = x < y || isapprox(x, y; atol = TEST_ATOL)
 
-include("utils.jl")
+const OPTIMIZER = optimizer_with_attributes(
+    SCIP.Optimizer,
+    "limits/gap" => 1e-4,
+    MOI.Silent() => true,
+)
 
 @testset "Hydrogen" begin
     @testset "Hydrogen | Electrolyzer" begin
