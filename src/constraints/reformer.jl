@@ -253,7 +253,7 @@ function constraints_state_time_iter(
     for t_scp ∈ opscenarios(per)
         t_last = last(t_scp)
         ts = t_scp.operational.operational
-        constraiteants_state_time_iter(m, n, t_scp, t_last, ts, modeltype)
+        constraints_state_time_iter(m, n, t_scp, t_last, ts, modeltype)
     end
 end
 function constraints_state_time_iter(
