@@ -47,12 +47,12 @@ The standard fields are given as:
   In the case of a reformer, `input` should include *natural gas* and potentially *water* and *electricity* while the output is *hydrogen* and potentially *heat*, if included in the model, and *electricity*.
   Whether *electricity* is an `input` or `output` is depending on the process design for the reformer.\
   All values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{<:ExtensionData}`**:\
   An entry for providing additional data to the model.
   In the current state of electrolysis, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
 
 !!! warning "CO₂ as output"
-    If you include CO₂ capture through the application of [`CaptureData`](@extref EnergyModelsBase.CaptureData) (explained on the page [*Data functions*](@extref EnergyModelsBase man-data_fun-emissions)), you have to add your CO₂ instance as output to the dictionary.
+    If you include CO₂ capture through the application of [`CaptureData`](@extref EnergyModelsBase.CaptureData) (explained on the page [*ExtensionData functions*](@extref EnergyModelsBase man-data_fun-emissions)), you have to add your CO₂ instance as output to the dictionary.
     The chosen value is not important, as the CO₂ outlet flow is calculated based on the CO₂ intensity of the fuel and the chosen capture rate.
 
 ### [Additional fields](@id nodes-ref-fields-new)
@@ -109,7 +109,7 @@ These variables are for reformer node ``n_{ref}`` in operational period ``t``:
 - ``\texttt{ref\_on\_b}[n_{ref}, t]``: Online indicator, and
 - ``\texttt{ref\_shut\_b}[n_{ref}, t]``: Shutdown indicator.
 
-These variables are **_binary_** variables which indicate in which state the reformer is operating.
+These variables are ***binary*** variables which indicate in which state the reformer is operating.
 A value of 1 corresponds to an operation in the given stage while a value of 0 implies that the reformer is not operating in a different state
 
 ### [Constraints](@id nodes-ref-math-con)
@@ -310,6 +310,7 @@ This approach is best explained with an example in which we want to force the mo
 Consider an operational period ``t``, its previous operator ``t_{prev}``, and the chunck ``t_{next, start}`` which corresponds to an iterator for the next ``n`` operational periods so that the duration of the iterator including the operational period ``t`` is at least as large as the provided value ``time\_startup``.
 
 The constraint is then given as
+
 ```math
 \begin{aligned}
 \sum_{\theta \in t_{next, start}}& \texttt{ref\_start\_b}[m_{ref}, \theta] \geq \\ &

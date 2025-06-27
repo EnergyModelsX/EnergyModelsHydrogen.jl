@@ -92,7 +92,7 @@ function generate_refomer_example_data()
             Dict(H2 => 1.0, CO2 => 0),          # Output from the node with output ratio
             # Line above: CO2 is required as output for variable definition, but the
             # value does not matter
-            Data[CaptureEnergyEmissions(0.92)], # CO₂ capture rate  as fraction
+            ExtensionData[CaptureEnergyEmissions(0.92)], # CO₂ capture rate  as fraction
             # The data vector above may also include, e.g., SingleInvData for inclusion of
             # investments
 

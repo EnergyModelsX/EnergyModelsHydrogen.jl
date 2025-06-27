@@ -70,7 +70,7 @@ function generate_electrolyzer_example_data()
             Dict(H2 => 0.69),       # Output from the node with output ratio
             # Lines above: This implies that the capacity is defined via the electricity
             # input as it is usually the case for electrolyzer
-            Data[],                 # Data
+            ExtensionData[],                 # ExtensionData
             LoadLimits(0, 1),       # Minimum and maximum load
             0.1,                    # Stack degradation rate in %/1000 h
             FixedProfile(1.5e5),    # Stack replacement costs in €/MW

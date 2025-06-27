@@ -43,7 +43,7 @@ The standard fields are given as:
   Both fields describe the `input` and `output` [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
   In the case of electrolysis, `input` should include *electricity* and potentially *water* while the output is *hydrogen* and potentially *heat*, if included in the model.\
   All values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{<:ExtensionData}`**:\
   An entry for providing additional data to the model.
   In the current version of electrolysis, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
 
@@ -120,7 +120,7 @@ Electrolyzer nodes declare in addition several variables through dispatching on 
 These variables are:
 
 - ``\texttt{elect\_on\_b}[n_{el}, t]``: State of electrolyser node ``n_{el}`` in operational period ``t``.\
-  This variable is a **_binary_** variable which indiciates whether the electrolyser is on (1) or off (0).
+  This variable is a ***binary*** variable which indiciates whether the electrolyser is on (1) or off (0).
   It is used in the calculation of the stack degradation and the lifetime of the electrolyser stack.
 - ``\texttt{elect\_prev\_use}[n_{el}, t]``: Usage of electrolyser node ``n_{el}`` up to operational period ``t``.\
   The usage of the electrolyser node always corresponds to the accumulated usage since the beginning or the last stack replacement up to the previous period.
@@ -133,7 +133,7 @@ These variables are:
 - ``\texttt{elect\_use\_rp}[n_{el}, t_{rp}]``: Usage of electrolyser node ``n_{el}`` in representative period ``t_{rp}``.\
   This variable denotes the total usage within a representative period, if the chosen `TimeStructure` includes `RepresentativePeriods`.
 - ``\texttt{elect\_stack\_replace\_b}[n_{el}, t_{inv}]``: Indicator variable of electrolyser node ``n_{el}`` in investment period ``t_{inv}`` for stack replacement.\
-  This variable is a **_binary_** variable which indiciates whether stack replacement is occuring at the beginning of  investment period ``t_{inv}`` (1) or not (0).
+  This variable is a ***binary*** variable which indiciates whether stack replacement is occuring at the beginning of  investment period ``t_{inv}`` (1) or not (0).
 - ``\texttt{elect\_efficiency\_penalty}[n_{el}, t]``: Efficiency penalty of electrolyser node ``n_{el}`` in operational period ``t``.\
   The efficiency penalty is calculated irrespectively whether you use a [`SimpleElectrolyzer`](@ref) or an [`Electrolyzer`](@ref) node.
   It is a multiplicator for the efficiency for hydrogen production and reset in the investment period in which stack replacement is occuring.
@@ -389,6 +389,7 @@ The declaration of the actual constraint for the previous usage can be different
 
 3. In the first operational period in subsequent representative period:\
    The constraint is given as
+
    ```math
    \begin{aligned}
    \texttt{elect\_}&\texttt{previous\_use}[n_{el}, t] = \\ &
@@ -396,8 +397,10 @@ The declaration of the actual constraint for the previous usage can be different
    \texttt{elect\_use\_rp}[n_{el}, t_{rp,prev}]
    \end{aligned}
    ```
+
    with ``t_{rp,prev}`` denoting the previous representative period.
 4. In all other operational periods
+
    ```math
    \begin{aligned}
    \texttt{elect\_}&\texttt{previous\_use}[n_{el}, t] = \\ &
@@ -405,4 +408,5 @@ The declaration of the actual constraint for the previous usage can be different
    duration(t_{prev}) \times \texttt{elect\_on\_b}[n, t_{prev}]/1000
    \end{aligned}
    ```
+
    with ``t_{prev}`` denoting the previous operational period.
