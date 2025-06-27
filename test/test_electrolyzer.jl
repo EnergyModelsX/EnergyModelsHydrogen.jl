@@ -10,7 +10,7 @@ params_dict = Dict(
     :stack_cost => FixedProfile(3e5),
     :rep => false,
     :simple => true,
-    :data => Data[]
+    :data => ExtensionData[]
 )
 
 # Test set for simple degradation tests without stack replacement due to the
@@ -37,7 +37,7 @@ end
     params_inv = deepcopy(params_dict)
     params_inv[:num_op] = 2000
     params_inv[:deficit_cost] = FixedProfile(1e4)
-    params_inv[:data] = Data[SingleInvData(
+    params_inv[:data] = ExtensionData[SingleInvData(
         FixedProfile(4e5),
         FixedProfile(200),
         ContinuousInvestment(

@@ -6,7 +6,7 @@ params_dict = Dict(
     :dur_op => 2,
     :rep => false,
     :simple => false,
-    :data => Data[CaptureEnergyEmissions(0.92)],
+    :data => ExtensionData[CaptureEnergyEmissions(0.92)],
     :rate_change => RampNone(),
     :load_limits => LoadLimits(0.2, 1.0),
     :co2_limit => 8760,
@@ -84,7 +84,7 @@ end
         # Modify the parameter set
         params_used = deepcopy(params_dict)
         params_used[:demand] = OperationalProfile([ones(14)*30; ones(1)*0; ones(15)*50])
-        params_used[:data] = Data[
+        params_used[:data] = ExtensionData[
             CaptureEnergyEmissions(0.92)
             SingleInvData(
                 FixedProfile(9e5),
@@ -202,7 +202,7 @@ end
         params_used[:deficit_cost] = FixedProfile(150)
         params_used[:demand] = OperationalProfile([zeros(10); ones(5)*10; ones(5)*50; ones(10)*30])
         params_used[:rate_change] = RampBi(FixedProfile(.1))
-        params_used[:data] = Data[
+        params_used[:data] = ExtensionData[
             CaptureEnergyEmissions(0.92)
             SingleInvData(
                 FixedProfile(9e5),

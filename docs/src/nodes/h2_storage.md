@@ -59,7 +59,7 @@ The fields of both storage nodes are given as:
       The individual resources used as input and output are instead obtained through dispatching on the functions [`inputs`](@extref EnergyModelsBase.inputs-Tuple{EnergyModelsBase.Node}) and [`outputs`](@extref EnergyModelsBase.outputs-Tuple{EnergyModelsBase.Node}).
       The inputs correspond in this case to the field `stor_res` and `el_res`.
       The latter is explained the following section.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{<:ExtensionData}`**:\
   An entry for providing additional data to the model.
   In the current version, it is used for providing additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/) is used.
   !!! note

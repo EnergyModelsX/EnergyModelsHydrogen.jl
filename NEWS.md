@@ -1,5 +1,9 @@
 # Release Notes
 
+## Unversioned
+
+* Renamed `Data` to `ExtensionData` as introduced in [`EnergyModelsBase` v0.9.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.1).
+
 ## Version 0.8.1 (2025-02-10)
 
 * Adjusted to [`EnergyModelsBase` v0.9.0](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.0):

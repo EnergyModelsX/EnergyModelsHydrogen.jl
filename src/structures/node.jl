@@ -94,7 +94,7 @@ New fields: `min_load`, `max_load`, `stack_lifetime`, `stack_replacement_cost`, 
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
-- **`data::Vector{Data}`** is the additional data (e.g. for investments).
+- **`data::Vector{<:ExtensionData}`** is the additional data (e.g. for investments).
 - **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
   [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
@@ -119,7 +119,7 @@ struct Electrolyzer <: AbstractElectrolyzer
     opex_fixed::TimeProfile
     input::Dict{Resource, Real}
     output::Dict{Resource, Real}
-    data::Array{<:Data}
+    data::Array{<:ExtensionData}
     load_limits::AbstractLoadLimits
     degradation_rate::Real
     stack_replacement_cost::TimeProfile
@@ -144,7 +144,7 @@ New fields compared to `NetworkNode`: `min_load`, `max_load`, `degradation_rate`
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
-- **`data::Vector{Data}`** is the additional data (e.g. for investments).
+- **`data::Vector{<:ExtensionData}`** is the additional data (e.g. for investments).
 - **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
   [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
@@ -169,7 +169,7 @@ struct SimpleElectrolyzer <: AbstractElectrolyzer
     opex_fixed::TimeProfile
     input::Dict{Resource, Real}
     output::Dict{Resource, Real}
-    data::Array{Data}
+    data::Array{ExtensionData}
     load_limits::AbstractLoadLimits
     degradation_rate::Real
     stack_replacement_cost::TimeProfile
@@ -329,7 +329,7 @@ technology descriptions.
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
-- **`data::Array{Data}`** is an array of additional data (e.g., for investments).
+- **`data::Array{ExtensionData}`** is an array of additional data (e.g., for investments).
 
 - **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
   [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
@@ -358,7 +358,7 @@ struct Reformer <: AbstractReformer
 	opex_fixed::TimeProfile
 	input::Dict{Resource, Real}
 	output::Dict{Resource, Real}
-	data::Array{Data}
+	data::Array{ExtensionData}
 
     load_limits::AbstractLoadLimits
 
@@ -483,8 +483,8 @@ capacity and a multiplier `discharge_charge`.
 - **`output::Dict{<:Resource, <:Real}`** are the generated [`Resource`](@extref EnergyModelsBase.Resource)s
   with conversion value `Real`. Only relevant for linking and the stored
   [`Resource`](@extref EnergyModelsBase.Resource) as the output value is not utilized in the calculations.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments). The field `data`
-  is conditional through usage of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments).
+  The field `data` is conditional through usage of a constructor.
 - **`discharge_charge::Float64`** is the multiplier for specifying the maximum discharge
   rate relative to the charge rate. A value of `2.0` would imply that it is possible to have
   double the discharge rate compared to the installed charge capacity.
@@ -500,7 +500,7 @@ struct SimpleHydrogenStorage{T} <: AbstractH2Storage{T}
     stor_res::Resource
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
     discharge_charge::Float64
     level_charge::Float64
 end
@@ -521,7 +521,7 @@ function SimpleHydrogenStorage{T}(
         stor_res,
         input,
         output,
-        Data[],
+        ExtensionData[],
         discharge_charge,
         level_charge,
     )
@@ -547,8 +547,8 @@ upper (field `p_max`) and charge pressure (field `p_charge`) of the node.
 - **`el_res::Resource`** is the [`Resource`](@extref EnergyModelsBase.Resource)
   representing electricity. It **must** be specified explicitly for the proper calculation
   of the electricity demand for compression.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments). The field `data`
-  is conditional through usage of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments).
+  The field `data` is conditional through usage of a constructor.
 - **`discharge_charge::Float64`** is the multiplier for specifying the maximum discharge
   rate relative to the charge rate. A value of `2.0` would imply that it is possible to have
   double the discharge rate compared to the installed charge capacity.
@@ -571,7 +571,7 @@ struct HydrogenStorage{T} <: AbstractH2Storage{T}
     level::EMB.UnionCapacity
     stor_res::Resource
     el_res::Resource
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
     discharge_charge::Float64
     level_charge::Float64
     p_min::Float64
@@ -596,7 +596,7 @@ function HydrogenStorage{T}(
         level,
         stor_res,
         el_res,
-        Data[],
+        ExtensionData[],
         discharge_charge,
         level_charge,
         p_min,
