@@ -1,10 +1,12 @@
 # Release Notes
 
-## Unversioned
+## Version 0.8.3 (2025-08-17)
 
 ### Bugfix
 
 * Fixed a bug when using `InvestmentModel` without investment data for `AbstractElectrolyzer` nodes.
+* Fixed a bug which provided a wrong upper bound for the linear reformulation for `AbstractElectrolyzer` nodes.
+  This bug essentially forces stack replacement when the maximum capacity was small.
 
 ## Version 0.8.2 (2025-06-27)
 
