@@ -145,7 +145,7 @@ These variables are:
 
 ### [Constraints](@id nodes-elec-math-con)
 
-The following sections omit the direction inclusion of the vector of electrolyzer nodes.
+The following sections omit the direct inclusion of the vector of electrolyzer nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n_{el} ∈ N^{EL}``, that is both [`SimpleElectrolyzer`](@ref) and [`Electrolyzer`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all investment periods).
 
@@ -182,7 +182,7 @@ These standard constraints are:
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
-  This function is only called for specified data of the reformer, see above.
+  This function is only called for specified data of the electrolyzer, see above.
 
 The [`SimpleElectrolyzer`](@ref) node utilizes in addition the default function `constraints_flow_out`:
 
