@@ -69,7 +69,7 @@ function constraints_usage_sp(
         m[:elect_use_sp][n, t_inv_prev] * duration_strat(t_inv_prev)
     )
     # Define the upper bound
-    ub = capacity_max(n, t_inv, modeltype)
+    ub = stack_lifetime(n)/1000
 
     # Constraints for the linear reformulation. The constraints are based on the
     # McCormick envelopes which result in an exact reformulation for the multiplication
