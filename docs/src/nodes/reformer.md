@@ -114,7 +114,7 @@ A value of 1 corresponds to an operation in the given stage while a value of 0 i
 
 ### [Constraints](@id nodes-ref-math-con)
 
-The following sections omit the direction inclusion of the vector of reformer nodes.
+The following sections omit the direct inclusion of the vector of reformer nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n_{ref} ∈ N^{Ref}`` for all [`Reformer`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all investment periods).
 

@@ -239,33 +239,55 @@ end
 
 # Test set for the extension with investments allowed
 @testset "Investment extension test" begin
-    # Specifying the input parameters
-    𝒯 = TwoLevel(5, 2, SimpleTimes(50, 8760/50); op_per_strat=8760)
-    cap = FixedProfile(0)
-    data = ExtensionData[SingleInvData(
-        FixedProfile(4e5),
-        FixedProfile(200),
-        ContinuousInvestment(
-            FixedProfile(0),
-            StrategicProfile([0, 100, 0, 0, 0]),
-        )
-    )]
-    stack_cost = FixedProfile(1e5)
-    stack_lifetime = 20000
+    @testset "Without investment data" begin
+        # Specifying the input parameters
+        𝒯 = TwoLevel(8, 2, SimpleTimes(20, 8760/20); op_per_strat=8760)
+        deficit_cost = StrategicProfile([25, 25, 25, 25, 30])
+        stack_cost = FixedProfile(3e8)
 
-    # Run and test the model
-    m, case, modeltype = elec_test_case(𝒯; cap, data, stack_cost, stack_lifetime)
+        # Run and test the model
+        m, case, modeltype = elec_test_case(𝒯; stack_cost, deficit_cost)
 
-    # Reassign types
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    elec = get_nodes(case)[2]
+        # Overwrite the modeltype
+        modeltype = InvestmentModel(Dict(co2 => FixedProfile(0)), Dict(co2 => FixedProfile(0)), co2, 0.07)
 
-    # Test that there are no quadratic constraints for SimpleElectrolyzer types
-    @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
+        # Create and run the model
+        m = create_model(case, modeltype)
+        set_optimizer(m, OPTIMIZER)
+        optimize!(m)
 
-    # Test for invested capacity
-    @test sum(value.(m[:cap_current][elec, t_inv]) ≈ 50/.62 for t_inv ∈ 𝒯ᴵⁿᵛ) == 4
-    finalize(backend(m).optimizer.model)
+        # Test the penalties
+        penalty_test(m, case)
+    end
+    @testset "With investment data" begin
+        # Specifying the input parameters
+        𝒯 = TwoLevel(5, 2, SimpleTimes(50, 8760/50); op_per_strat=8760)
+        cap = FixedProfile(0)
+        data = ExtensionData[SingleInvData(
+            FixedProfile(4e5),
+            FixedProfile(200),
+            ContinuousInvestment(
+                FixedProfile(0),
+                StrategicProfile([0, 100, 0, 0, 0]),
+            )
+        )]
+        stack_cost = FixedProfile(1e5)
+        stack_lifetime = 20000
+
+        # Run and test the model
+        m, case, modeltype = elec_test_case(𝒯; cap, data, stack_cost, stack_lifetime)
+
+        # Reassign types
+        𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+        elec = get_nodes(case)[2]
+
+        # Test that there are no quadratic constraints for SimpleElectrolyzer types
+        @test isempty(all_constraints(m, QuadExpr, MOI.EqualTo{MOI.Float64}))
+
+        # Test for invested capacity
+        @test sum(value.(m[:cap_current][elec, t_inv]) ≈ 50/.62 for t_inv ∈ 𝒯ᴵⁿᵛ) == 4
+        finalize(backend(m).optimizer.model)
+    end
 end
 
 # Test set for analysing the correct implementation of stack replacement

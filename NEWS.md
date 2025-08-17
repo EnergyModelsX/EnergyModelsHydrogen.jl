@@ -1,5 +1,11 @@
 # Release Notes
 
+## Unversioned
+
+### Bugfix
+
+* Fixed a bug when using `InvestmentModel` without investment data for `AbstractElectrolyzer` nodes.
+
 ## Version 0.8.2 (2025-06-27)
 
 ### Bugfix

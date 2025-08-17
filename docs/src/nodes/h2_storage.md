@@ -81,7 +81,7 @@ Boths nodes have the following fields:
   As a consequence of its introduction, it is not possible to specify a `discharge` capacity to the storage node.
 - **`level_charge::Float64`**:\
   The level to charge ratio specifies the maximum allowed storage level capacity as a ratio of the charging capacity.
-  The implementation is rquired to avoid large pressure changes in the vessel in a short period.
+  The implementation is requiredto avoid large pressure changes in the vessel in a short period.
 
 !!! note "Allowed values"
     Both ratios have to be positive.
@@ -229,12 +229,12 @@ additional constraints are introduced to account for the introduced limits throu
 
 ```math
 \begin{aligned}
-\texttt{stor\__discharge\_use}[n, t] & \leq discharge\_charge(n) \texttt{stor\_charge\_use}[n, t] \\
-\texttt{stor\_charge\_inst}[n, t] level\_charge(n) & \leq \texttt{stor\_level\_inst}[n, t]
+\texttt{stor\_discharge\_use}[n, t] & \leq discharge\_charge(n) \times \texttt{stor\_charge\_use}[n, t] \\
+level\_charge(n) \times \texttt{stor\_charge\_inst}[n, t] & \leq \texttt{stor\_level\_inst}[n, t]
 \end{aligned}
 ```
 
-The second constraint also limitsthe potential for investments in the charge capacity through the different constraints introduced in `EnergyModelsBase`.
+The second constraint also limits the potential for investments in the charge capacity through the different constraints introduced in `EnergyModelsBase`.
 
 The function `constraints_flow_in` is different for [`SimpleHydrogenStorage`](@ref) and [`HydrogenStorage`](@ref).
 [`SimpleHydrogenStorage`](@ref) nodes utilize the standard method.

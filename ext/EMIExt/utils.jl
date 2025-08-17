@@ -35,41 +35,68 @@ function EMH.multiplication_variables(
 end
 
 function EMH.fix_elect_on_b(m, n::EMH.AbstractElectrolyzer, 𝒯, 𝒫, modeltype::AbstractInvestmentModel)
-
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # Fixing the value to 0 if it is not possible to add capacity beforehand
     cap_bool = true
-    tmp_max_add = EMI.max_add(EMI.investment_data(n, :cap))
-    for t_inv ∈ 𝒯ᴵⁿᵛ
-        if cap_bool &&
-            (
-                (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
-                (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
-            )
-            JuMP.fix(m[:elect_stack_replace_b][n, t_inv], 0)
-            set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
-            for t ∈ t_inv
-                JuMP.fix(m[:elect_on_b][n, t], 0)
-                set_start_value(m[:elect_on_b][n, t], 0)
-            end
-        else
-            if isfirst(t_inv)
+    if EMI.has_investment(n)
+        tmp_max_add = EMI.max_add(EMI.investment_data(n, :cap))
+        for t_inv ∈ 𝒯ᴵⁿᵛ
+            if cap_bool &&
+                (
+                    (EMI.has_investment(n) && tmp_max_add[t_inv] == 0) ||
+                    (!EMI.has_investment(n) && capacity(n, t_inv) == 0)
+                )
+                JuMP.fix(m[:elect_stack_replace_b][n, t_inv], 0)
                 set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
+                for t ∈ t_inv
+                    JuMP.fix(m[:elect_on_b][n, t], 0)
+                    set_start_value(m[:elect_on_b][n, t], 0)
+                end
             else
-                set_start_value(m[:elect_stack_replace_b][n, t_inv], 1)
+                if isfirst(t_inv)
+                    set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
+                else
+                    set_start_value(m[:elect_stack_replace_b][n, t_inv], 1)
+                end
+                for t ∈ t_inv
+                    set_start_value(m[:elect_on_b][n, t], 1)
+                end
+                cap_bool = false
             end
-            for t ∈ t_inv
-                set_start_value(m[:elect_on_b][n, t], 1)
+        end
+    else
+        for t_inv ∈ 𝒯ᴵⁿᵛ
+            if capacity(n, t_inv) == 0 && cap_bool
+                JuMP.fix(m[:elect_stack_replace_b][n, t_inv], 0)
+                set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
+                for t ∈ t_inv
+                    JuMP.fix(m[:elect_on_b][n, t], 0)
+                    set_start_value(m[:elect_on_b][n, t], 0)
+                end
+            else
+                cap_bool = false
+                if isfirst(t_inv)
+                    set_start_value(m[:elect_stack_replace_b][n, t_inv], 0)
+                else
+                    set_start_value(m[:elect_stack_replace_b][n, t_inv], 1)
+                end
+                for t ∈ t_inv
+                    set_start_value(m[:elect_on_b][n, t], 1)
+                end
             end
-            cap_bool = false
         end
     end
 end
 
-EMH.capacity_max(n::EMH.AbstractElectrolyzer, t_inv, modeltype::AbstractInvestmentModel) =
-    EMI.max_installed(EMI.investment_data(n, :cap), t_inv)
+function EMH.capacity_max(n::EMH.AbstractElectrolyzer, t_inv, modeltype::AbstractInvestmentModel)
+    cap = capacity(n, t_inv)
+    if EMI.has_investment(n)
+        cap = EMI.max_installed(EMI.investment_data(n, :cap), t_inv)
+    end
+    return cap
+end
 
 function EMH.ramp_disjunct(m, n::Reformer, ref_pers::EMH.RefPeriods, modeltype::AbstractInvestmentModel)
     # Extract the values from the types
