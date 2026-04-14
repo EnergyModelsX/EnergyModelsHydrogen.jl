@@ -15,10 +15,9 @@ additional check on the data.
 - The values of the dictionary `input` are required to be non-negative.
 - The values of the dictionary `output` are required to be non-negative.
 
-  - The lower limit on capacity utilization is required ot be non-negative while the upper
+- The lower limit on capacity utilization is required to be non-negative while the upper
   limit is required to be larger or equal than the lower limit as described in the
   [`check_load_lim()`](@ref)
-
 - The field `degradation_rate` is required to be in the range [0,1).
 - The `TimeProfile` of the field `stack_replacement` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
@@ -83,7 +82,6 @@ additional check on the data.
 - The lower limit on capacity utilization is required ot be non-negative while the upper
   limit is required to be larger or equal than the lower limit as described in the
   [`check_load_lim()`](@ref)
-
 - The field `opex` of the `CommitParameters` of the fields `startup`, `shutdown`, and `off`
   is required to be non-negative.
 - The field `time` of the `CommitParameters` of the fields `startup`, `shutdown`, and `off`

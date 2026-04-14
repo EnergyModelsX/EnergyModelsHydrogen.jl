@@ -7,7 +7,7 @@
         modeltype::EnergyModel
     )
 
-Function for creating operational limits of an `AbstractHydrogenNetworkNode`.
+Function for creating operational limits of an [`AbstractHydrogenNetworkNode`](@ref).
 
 The operational limits limit the capacity usage of the electrolyzer node between a minimimum
 and maximum load based on the installed capacity.
@@ -43,7 +43,7 @@ end
         modeltype::EnergyModel
     )
 
-Function for creating the constraints on the `:stor_level`, `:stor_charge_use`, and
+Method for creating the constraints on the `:stor_level`, `:stor_charge_use`, and
 `:stor_discharge_use` variables for a [`AbstractH2Storage`](@ref) node.
 
 The discharge `:stor_discharge_use` is limited by the installed charging capacity
@@ -80,13 +80,11 @@ end
 """
     EMB.constraints_flow_in(m, n::HydrogenStorage, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the inlet flow to a [`HydrogenStorage`](@ref) node.
+Method for creating the constraint on the inlet flow to a [`HydrogenStorage`](@ref) node.
 
 It differs from the reference description by considering the dependency of the compression
-power on the storage level.
-
-This is achieved through calling the subfunction [`energy_curve`](@ref) for the different
-breakpoints in the compression curve.
+power on the storage level. This is achieved through calling the subfunction
+[`energy_curve`](@ref) for the different breakpoints in the compression curve.
 """
 function EMB.constraints_flow_in(m, n::HydrogenStorage, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -154,7 +152,8 @@ end
 """
     EMB.constraints_flow_out(m, n::Electrolyzer, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the outlet flow from an `Electrolyzer` node.
+Method for creating the constraint on the outlet flow from an [`Electrolyzer`](@ref) node.
+
 It differs from the reference description by taking into account stack degradation through
 the variable `:elect_efficiency_penalty`.
 """
@@ -172,7 +171,8 @@ end
 """
     EMB.constraints_opex_var(m, n::Reformer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Function for creating the constraint on the variable OPEX of a `Reformer` node.
+Method for creating the constraint on the variable OPEX of a [`Reformer`](@ref) node.
+
 It differs from the reference description through the incorporation of additional costs
 in each state of the node.
 """

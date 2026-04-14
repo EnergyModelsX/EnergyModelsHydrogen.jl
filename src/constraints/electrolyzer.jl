@@ -1,9 +1,10 @@
 """
     constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Function for creating the usage constraints for an AbstractElectrolyzer. These constraints
-calculate the usage of the electrolyzer up to each time step for both the lifetime and the
-degradation calculations.
+Function for creating the usage constraints for an [`AbstractElectrolyzer`](@ref).
+
+These constraints calculate the usage of the electrolyzer up to each time step for both the
+lifetime and the degradation calculations.
 """
 function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     # Mass/energy balance constraints for stored energy carrier.
@@ -204,8 +205,8 @@ end
         modeltype::EnergyModel,
     )
 
-Returns the previous usage of an `AbstractElectrolyzer` node depending on the type of
-[`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
+Function for creating the previous usage of an [`AbstractElectrolyzer`](@ref) node depending
+on the type of [`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 
 The basic functionality is used in the case when the previous operational period is a
 `TimePeriod`, in which case it just returns the previous operational period.

@@ -1,7 +1,8 @@
 """
-    ElecPeriods
+    mutable struct ElecPeriods
 
-Contains information for calculating the constraints for `AbstractElectrolyzer` node types.
+Contains information for calculating the constraints for [`AbstractElectrolyzer`](@ref) node
+types.
 
 # Fields
 - **`sps::TS.AbstractStratPers`** are the strategic periods of the `TimeStructure`.
@@ -47,9 +48,9 @@ within a strategic period of an [`ElecPeriods`](@ref) `pers`.
 is_last(pers::ElecPeriods) = pers.last
 
 """
-    RefPeriods{S<:Union{TS.OperationalPeriod, Nothing}}
+    mutable struct RefPeriods{S<:Union{TS.OperationalPeriod, Nothing}}
 
-Contains information for calculating the constraints for `Reformer` node types.
+Contains information for calculating the constraints for [`Reformer`](@ref) node types.
 
 # Fields
 - **`previous::S`** is the previous operational period received from the
