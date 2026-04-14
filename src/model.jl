@@ -45,8 +45,8 @@ end
 """
     EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫,  modeltype::EnergyModel)
 
-Set all constraints for an `AbstractElectrolyzer`. Can serve as fallback option for all
-unspecified subtypes of `AbstractElectrolyzer`.
+Set all constraints for an [`AbstractElectrolyzer`](@ref). Can serve as fallback option for
+all unspecified subtypes of `AbstractElectrolyzer`.
 
 It differs from the function for a standard [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode)
 node through both calling additional functions as well as for calculations within the function.

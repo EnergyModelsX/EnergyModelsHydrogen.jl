@@ -1,8 +1,12 @@
-""" Abstract supertype for all hydrogen network nodes."""
+"""
+    abstract type AbstractHydrogenNetworkNode <: NetworkNode
+
+Abstract supertype for all hydrogen network nodes.
+"""
 abstract type AbstractHydrogenNetworkNode <: NetworkNode end
 
 """
-    AbstractLoadLimits{T}
+    abstract type AbstractLoadLimits{T}
 
 Abstract type for the load limits. This type can be used to incorporate other types for the
 load limit.
@@ -10,7 +14,7 @@ load limit.
 abstract type AbstractLoadLimits{T} end
 
 """
-    LoadLimits{T<:Real} <: AbstractLoadLimits{T}
+    struct LoadLimits{T<:Real} <: AbstractLoadLimits{T}
 
 Type for the incorporation of limits on the capacity utilization of the node through
 constraining the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
@@ -69,14 +73,14 @@ max_load(n::EMB.Node) = max_load(n.load_limits)
 max_load(n::EMB.Node, t) = max_load(n.load_limits, t)
 
 """
-    AbstractElectrolyzer <: AbstractHydrogenNetworkNode
+    abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode
 
 Abstract supertype for all electrolyzer nodes.
 """
 abstract type AbstractElectrolyzer <: AbstractHydrogenNetworkNode end
 
 """
-    Electrolyzer <: AbstractElectrolyzer
+    struct Electrolyzer <: AbstractElectrolyzer
 
 Description of an electrolyzer node with minimum and maximum load as well as degredation
 and stack replacement.
@@ -127,7 +131,7 @@ struct Electrolyzer <: AbstractElectrolyzer
 end
 
 """
-    SimpleElectrolyzer <: AbstractElectrolyzer
+    stuct SimpleElectrolyzer <: AbstractElectrolyzer
 
 Description of a simple electrolyzer node with minimum and maximum load as well as stack
 replacement. Degradation is calculated, but not used for the efficiency calculations.
@@ -194,6 +198,7 @@ stack_replacement_cost(n::AbstractElectrolyzer, t_inv) = n.stack_replacement_cos
 
 """
     stack_lifetime(n::Electrolyzer)
+
 Returns the stack lfetime of electrolyzer `n`.
 """
 stack_lifetime(n::AbstractElectrolyzer) = n.stack_lifetime
@@ -283,6 +288,7 @@ ramp_down(ramp_param::UnionRampDown) = ramp_param.down
 ramp_down(ramp_param::UnionRampDown, t) = ramp_param.down[t]
 
 UnionRampUp = Union{RampBi, RampUp}
+
 """
     ramp_up(ramp_param::UnionRampUp)
     ramp_up(ramp_param::UnionRampUp, t)
@@ -311,11 +317,15 @@ Returns the minimum time in the state as `TimeProfile` *or* in operational perio
 time_state(com_par::CommitParameters) = com_par.time
 time_state(com_par::CommitParameters, t) = com_par.time[t]
 
-""" Abstract supertype for all reformer nodes."""
+"""
+    abstract type AbstractReformer <: AbstractHydrogenNetworkNode
+
+Abstract supertype for all reformer nodes.
+"""
 abstract type AbstractReformer <: AbstractHydrogenNetworkNode end
 
 """
-    Reformer <: AbstractReformer
+    struct Reformer <: AbstractReformer
 
 A network node with start-up and shut-down time and costs that should be used for reformer
 technology descriptions.
@@ -457,14 +467,14 @@ ramp_down(n::AbstractReformer) = ramp_down(ramp_limit(n))
 ramp_down(n::AbstractReformer, t) = ramp_down(ramp_limit(n), t)
 
 """
-    AbstractH2Storage{T} <: Storage{T}
+    abstract type AbstractH2Storage{T} <: Storage{T}
 
 Abstract type for different implementations of hydrogen storage nodes.
 """
 abstract type AbstractH2Storage{T} <: Storage{T} end
 
 """
-    SimpleHydrogenStorage{T} <: AbstractH2Storage{T}
+    struct SimpleHydrogenStorage{T} <: AbstractH2Storage{T}
 
 `Storage` node in which the maximum discharge usage is directly linked to the charge
 capacity, that is it is not possbible to have a larger discharge usage than the charge
@@ -528,7 +538,7 @@ function SimpleHydrogenStorage{T}(
 end
 
 """
-    HydrogenStorage{T} <: AbstractH2Storage{T}
+    struct HydrogenStorage{T} <: AbstractH2Storage{T}
 
 `Storage` node in which the maximum discharge usage is directly linked to the charge
 capacity, that is it is not possbible to have a larger discharge usage than the charge

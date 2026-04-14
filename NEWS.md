@@ -8,6 +8,10 @@
   * Breaking change required as early retirement is now allowed.
   * Early retirement can change the model behavior.
 
+### Other
+
+* Minor updates to the documentation.
+
 ## Version 0.8.3 (2025-08-17)
 
 ### Bugfix

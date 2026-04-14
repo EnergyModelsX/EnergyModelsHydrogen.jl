@@ -68,7 +68,7 @@ function simple_graph_elec(;
     return create_model(case, model), case, model
 end
 
-# Test that the fields of a `AbstractElectrolyzenr` are correctly checked
+# Test that the fields of a `AbstractElectrolyzer` are correctly checked
 # - EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "Test checks - AbstractElectrolyzer" begin
 
