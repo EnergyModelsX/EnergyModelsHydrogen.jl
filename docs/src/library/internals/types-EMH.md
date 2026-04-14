@@ -10,22 +10,22 @@ Pages = ["types-EMH.md"]
 ## [Nodal supertypes](@id lib-int-types-node)
 
 ```@docs
-EnergyModelsHydrogen.AbstractHydrogenNetworkNode
-EnergyModelsHydrogen.AbstractElectrolyzer
-EnergyModelsHydrogen.AbstractReformer
-EnergyModelsHydrogen.AbstractH2Storage
+EMH.AbstractHydrogenNetworkNode
+EMH.AbstractElectrolyzer
+EMH.AbstractReformer
+EMH.AbstractH2Storage
 ```
 
 ## [Parameter supertypes](@id lib-int-types-para)
 
 ```@docs
-EnergyModelsHydrogen.AbstractLoadLimits
-EnergyModelsHydrogen.AbstractRampParameters
+EMH.AbstractLoadLimits
+EMH.AbstractRampParameters
 ```
 
 ## [Auxiliary types](@id lib-int-types-aux)
 
 ```@docs
-EnergyModelsHydrogen.ElecPeriods
-EnergyModelsHydrogen.RefPeriods
+EMH.ElecPeriods
+EMH.RefPeriods
 ```

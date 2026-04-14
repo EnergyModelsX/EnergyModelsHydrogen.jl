@@ -9,32 +9,32 @@ Pages = ["methods-EMH.md"]
 ## [Constraint methods](@id lib-int-met-con)
 
 ```@docs
-EnergyModelsHydrogen.constraints_usage
-EnergyModelsHydrogen.constraints_usage_sp
-EnergyModelsHydrogen.constraints_usage_iterate
-EnergyModelsHydrogen.constraints_previous_usage
-EnergyModelsHydrogen.constraints_rate_of_change_iterate
-EnergyModelsHydrogen.constraints_rate_of_change
-EnergyModelsHydrogen.constraints_state_seq_iter
-EnergyModelsHydrogen.constraints_state_seq
-EnergyModelsHydrogen.constraints_state_time_iter
+EMH.constraints_usage
+EMH.constraints_usage_sp
+EMH.constraints_usage_iterate
+EMH.constraints_previous_usage
+EMH.constraints_rate_of_change_iterate
+EMH.constraints_rate_of_change
+EMH.constraints_state_seq_iter
+EMH.constraints_state_seq
+EMH.constraints_state_time_iter
 ```
 
 ## [Check methods](@id lib-int-met-check)
 
 ```@docs
-EnergyModelsHydrogen.check_load_lim
-EnergyModelsHydrogen.check_commitment_profile
+EMH.check_load_lim
+EMH.check_commitment_profile
 ```
 
 ## [Utility methods](@id lib-int-met-util)
 
 ```@docs
-EnergyModelsHydrogen.capacity_max
-EnergyModelsHydrogen.linear_reformulation
-EnergyModelsHydrogen.multiplication_variables
-EnergyModelsHydrogen.fix_elect_on_b
-EnergyModelsHydrogen.ramp_disjunct
-EnergyModelsHydrogen.compression_energy
-EnergyModelsHydrogen.energy_curve
+EMH.capacity_max
+EMH.linear_reformulation
+EMH.multiplication_variables
+EMH.fix_elect_on_b
+EMH.ramp_disjunct
+EMH.compression_energy
+EMH.energy_curve
 ```

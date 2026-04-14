@@ -122,7 +122,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with paranthesis.
+with parantheses.
 
 ### [Variables](@id nodes-h2_storage-math-var)
 
@@ -362,7 +362,7 @@ The non-linear compression curve is implemented using a piecewise linear approac
 ```
 
 Given the formulation, it is possible that some pressures are included twice and that the pressures are not sorted.
-Hence, the ``\hat{\textbef{p}}`` is sorted and all duplicates are removed resulting in ``n_p`` break points.
+Hence, the ``\hat{\textbf{p}}`` is sorted and all duplicates are removed resulting in ``n_p`` break points.
 
 The required relative compression energy at each breakpoint ``\hat{W}_p`` is then calculated using the function [`energy_curve`](@ref EnergyModelsHydrogen.energy_curve) as described on *[Compression train](@ref aux-p_calc-train)*.
 
