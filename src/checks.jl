@@ -21,7 +21,7 @@ additional check on the data.
 - The field `degradation_rate` is required to be in the range [0,1).
 - The `TimeProfile` of the field `stack_replacement` is required to be non-negative and
   accessible through a `StrategicPeriod` as outlined in the function
-  [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
+  [`EMB.check_strategic_profile()`](@extref EnergyModelsBase.check_strategic_profile).
 - The field `stack_lifetime` is required to be non-negative.
 """
 function EMB.check_node(
