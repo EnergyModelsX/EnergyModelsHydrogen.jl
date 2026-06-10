@@ -16,8 +16,9 @@ function check_elec(;
     output = Dict(H2 => 0.62),      # Ouput: Ratio of Output flow to characteristic throughput
     load_limits = LoadLimits(0, 1), # Minimum and maximum load
     degradation_rate = 0.1,         # Degradation rate
-    stack_replacement_cost = FixedProfile(3e5),  # Stack replacement costs
+    stack_rep_cost = FixedProfile(3e5),  # Stack replacement costs
     stack_lifetime = 60000,         # Stack lifetime in h
+    T = TwoLevel(2, 2, SimpleTimes(5, 2); op_per_strat=10),
 )
 
     # Used source, network, and sink
@@ -45,13 +46,11 @@ function check_elec(;
         ExtensionData[],
         load_limits,
         degradation_rate,
-        stack_replacement_cost,
+        stack_rep_cost,
         stack_lifetime
     )
 
     resources = [Power, H2, CO2]
-    ops = SimpleTimes(5, 2)
-    T = TwoLevel(2, 2, ops; op_per_strat=10)
 
     nodes = [source, elec, sink]
     links = [
@@ -95,12 +94,26 @@ end
     @test_throws AssertionError check_elec(; degradation_rate=100)
 
     # Test that a wrong stack replacement profile is caught by the checks
-    stack_replacement_cost = FixedProfile(-5)
-    @test_throws AssertionError check_elec(; stack_replacement_cost)
-    stack_replacement_cost = StrategicProfile([10])
-    @test_throws AssertionError check_elec(; stack_replacement_cost)
-    stack_replacement_cost = OperationalProfile([10])
-    @test_throws AssertionError check_elec(; stack_replacement_cost)
+    stack_rep_cost = FixedProfile(-5)
+    @test_throws AssertionError check_elec(; stack_rep_cost)
+    T = TwoLevelTree(2, [2], SimpleTimes(5, 1); op_per_strat=10.0)
+    oprofile = OperationalProfile(ones(4))
+    profiles = [
+        oprofile,
+        StrategicProfile([4]),
+        StrategicProfile([oprofile, oprofile, oprofile, oprofile]),
+    ]
+    for tp ∈ profiles
+        @test_throws AssertionError check_elec(; stack_rep_cost=tp)
+        @test_throws AssertionError check_elec(; stack_rep_cost=tp, T)
+    end
+    stack_rep_cost = StrategicStochasticProfile([[4]])
+    @test_throws AssertionError check_elec(; stack_rep_cost, T)
+
+    stack_rep_cost = StrategicProfile([10])
+    @test_throws AssertionError check_elec(; stack_rep_cost)
+    stack_rep_cost = OperationalProfile([10])
+    @test_throws AssertionError check_elec(; stack_rep_cost)
 
     # Test that a wrong lifetime is caught by the checks
     @test_throws AssertionError check_elec(; stack_lifetime=-10)

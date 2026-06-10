@@ -39,13 +39,6 @@ function EMB.check_node(
         "The stack degradation rate must be in the range [0, 100)."
     )
 
-    if isa(stack_replacement_cost(n), StrategicProfile) && check_timeprofiles
-        @assert_or_log(
-            length(stack_replacement_cost(n).vals) == length(𝒯ᴵⁿᵛ),
-            "The timeprofile provided for the field `stack_replacement_cost` does not " *
-            "match the strategic structure."
-        )
-    end
     # Check for potential indexing problems
     message = "are not allowed for the field `stack_replacement_cost`."
     bool_sp = EMB.check_strategic_profile(stack_replacement_cost(n), message)

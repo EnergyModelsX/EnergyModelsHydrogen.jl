@@ -1,5 +1,11 @@
 # Release Notes
 
+## Version 0.9.1 (2026-04-16)
+
+### Bug fixes
+
+* Fixed a bug in the checks when using `StrategicProfile` for the stack replacement costs of `AbstractElectrolyzer` nodes and `TwoLevelTree` as time structure.
+
 ## Version 0.9.0 (2026-04-14)
 
 ### Breaking changes
