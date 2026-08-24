@@ -110,7 +110,6 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
             + stack_replace[t_inv] * stack_replacement_cost(n, t_inv) / duration_strat(t_inv)
     )
 
-
     # Call of the functions for the variable OPEX constraint introduction
     constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
