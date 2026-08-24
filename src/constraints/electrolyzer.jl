@@ -8,12 +8,20 @@ degradation calculations.
 function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     # Mass/energy balance constraints for stored energy carrier.
     for (t_inv_prev, t_inv) ∈ withprev(𝒯ᴵⁿᵛ)
-        # Calculation of hte usage within a strategic period
+        # Calculation of the usage within a strategic period
         @constraint(m,
             m[:elect_use_sp][n, t_inv] * 1000 ==
                 sum(m[:elect_on_b][n, t] * scale_op_sp(t_inv, t) for t ∈ t_inv)
         )
 
+        # Upper constraint for the total usage of the electrolyzer
+        @constraint(m,
+            stack_lifetime(n)/1000 ≥
+                m[:elect_prev_use_sp][n, t_inv] +
+                m[:elect_use_sp][n, t_inv] * duration_strat(t_inv)
+        )
+
+        # Initialization of the periods
         prev_pers = PreviousPeriods(t_inv_prev, nothing, nothing);
         elec_pers = ElecPeriods(𝒯ᴵⁿᵛ, t_inv, nothing, true)
 
@@ -165,25 +173,6 @@ function constraints_usage_iterate(
     _::SimpleTimes,
     modeltype::EnergyModel,
 )
-    # Constraint for the total usage of the electrolyzer including the current time step.
-    # This ensures that the last repetition of the strategic period is appropriately
-    # constrained.
-    # The conditional statement activates this constraint only for the last representative
-    # period, if representative periods are present as stack replacement is only feasible
-    # once per strategic period
-    if is_last(elec_pers)
-        t_inv = strat_per(elec_pers)
-        t = last(per)
-        @constraint(m,
-            stack_lifetime(n) ≥
-                (
-                    m[:elect_prev_use][n, t] +
-                    m[:elect_use_sp][n, t_inv]*(duration_strat(t_inv) - 1)
-                )
-                * 1000 + m[:elect_on_b][n, t] * scale_op_sp(t_inv, t)
-        )
-    end
-
     # Iterate through the operational structure
     for (t_prev, t) ∈ withprev(per)
         prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), EMB.rep_per(prev_pers), t_prev);

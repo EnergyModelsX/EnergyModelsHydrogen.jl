@@ -9,7 +9,7 @@ CO2 = ResourceEmit("CO2", 1.0)
 
 # Function for setting up the system for testing an `AbstractElectrolyzer` node
 function simple_graph_elec(;
-    cap = FixedProfile(-25),        # Installed capacity [MW]
+    cap = FixedProfile(25),         # Installed capacity [MW]
     opex_var = FixedProfile(5),     # Variable Opex
     opex_fixed = FixedProfile(100), # Fixed Opex
     input = Dict(Power => 1),       # Input: Ratio of Input flows to characteristic throughput
@@ -76,7 +76,7 @@ end
     @test_throws AssertionError simple_graph_elec(cap=FixedProfile(-25))
 
     # Test that a wrong fixed OPEX is caught by the checks
-    @test_throws AssertionError simple_graph_elec(;opex_var=FixedProfile(5))
+    @test_throws AssertionError simple_graph_elec(;opex_fixed=FixedProfile(-5))
 
     # Test that a wrong input dictionary is caught by the checks
     @test_throws AssertionError simple_graph_elec(;input=Dict(Power => -1))
