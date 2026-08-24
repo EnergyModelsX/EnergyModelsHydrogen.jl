@@ -97,20 +97,20 @@ function penalty_test(m, case)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # Reassign variables
-    penalty = m[:elect_efficiency_penalty][elec, :]
-    stack_replace = m[:elect_stack_replace_b][elec, :]
+    penalty = value.(m[:elect_efficiency_penalty][elec, :])
+    stack_replace = value.(m[:elect_stack_replace_b][elec, :])
+    prev_use = value.(m[:elect_prev_use][elec, :])
 
     # Calculation of the penalty
     @test all(
-        value.(penalty[t]) ⪅ value.(penalty[t_prev])
+        penalty[t] ⪅ penalty[t_prev]
         for (t_prev, t) ∈ withprev(𝒯) if !isnothing(t_prev)
     )
+    @test all(prev_use[t] ⪅ EMH.stack_lifetime(elec) for t ∈ 𝒯)
     @test all(
-        value.(m[:elect_prev_use][elec, t]) ⪅ EMH.stack_lifetime(elec) for t ∈ 𝒯
-    )
-    @test all(
-        value.(penalty[t]) ≈
-            1 - EMH.degradation_rate(elec)/100 * value.(m[:elect_prev_use][elec, t])
+        isapprox(
+            penalty[t], 1 - EMH.degradation_rate(elec)/100 * prev_use[t], atol=1e-6
+        )
     for t ∈ 𝒯)
 
     # Test that the previous usage is correctly calculated
@@ -119,9 +119,16 @@ function penalty_test(m, case)
         (
             value.(m[:elect_prev_use_sp][elec, t_inv_prev]) +
             value.(m[:elect_use_sp][elec, t_inv_prev]) * 2
-        ) * (1 - value.(stack_replace[t_inv])),
+        ) * (1 - stack_replace[t_inv]),
         atol = TEST_ATOL)
     for (t_inv_prev, t_inv) ∈ withprev(𝒯ᴵⁿᵛ) if !isnothing(t_inv_prev))
+
+    # Test that the stack lifetime constraint is not violated
+    @test all(
+        EMH.stack_lifetime(elec)/1000 ⪆
+            value.(m[:elect_prev_use_sp][elec, t_inv]) * (1-stack_replace[t_inv]) +
+            value.(m[:elect_use_sp][elec, t_inv]) * duration_strat(t_inv)
+    for t_inv ∈ 𝒯ᴵⁿᵛ)
 end
 
 # Testset for the individual extraction methods incorporated in the model
@@ -241,23 +248,13 @@ end
 @testset "Investment extension test" begin
     @testset "Without investment data" begin
         # Specifying the input parameters
-        𝒯 = TwoLevel(8, 2, SimpleTimes(20, 8760/20); op_per_strat=8760)
+        𝒯 = TwoLevel(8, 2, SimpleTimes(20, 1); op_per_strat=8760)
         deficit_cost = StrategicProfile([25, 25, 25, 25, 30])
         stack_cost = FixedProfile(3e8)
+        stack_lifetime = 8000
 
         # Run and test the model
-        m, case, modeltype = elec_test_case(𝒯; stack_cost, deficit_cost)
-
-        # Overwrite the modeltype
-        modeltype = InvestmentModel(Dict(co2 => FixedProfile(0)), Dict(co2 => FixedProfile(0)), co2, 0.07)
-
-        # Create and run the model
-        m = create_model(case, modeltype)
-        set_optimizer(m, OPTIMIZER)
-        optimize!(m)
-
-        # Test the penalties
-        penalty_test(m, case)
+        m, case, modeltype = elec_test_case(𝒯; stack_cost, deficit_cost, stack_lifetime)
     end
     @testset "With investment data" begin
         # Specifying the input parameters
