@@ -315,13 +315,20 @@ The calculation of the previous usage of the electrolyzer node requires the defi
 The overall approach is similar to the calculation of the level constraints in `EnergyModelsBase`.
 This is achieved through the function `constraints_usage()` and the individual functions calculated from the function.
 
-Within this function, we first calculate ``\forall t_{inv, 1} \in T^{Inv},~ t_{inv, 2} \in T^{Inv}`` the linear reformulation of the product
-
 First, the usage in each investment period ``t_{inv}`` is calculated:
 
 ```math
 \texttt{elect\_use\_sp}[n_{el}, t_{inv}] \times 1000 = \sum_{t \in t_{inv}}\texttt{elect\_on\_b}[n_{el}, t]
 \times scale\_op\_sp(t_{inv}, t)
+```
+
+In addition, we add the constraint on the stack lifetime.
+
+```math
+\begin{aligned}
+stack\_&lifetime(n) / 1000 \geq \\ &
+\texttt{elect\_prev\_use\_sp}[n_{el}, t]_{inv}  + \texttt{elect\_use\_sp}[n_{el}, t_{inv}] \times duration\_strat(t_{inv})
+\end{aligned}
 ```
 
 The previous usage up the current investment period ``t_{inv}`` is calculated through the function `constraints_usage_sp`.
@@ -377,20 +384,6 @@ If the `TimeStructure` includes representative periods, then the usage in each r
 \texttt{elect\_use\_rp}[n_{el}, t_{rp}] \times 1000 = \sum_{t \in t_{rp}}\texttt{elect\_on\_b}[n_{el}, t]
 \times scale\_op\_sp(t_{inv}, t)
 ```
-
-In addition, if we are in the last operational period (of the last representative period) of an investment period, we calculate (for each operational scenario) the constraint
-
-```math
-\begin{aligned}
-stack\_&lifetime(n) \geq \\ &
-\texttt{elect\_prev\_use}[n_{el}, t] \times 1000 + \\ &
-\texttt{elect\_use\_sp}[n_{el}, t_{inv}] \times (duration\_strat(t_{inv}) - 1) \times 1000 + \\
-& \texttt{elect\_on\_b}[n_{el}, t] \times scale\_op\_sp(t_{inv}, t)
-\end{aligned}
-```
-
-to avoid a violation of the lifetime constraint.
-This constraint is only necessary for the last operational period as stack replacement is only allowed at the beginning of an investment period.
 
 The declaration of the actual constraint for the previous usage can be differentiated in four individual cases:
 
