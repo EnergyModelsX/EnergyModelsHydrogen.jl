@@ -8,6 +8,22 @@ Hence, incorporating the potential for stack replacement and the associated cost
 Stack replacement is cheaper than rebuilding a complete plant.
 Furthermore, it results in an improved efficiency as it resets the degradation.
 
+!!! note "Degradation and stack utilization calculations"
+    The degradation and stack utilization calculations do not include the multiplier (to scale between operational and strategic periods) within a given `SimpleTimes` structure or the duration of a strategic period.
+    We only consider the duration of the operational period.
+
+    As an example, consider the following time structure:
+
+    ```julia
+    𝒯 = TwoLevel(1, 2, SimpleTimes(24, 1); 8760.0)
+    ```
+
+    which corresponds to modelling a strategic period with a duration of 2 years and 24 operational periods with a duration of 1 h each.
+    In this situation, the maximum achievable degradation and stack utilization is given by the degradation after 24 hours of usage while theoretically it would be possible to have in the second year of the strategic period a total previous usage of 17 496 hours.
+    This is an optimistic treatment of the behavior while maintaining the degradation change within the given `SimpeTimes` structure.
+
+    However, when using representative periods, we do account for the multiplier for `SimpleTimes` structures as the core assumption is that the individual time structure within a representative period is repeated.
+
 ## [Introduced types and their fields](@id nodes-elec-fields)
 
 Electrolysis is incorporated through two composite types with the same parameters.
@@ -71,7 +87,7 @@ The standard fields are given as:
   The lower limit has to be non-negative while the upper limit has to be higher than the lower limit.
 - **`degradation_rate::Real`**:\
   The degradation rate is the reduction in efficiency of the electrolyser due to utilization.
-  It has to be provided as a percentage drop in efficiency in 1000 time the length of an operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
+  It has to be provided as a percentage drop in efficiency in 1000 times the length of an operational duration (see *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS-struct-sp)* for an explanation).
   If a duration of 1 in an operational period corresponds to an hour, then the unit is %/1000h.\
   The degradation rate has to be given as ``[0, 1)``.
 - **`stack_replacement_cost::TimeProfile`**:\

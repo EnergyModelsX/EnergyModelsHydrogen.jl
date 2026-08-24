@@ -1,5 +1,16 @@
 # Release Notes
 
+## Version 0.9.2 (2026-08-24)
+
+### Bug fixes
+
+* Fixed a bug in the tests of the checks of an `AbstractElectrolyzer`.
+* Fixed a bug in the lifetime bounds of an `AbstractElectrolyzer`.
+  * The bug occured when
+    1. the sum of the durations of the operational periods were not equal to the parameter `op_per_strat` and
+    2. the stack lifetime was shorter than the paramerer `op_per_strat`.
+  * Solving the bug resulted in changing the constraint for the upper bound of the lifetime with redundant strategic constraints when the stack lifetime is longer than the paramerer `op_per_strat` times the duration of a strategic period.
+
 ## Version 0.9.1 (2026-08-11)
 
 ### Bug fixes
