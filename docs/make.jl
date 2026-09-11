@@ -50,6 +50,7 @@ makedocs(
         ],
         "Nodes" => Any[
             "Electrolyzer" => "nodes/electrolyzer.md",
+            "Discrete Electrolyzer" => "nodes/discrete_electrolyzer.md",
             "Reformer" => "nodes/reformer.md",
             "H₂ storage" => "nodes/h2_storage.md",
         ],

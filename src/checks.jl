@@ -23,6 +23,11 @@ additional check on the data.
   accessible through a `StrategicPeriod` as outlined in the function
   [`EMB.check_strategic_profile()`](@extref EnergyModelsBase.check_strategic_profile).
 - The field `stack_lifetime` is required to be non-negative.
+
+For the type [`StrategicDegradationElectrolyzer`](@ref), the following additional checks are performed:
+- The field `degradation_usage_breakpoints` is required to be sorted and contain at least two values, 
+  with the first value being zero and the last value being equal to the field `stack_lifetime` (in units of 1000 h).
+- The values of the field `degradation_state_efficiency` are required to be non-negative
 """
 function EMB.check_node(
     n::AbstractElectrolyzer,
@@ -30,6 +35,52 @@ function EMB.check_node(
     modeltype::EnergyModel,
     check_timeprofiles::Bool
 )
+    common_checks(n, 𝒯, modeltype, check_timeprofiles)
+end
+function EMB.check_node(
+    n::StrategicDegradationElectrolyzer,
+    𝒯,
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool
+)
+    common_checks(n, 𝒯, modeltype, check_timeprofiles)
+    breakpoints = degradation_usage_breakpoints(n)
+
+    @assert_or_log(
+        length(breakpoints) >= 2,
+        "The degradation usage breakpoints of $(n.id) must contain at least two values."
+    )
+
+    @assert_or_log(
+        first(breakpoints) == 0,
+        "The first degradation usage breakpoint of $(n.id) must be zero."
+    )
+
+    @assert_or_log(
+        issorted(breakpoints),
+        "The degradation usage breakpoints of $(n.id) must be sorted."
+    )
+
+    @assert_or_log(
+        all(diff(breakpoints) .> 0),
+        "The degradation usage breakpoints of $(n.id) must be strictly increasing."
+    )
+
+    @assert_or_log(
+        last(breakpoints) * 1000 == stack_lifetime(n),
+        "The last degradation usage breakpoint of $(n.id) must equal its stack lifetime."
+    )
+
+    @assert_or_log(
+        all(
+            degradation_state_efficiency(n, j) >= 0
+            for j in degradation_states(n)
+        ),
+        "The degradation states of $(n.id) must not result in negative efficiencies."
+    )
+end
+
+function common_checks(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)

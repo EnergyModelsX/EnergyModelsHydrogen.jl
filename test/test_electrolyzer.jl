@@ -1,10 +1,5 @@
 using LinearAlgebra
 
-# Declare all resources of the case
-power = ResourceCarrier("Power", 0.0)
-h2 = ResourceCarrier("H₂", 0.0)
-co2 = ResourceEmit("CO₂", 1.0)
-
 """
     elec_test_case(𝒯; kwargs)
 
@@ -16,8 +11,9 @@ function elec_test_case(
     elec_type=SimpleElectrolyzer,
     cap=FixedProfile(100),
     data=ExtensionData[],
-    limits=LoadLimits(0, 1),
+    load_limits=LoadLimits(0, 1),
     degradation_rate=0.1,
+    degradation_usage_breakpoints = collect(0.0:5.0:60.0),
     stack_cost=FixedProfile(3e5),
     stack_lifetime=60000,
     demand=FixedProfile(50),
@@ -34,18 +30,19 @@ function elec_test_case(
         FixedProfile(0),    # Fixed Opex
         Dict(power => 1),   # Ratio of output to characteristic throughput
     )
-    elec = elec_type(
-        "Electrolyzer",
-        cap,                # Installed capacity [MW]
-        FixedProfile(5),    # Variable Opex
-        FixedProfile(0),    # Fixed Opex
-        Dict(power => 1),   # Input: Ratio of Input flows to characteristic throughput
-        Dict(h2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
-        data,               # Data
-        limits,             # Minimum and maximum load
-        degradation_rate,   # Degradation rate
-        stack_cost,         # Stack replacement costs
-        stack_lifetime,     # Stack lifetime in h
+    elec = constructor_helper(
+        elec_type;
+        cap,
+        opex_var=FixedProfile(5),
+        opex_fixed=FixedProfile(0),
+        input = Dict(power => 1),
+        output = Dict(h2 => 0.62),
+        data,
+        load_limits,
+        degradation_rate,
+        degradation_usage_breakpoints,
+        stack_cost,
+        stack_lifetime,
     )
     h2_sink = RefSink(
         "H₂ demand",
@@ -91,8 +88,12 @@ penalty that is at least as large as the one of the current period as well as th
 the previous usage with stack replacement is correctly calculated.
 """
 function penalty_test(m, case)
-    # Extract the required input
     elec = get_nodes(case)[2]
+
+    return penalty_test(m, case, elec)
+end
+function penalty_test(m, case, elec::EMH.AbstractElectrolyzer)
+    # Extract the required input
     𝒯 = get_time_struct(case)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
@@ -130,6 +131,137 @@ function penalty_test(m, case)
             value.(m[:elect_use_sp][elec, t_inv]) * duration_strat(t_inv)
     for t_inv ∈ 𝒯ᴵⁿᵛ)
 end
+function penalty_test(
+    m,
+    case,
+    elec::StrategicDegradationElectrolyzer,
+)
+    𝒯 = get_time_struct(case)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    penalty = m[:elect_efficiency_penalty][elec, :]
+    stack_replace = m[:elect_stack_replace_b][elec, :]
+
+    # Previous strategic-period usage remains bounded by stack lifetime.
+    @test all(
+        value(m[:elect_prev_use_sp][elec, t_inv]) ⪅
+            EMH.stack_lifetime(elec) / 1000
+        for t_inv in 𝒯ᴵⁿᵛ
+    )
+
+    # Exactly one degradation state must be selected in each strategic period.
+    @test all(
+        isapprox(
+            sum(
+                value(
+                    m[:elect_deg_state_b][
+                        elec,
+                        t_inv,
+                        j,
+                    ]
+                )
+                for j in EMH.degradation_states(elec)
+            ),
+            1;
+            atol = TEST_ATOL,
+        )
+        for t_inv in 𝒯ᴵⁿᵛ
+    )
+
+    # The efficiency penalty must be equal to the efficiency of the selected
+    # degradation state.
+    @test all(
+        isapprox(
+            value(penalty[t]),
+            sum(
+                EMH.degradation_state_efficiency(elec, j) *
+                value(
+                    m[:elect_deg_state_b][
+                        elec,
+                        t_inv,
+                        j,
+                    ]
+                )
+                for j in EMH.degradation_states(elec)
+            );
+            atol = TEST_ATOL,
+        )
+        for t_inv in 𝒯ᴵⁿᵛ
+        for t in t_inv
+    )
+
+    # Efficiency must be constant within each strategic period.
+    @test all(
+        isapprox(
+            value(penalty[t]),
+            value(penalty[first(t_inv)]);
+            atol = TEST_ATOL,
+        )
+        for t_inv in 𝒯ᴵⁿᵛ
+        for t in t_inv
+    )
+
+    # The selected state must contain the accumulated usage at the beginning
+    # of the strategic period.
+    breakpoints = EMH.degradation_usage_breakpoints(elec)
+
+    @test all(
+        value(m[:elect_prev_use_sp][elec, t_inv]) >=
+            breakpoints[j] - TEST_ATOL
+        for t_inv in 𝒯ᴵⁿᵛ
+        for j in EMH.degradation_states(elec)
+        if value(
+            m[:elect_deg_state_b][
+                elec,
+                t_inv,
+                j,
+            ]
+        ) >= 1 - TEST_ATOL
+    )
+
+    @test all(
+        value(m[:elect_prev_use_sp][elec, t_inv]) <=
+            breakpoints[j + 1] + TEST_ATOL
+        for t_inv in 𝒯ᴵⁿᵛ
+        for j in EMH.degradation_states(elec)
+        if value(
+            m[:elect_deg_state_b][
+                elec,
+                t_inv,
+                j,
+            ]
+        ) >= 1 - TEST_ATOL
+    )
+
+    # Test carry-over and stack replacement between strategic periods.
+    @test all(
+        isapprox(
+            value(m[:elect_prev_use_sp][elec, t_inv]),
+            (
+                value(
+                    m[:elect_prev_use_sp][
+                        elec,
+                        t_inv_prev,
+                    ]
+                ) +
+                value(
+                    m[:elect_use_sp][
+                        elec,
+                        t_inv_prev,
+                    ]
+                ) *
+                duration_strat(t_inv_prev)
+            ) *
+            (
+                1 -
+                value(stack_replace[t_inv])
+            );
+            atol = TEST_ATOL,
+        )
+        for (t_inv_prev, t_inv) in withprev(𝒯ᴵⁿᵛ)
+        if !isnothing(t_inv_prev)
+    )
+end
 
 # Testset for the individual extraction methods incorporated in the model
 @testset "Utilities" begin
@@ -144,21 +276,23 @@ end
             StrategicProfile([0, 100, 0, 0, 0]),
         )
     )]
+    degradation_usage_breakpoints = [0.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0]
 
     # Iterate through both electrolyzer types and check that all functions are working
-    for type ∈ [SimpleElectrolyzer, Electrolyzer]
-        elec = type(
-            "electrolyzer",
-            FixedProfile(10),   # Installed capacity [MW]
-            FixedProfile(5),    # Variable Opex
-            FixedProfile(0),    # Fixed Opex
-            Dict(power => 1),   # Input: Ratio of Input flows to characteristic throughput
-            Dict(h2 => 0.62),   # Ouput: Ratio of Output flow to characteristic throughput
+    for type ∈ [SimpleElectrolyzer, Electrolyzer, StrategicDegradationElectrolyzer]
+        elec = constructor_helper(
+            type;
+            cap = FixedProfile(10),                      # Installed capacity [MW]
+            opex_var = FixedProfile(5),    # Variable Opex
+            opex_fixed = FixedProfile(0),    # Fixed Opex
+            input = Dict(power => 1),                     # Input: Ratio of Input flows to characteristic throughput
+            output = Dict(h2 => 0.62),                    # Ouput: Ratio of Output flow to characteristic throughput
             data,
-            LoadLimits(0.1, 1.2),   # Minimum and maximum load
-            0.1,                # Degradation rate
-            FixedProfile(3e5),  # Stack replacement costs
-            60000,              # Stack lifetime in h
+            load_limits = LoadLimits(0.1, 1.2),          # Minimum and maximum load
+            degradation_rate = 0.1,                      # Degradation rate
+            degradation_usage_breakpoints,
+            stack_cost = FixedProfile(3e5),              # Stack replacement costs
+            stack_lifetime = 60_000,                     # Stack lifetime in h
         )
 
         # Test the EMB utility functions
@@ -222,10 +356,10 @@ end
     𝒯 = TwoLevel(8, 2, SimpleTimes(10, 1); op_per_strat=8760)
     cap = FixedProfile(80)
     demand = OperationalProfile([20, 30, 40, 50, 100, 60, 20, 20, 25, 50] * 0.62)
-    limits = LoadLimits(0.3, 1.1)
+    load_limits = LoadLimits(0.3, 1.1)
 
     # Run and test the model
-    m, case, modeltype = elec_test_case(𝒯; cap, limits, demand)
+    m, case, modeltype = elec_test_case(𝒯; cap, load_limits, demand)
 
     # Test that the minimum usage is enforced and there is a surplus in some periods
     elec, sink = get_nodes(case)[2:3]
@@ -442,4 +576,45 @@ end
     )
 
     finalize(backend(m).optimizer.model)
+end
+
+@testset "Strategic-period degradation" begin
+    𝒯 = TwoLevel(
+        [1, 2, 2, 2, 2, 2],
+        SimpleTimes(4, 1);
+        op_per_strat = 8760,
+    )
+
+    elec_type = StrategicDegradationElectrolyzer
+
+    stack_lifetime = 60_000
+    degradation_usage_breakpoints = [0.0, 30.0, 60.0]  # kh; last == stack_lifetime/1000 ✓
+
+    # degradation_rate = 0.5 (%/1000 h):
+    #   state-1 efficiency = 1 - 0.5/100 * 30 = 0.85 → output = 100 * 0.85 * 0.62 = 52.7 ≥ demand 50 ✓
+    #   state-2 efficiency = 1 - 0.5/100 * 60 = 0.70 → output = 100 * 0.70 * 0.62 = 43.4 < demand 50 ✗
+    #
+    # Accumulated elect_prev_use_sp (scale_op_sp = 8760/4 = 2190):
+    #   elect_use_sp = 4 * 2190 / 1000 = 8.76 kh per strategic period
+    #   SP1 (1yr): start=0          → state 1
+    #   SP2 (2yr): start=8.76       → state 1
+    #   SP3 (2yr): start=26.28      → state 1
+    #   SP4 (2yr): start=43.8∈[30,60) → state 2
+    #   SP5 (2yr): start=61.56 → capped by stack_lifetime constraint
+    #   SP6 (2yr): same
+    #
+    # stack_cost = 1e9 → replacement never optimal; 2 states × 6 SPs = 12 binaries → fast
+    m, case, modeltype = elec_test_case(
+        𝒯;
+        elec_type,
+        degradation_usage_breakpoints,
+        degradation_rate = 0.5,
+        demand = FixedProfile(50),
+        stack_lifetime,
+        stack_cost = FixedProfile(1e9),
+    )
+
+    finalize(backend(m).optimizer.model)
+
+    @test termination_status(EMGUI.get_model(gui)) == MOI.OPTIMAL
 end

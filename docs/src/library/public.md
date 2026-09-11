@@ -7,6 +7,7 @@
 ```@docs
 SimpleElectrolyzer
 Electrolyzer
+DiscreteDegradationPWLElectrolyzer
 ```
 
 ### [Reformer nodes](@id lib-pub-nodes-ref)

@@ -190,7 +190,7 @@ These standard constraints are:
 - `constraints_opex_var`:
 
   ```math
-  \texttt{opex\_var}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}} opex_var(n_{el}, t) \times \texttt{cap\_use}[n_{el}, t] \times scale\_op\_sp(t_{inv}, t)
+  \texttt{opex\_var}[n_{el}, t_{inv}] = \sum_{t \in t_{inv}} opex_{var}(n_{el}, t) \times \texttt{cap\_use}[n_{el}, t] \times scale\_op\_sp(t_{inv}, t)
   ```
 
   !!! tip "The function `scale_op_sp`"

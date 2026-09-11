@@ -212,7 +212,7 @@ function constraints_previous_usage(
     @constraint(m,
         m[:elect_prev_use][n, t] ==
             m[:elect_prev_use][n, t_prev] +
-            duration(t_prev) * m[:elect_on_b][n, t_prev] / 1000
+            scale_op_sp(strat_per(elec_pers), t_prev) * m[:elect_on_b][n, t_prev] / 1000
     )
 end
 """
@@ -266,5 +266,155 @@ function constraints_previous_usage(
         m[:elect_prev_use][n, t] ==
             m[:elect_prev_use][n, first(t_rp_prev)] +
             m[:elect_use_rp][n, t_rp_prev]
+    )
+end
+
+
+"""
+    constraints_degradation(
+        m,
+        n::StrategicDegradationElectrolyzer,
+        𝒯,
+        𝒯ᴵⁿᵛ,
+    )
+
+Selects one degradation state in each strategic period based on accumulated
+usage before the beginning of that strategic period.
+"""
+function constraints_degradation(
+    m,
+    n::StrategicDegradationElectrolyzer,
+    𝒯,
+    𝒯ᴵⁿᵛ,
+)
+    breakpoints = degradation_usage_breakpoints(n)
+    𝒮 = degradation_states(n)
+    # M must be at least as large as the last breakpoint (in 1000 h units) so that
+    # inactive-state lower-bound constraints do not impose a positive floor on
+    # elect_prev_use_sp (which is fixed to 0 in the first strategic period).
+    M = stack_lifetime(n) / 1000
+
+    @constraint(m, [t_inv in 𝒯ᴵⁿᵛ],
+        sum(m[:elect_deg_state_b][n, t_inv, j] for j in 𝒮) == 1
+    )
+
+    @constraint(m, [t_inv in 𝒯ᴵⁿᵛ, j in 𝒮],
+        m[:elect_prev_use_sp][n, t_inv] >=
+            breakpoints[j] - M * (1 - m[:elect_deg_state_b][n, t_inv, j])
+    )
+
+    @constraint(m, [t_inv in 𝒯ᴵⁿᵛ, j in 𝒮],
+        m[:elect_prev_use_sp][n, t_inv] <=
+            breakpoints[j + 1] + M * (1 - m[:elect_deg_state_b][n, t_inv, j])
+    )
+end
+function constraints_degradation(
+    m,
+    n::AbstractElectrolyzer,
+    𝒯,
+    𝒯ᴵⁿᵛ,
+)
+    # Determine the efficiency penalty at current timestep due to degradation:
+    # Linearly decreasing to zero with increasing `degradation_rate(n)` and `elect_prev_use`.
+    # With `degradation_rate(n)` = 0, the degradation is disabled,
+    # Note that `degradation_rate(n)` is a percentage and is normalized to the
+    # interval [0, 1] in the constraint.
+    @constraint(m, [t ∈ 𝒯],
+        m[:elect_efficiency_penalty][n, t] ==
+            1 - (degradation_rate(n)/100) * m[:elect_prev_use][n, t]
+    )
+end
+
+"""
+    EMB.constraints_flow_out(
+        m,
+        n::StrategicDegradationElectrolyzer,
+        𝒯::TimeStructure,
+        modeltype::EnergyModel,
+    )
+
+Calculates output flows using an efficiency determined by accumulated usage at
+the beginning of the strategic period.
+
+The operational capacity use is disaggregated by degradation state to avoid a
+product between two continuous variables.
+"""
+function EMB.constraints_flow_out(
+    m,
+    n::StrategicDegradationElectrolyzer,
+    𝒯::TimeStructure,
+    modeltype::EnergyModel,
+)
+    𝒫ᵒᵘᵗ = outputs(n)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    # Compute cap_inst[t_inv] * elect_deg_state_b[n, t_inv, j] for all (t_inv, j).
+    # Returns a DenseAxisArray indexed over 𝒯ᴵⁿᵛ per state j.
+    # For EnergyModel this is a scalar product; for AbstractInvestmentModel the EMIExt
+    # override applies a McCormick linearization.
+    cap_state = Dict(
+        j => cap_deg_state_product(m, n, 𝒯ᴵⁿᵛ, j, modeltype)
+        for j in degradation_states(n)
+    )
+
+    for t_inv in 𝒯ᴵⁿᵛ
+        for t in t_inv
+            @constraint(m,
+                m[:cap_use][n, t] ==
+                    sum(
+                        m[:elect_cap_use_deg][n, t, j]
+                        for j in degradation_states(n)
+                    )
+            )
+
+            @constraint(m, [
+                j in degradation_states(n),
+            ],
+                m[:elect_cap_use_deg][n, t, j] <=
+                    max_load(n, t) * cap_state[j][t_inv]
+            )
+
+            @constraint(m, [p in 𝒫ᵒᵘᵗ],
+                m[:flow_out][n, t, p] ==
+                    outputs(n, p) *
+                    sum(
+                        degradation_state_efficiency(n, j) *
+                        m[:elect_cap_use_deg][n, t, j]
+                        for j in degradation_states(n)
+                    )
+            )
+
+            @constraint(m,
+                m[:elect_efficiency_penalty][n, t] ==
+                    sum(
+                        degradation_state_efficiency(n, j) *
+                        m[:elect_deg_state_b][n, t_inv, j]
+                        for j in degradation_states(n)
+                    )
+            )
+        end
+    end
+end
+
+"""
+    cap_deg_state_product(m, n::StrategicDegradationElectrolyzer, 𝒯ᴵⁿᵛ, j, modeltype::EnergyModel)
+
+Returns an expression indexed over `𝒯ᴵⁿᵛ` for `capacity(n, t_inv) * elect_deg_state_b[n, t_inv, j]`.
+
+For an `EnergyModel` this is a scalar-binary product (no auxiliary variables needed).
+For an `AbstractInvestmentModel` with investment data the extension in `EMIExt` overrides
+this to apply a McCormick linearization of `cap_inst[n, t_inv] * elect_deg_state_b[n, t_inv, j]`.
+"""
+function cap_deg_state_product(
+    m,
+    n::StrategicDegradationElectrolyzer,
+    𝒯ᴵⁿᵛ,
+    j,
+    ::EnergyModel,
+)
+    return @expression(
+        m,
+        [t_inv ∈ 𝒯ᴵⁿᵛ],
+        capacity(n, t_inv) * m[:elect_deg_state_b][n, t_inv, j],
     )
 end

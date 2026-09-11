@@ -23,7 +23,7 @@ include("model.jl")
 include("checks.jl")
 include("utils.jl")
 
-export SimpleElectrolyzer, Electrolyzer
+export SimpleElectrolyzer, Electrolyzer, StrategicDegradationElectrolyzer
 export Reformer
 export SimpleHydrogenStorage, HydrogenStorage
 

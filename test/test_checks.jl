@@ -3,120 +3,139 @@ EMB.TEST_ENV = true
 
 # Resources used in the checks
 NG = ResourceCarrier("NG", 0.2)
-Power = ResourceCarrier("Power", 0.0)
-H2 = ResourceCarrier("Hydrogen", 0.0)
-CO2 = ResourceEmit("CO2", 1.0)
 
 # Function for setting up the system for testing an `AbstractElectrolyzer` node
 function check_elec(;
+    type = StrategicDegradationElectrolyzer,
     cap = FixedProfile(25),         # Installed capacity [MW]
     opex_var = FixedProfile(5),     # Variable Opex
     opex_fixed = FixedProfile(100), # Fixed Opex
-    input = Dict(Power => 1),       # Input: Ratio of Input flows to characteristic throughput
-    output = Dict(H2 => 0.62),      # Ouput: Ratio of Output flow to characteristic throughput
+    input = Dict(power => 1),       # Input: Ratio of Input flows to characteristic throughput
+    output = Dict(h2 => 0.62),      # Ouput: Ratio of Output flow to characteristic throughput
     load_limits = LoadLimits(0, 1), # Minimum and maximum load
     degradation_rate = 0.1,         # Degradation rate
-    stack_rep_cost = FixedProfile(3e5),  # Stack replacement costs
+    degradation_usage_breakpoints = collect(0.0:5.0:60.0), # Degradation usage breakpoints
+    stack_cost = FixedProfile(3e5), # Stack replacement costs
     stack_lifetime = 60000,         # Stack lifetime in h
     T = TwoLevel(2, 2, SimpleTimes(5, 2); op_per_strat=10),
 )
-
     # Used source, network, and sink
     source = RefSource(
         "source",
         FixedProfile(4),
         FixedProfile(10),
         FixedProfile(0),
-        Dict(Power => 1),
+        Dict(power => 1),
     )
 
     sink = RefSink(
         "sink",
         FixedProfile(3),
         Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
-    elec = SimpleElectrolyzer(
-        "PEM",
+    elec = constructor_helper(
+        type;
         cap,
         opex_var,
         opex_fixed,
         input,
         output,
-        ExtensionData[],
+        data = ExtensionData[],
         load_limits,
         degradation_rate,
-        stack_rep_cost,
-        stack_lifetime
+        degradation_usage_breakpoints,
+        stack_cost,
+        stack_lifetime,
     )
 
-    resources = [Power, H2, CO2]
+    resources = [power, h2, co2]
 
     nodes = [source, elec, sink]
     links = [
         Direct(12, source, elec)
         Direct(23, elec, sink)
-        ]
+    ]
 
     model = OperationalModel(
-        Dict(CO2 => FixedProfile(100)),
-        Dict(CO2 => FixedProfile(0)),
-        CO2,
+        Dict(co2 => FixedProfile(100)),
+        Dict(co2 => FixedProfile(0)),
+        co2,
     )
     case = Case(T, resources, [nodes, links], [[get_nodes, get_links]])
     return create_model(case, model), case, model
 end
-
 # Test that the fields of a `AbstractElectrolyzer` are correctly checked
 # - EMB.check_node(n::AbstractElectrolyzer, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "Test checks - AbstractElectrolyzer" begin
 
-    # Test that a wrong capacity is caught by the checks
-    @test_throws AssertionError check_elec(cap=FixedProfile(-25))
+    for type in [SimpleElectrolyzer, StrategicDegradationElectrolyzer]
+        # Test that a wrong capacity is caught by the checks
+        @test_throws AssertionError check_elec(; type, cap=FixedProfile(-25))
 
-    # Test that a wrong fixed OPEX is caught by the checks
-    @test_throws AssertionError check_elec(; opex_fixed=FixedProfile(-5))
+        # Test that a wrong fixed OPEX is caught by the checks
+        @test_throws AssertionError check_elec(; type, opex_fixed=FixedProfile(-5))
 
-    # Test that a wrong input dictionary is caught by the checks
-    @test_throws AssertionError check_elec(; input=Dict(Power => -1))
+        # Test that a wrong input dictionary is caught by the checks
+        @test_throws AssertionError check_elec(; type, input=Dict(power => -1))
 
-    # Test that a wrong output dictionary is caught by the checks
-    @test_throws AssertionError check_elec(; output=Dict(H2 => -0.62))
+        # Test that a wrong output dictionary is caught by the checks
+        @test_throws AssertionError check_elec(; type, output=Dict(h2 => -0.62))
 
-    # Test that a wrong minimum load is caught by the checks
-    @test_throws AssertionError check_elec(; load_limits=LoadLimits(-0.5, 1.0))
+        # Test that a wrong minimum load is caught by the checks
+        @test_throws AssertionError check_elec(; type, load_limits=LoadLimits(-0.5, 1.0))
 
-    # Test that a wrong maximum load is caught by the checks
-    @test_throws AssertionError check_elec(; load_limits=LoadLimits(1.5, 1.0))
+        # Test that a wrong maximum load is caught by the checks
+        @test_throws AssertionError check_elec(; type, load_limits=LoadLimits(1.5, 1.0))
 
-    # Test that a wrong degradation rate load is caught by the checks
-    @test_throws AssertionError check_elec(; degradation_rate=-0.1)
-    @test_throws AssertionError check_elec(; degradation_rate=100)
+        # Test that a wrong degradation rate load is caught by the checks
+        @test_throws AssertionError check_elec(; type, degradation_rate=-0.1)
+        @test_throws AssertionError check_elec(; type, degradation_rate=100)
 
-    # Test that a wrong stack replacement profile is caught by the checks
-    stack_rep_cost = FixedProfile(-5)
-    @test_throws AssertionError check_elec(; stack_rep_cost)
-    T = TwoLevelTree(2, [2], SimpleTimes(5, 1); op_per_strat=10.0)
-    oprofile = OperationalProfile(ones(4))
-    profiles = [
-        oprofile,
-        StrategicProfile([4]),
-        StrategicProfile([oprofile, oprofile, oprofile, oprofile]),
-    ]
-    for tp ∈ profiles
-        @test_throws AssertionError check_elec(; stack_rep_cost=tp)
-        @test_throws AssertionError check_elec(; stack_rep_cost=tp, T)
+        # Test that a wrong stack replacement profile is caught by the checks
+        stack_cost = FixedProfile(-5)
+        @test_throws AssertionError check_elec(; type, stack_cost)
+        T = TwoLevelTree(2, [2], SimpleTimes(5, 1); op_per_strat=10.0)
+        oprofile = OperationalProfile(ones(4))
+        profiles = [
+            oprofile,
+            StrategicProfile([4]),
+            StrategicProfile([oprofile, oprofile, oprofile, oprofile]),
+        ]
+        for tp ∈ profiles
+            @test_throws AssertionError check_elec(; type, cap = tp)
+            @test_throws AssertionError check_elec(; type, cap = tp, T)
+        end
+        stack_cost = StrategicStochasticProfile([[4]])
+        @test_throws AssertionError check_elec(; type, stack_cost, T)
+
+        stack_cost = StrategicProfile([10])
+        @test_throws AssertionError check_elec(; type, stack_cost)
+        stack_cost = OperationalProfile([10])
+        @test_throws AssertionError check_elec(; type, stack_cost)
+
+        # Test that a wrong lifetime is caught by the checks
+        @test_throws AssertionError check_elec(; type, stack_lifetime=-10)
     end
-    stack_rep_cost = StrategicStochasticProfile([[4]])
-    @test_throws AssertionError check_elec(; stack_rep_cost, T)
 
-    stack_rep_cost = StrategicProfile([10])
-    @test_throws AssertionError check_elec(; stack_rep_cost)
-    stack_rep_cost = OperationalProfile([10])
-    @test_throws AssertionError check_elec(; stack_rep_cost)
+    # length(breakpoints) >= 2
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[0.0])
 
-    # Test that a wrong lifetime is caught by the checks
-    @test_throws AssertionError check_elec(; stack_lifetime=-10)
+    # first(breakpoints) == 0
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[1.0, 10.0])
+
+    # issorted(breakpoints)
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[0.0, 20.0, 10.0])
+
+    # strictly increasing (no duplicates)
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[0.0, 10.0, 10.0])
+
+    # last(breakpoints) * 1000 >= stack_lifetime
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[0.0, 10.0], stack_lifetime=9_000)
+    @test_throws AssertionError check_elec(; degradation_usage_breakpoints=[0.0, 10.0], stack_lifetime=11_000)
+
+    # degradation_state_efficiency(n, j) >= 0
+    @test_throws AssertionError check_elec(; degradation_rate=100)
 end
 
 # Function for setting up the system for testing a `Reformer` node
@@ -125,7 +144,7 @@ function check_ref(;
     opex_var = FixedProfile(5),    # Variable Opex
     opex_fixed = FixedProfile(100),  # Fixed Opex
     input = Dict(NG => 1.36),   # Input: Ratio of Input flows to characteristic throughput
-    output = Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
+    output = Dict(h2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
     load_limits = LoadLimits(0, 1),   # Minimum and maximum load
     startup = CommitParameters(FixedProfile(1), FixedProfile(1)),
     shutdown = CommitParameters(FixedProfile(1), FixedProfile(1)),
@@ -161,10 +180,10 @@ function check_ref(;
         "sink",
         FixedProfile(3),
         Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
 
-    resources = [NG, H2, CO2]
+    resources = [NG, h2, co2]
     ops = SimpleTimes(1, 2)
     T = TwoLevel(1, 2, ops; op_per_strat=10)
 
@@ -175,9 +194,9 @@ function check_ref(;
         ]
 
     model = OperationalModel(
-        Dict(CO2 => FixedProfile(1e5)),
-        Dict(CO2 => FixedProfile(0)),
-        CO2,
+        Dict(co2 => FixedProfile(1e5)),
+        Dict(co2 => FixedProfile(0)),
+        co2,
     )
     case = Case(T, resources, [nodes, links], [[get_nodes, get_links]])
     return create_model(case, model), case, model
@@ -197,7 +216,7 @@ end
     @test_throws AssertionError check_ref(; input=Dict(NG => -1))
 
     # Test that a wrong output dictionary is caught by the checks
-    @test_throws AssertionError check_ref(; output=Dict(H2 => -1.0))
+    @test_throws AssertionError check_ref(; output=Dict(h2 => -1.0))
 
     # Test that a wrong minimum load is caught by the checks
     @test_throws AssertionError check_ref(; load_limits=LoadLimits(-0.5, 1.0))
@@ -235,8 +254,8 @@ function check_simple_stor(;
     level_cap = FixedProfile(1000),         # Installed capacity [MWh]
     charge_opex_fixed = FixedProfile(5),    # Fixed Opex
     level_opex_fixed = FixedProfile(5),     # Fixed Opex
-    input = Dict(H2 => 1.0),    # Input: Ratio of Input flows to characteristic throughput
-    output = Dict(H2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
+    input = Dict(h2 => 1.0),    # Input: Ratio of Input flows to characteristic throughput
+    output = Dict(h2 => 1.0),   # Ouput: Ratio of Output flow to characteristic throughput
     discharge_charge = 2.0,     # Maximum discharge rate to charge capacity ratio
     level_charge = 100.0,       # Maximum level capacity to charge capacity ratio
 )
@@ -247,14 +266,14 @@ function check_simple_stor(;
         FixedProfile(4),
         FixedProfile(10),
         FixedProfile(0),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
 
     storage = SimpleHydrogenStorage{CyclicStrategic}(
         "Storage",
         StorCapOpexFixed(charge_cap, charge_opex_fixed),
         StorCapOpexFixed(level_cap, level_opex_fixed),
-        H2,
+        h2,
         input,
         output,
         discharge_charge,
@@ -265,10 +284,10 @@ function check_simple_stor(;
         "sink",
         FixedProfile(3),
         Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
 
-    resources = [H2, CO2]
+    resources = [h2, co2]
     ops = SimpleTimes(1, 2)
     T = TwoLevel(1, 2, ops; op_per_strat=10)
 
@@ -279,9 +298,9 @@ function check_simple_stor(;
         ]
 
     model = OperationalModel(
-        Dict(CO2 => FixedProfile(1e5)),
-        Dict(CO2 => FixedProfile(0)),
-        CO2,
+        Dict(co2 => FixedProfile(1e5)),
+        Dict(co2 => FixedProfile(0)),
+        co2,
     )
     case = Case(T, resources, [nodes, links], [[get_nodes, get_links]])
     return create_model(case, model), case, model
@@ -300,10 +319,10 @@ end
     @test_throws AssertionError check_simple_stor(; level_opex_fixed=FixedProfile(-100))
 
     # Test that a wrong input dictionary is caught by the checks
-    @test_throws AssertionError check_simple_stor(; input=Dict(H2 => -1))
+    @test_throws AssertionError check_simple_stor(; input=Dict(h2 => -1))
 
     # Test that a wrong output dictionary is caught by the checks
-    @test_throws AssertionError check_simple_stor(; output=Dict(H2 => -1.0))
+    @test_throws AssertionError check_simple_stor(; output=Dict(h2 => -1.0))
 
     # Test that a wrong discharge to charge ratio is caught by the checks
     @test_throws AssertionError check_simple_stor(; discharge_charge=-0.5)
@@ -332,15 +351,15 @@ function check_h2_stor(;
         FixedProfile(4),
         FixedProfile(10),
         FixedProfile(0),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
 
     storage = HydrogenStorage{CyclicStrategic}(
         "Storage",
         StorCapOpexFixed(charge_cap, charge_opex_fixed),
         StorCapOpexFixed(level_cap, level_opex_fixed),
-        H2,
-        Power,
+        h2,
+        power,
         discharge_charge,
         level_charge,
         p_min,
@@ -352,10 +371,10 @@ function check_h2_stor(;
         "sink",
         FixedProfile(3),
         Dict(:surplus => FixedProfile(4), :deficit => FixedProfile(100)),
-        Dict(H2 => 1),
+        Dict(h2 => 1),
     )
 
-    resources = [H2, CO2]
+    resources = [h2, co2]
     ops = SimpleTimes(1, 2)
     T = TwoLevel(1, 2, ops; op_per_strat=10)
 
@@ -366,9 +385,9 @@ function check_h2_stor(;
         ]
 
     model = OperationalModel(
-        Dict(CO2 => FixedProfile(1e5)),
-        Dict(CO2 => FixedProfile(0)),
-        CO2,
+        Dict(co2 => FixedProfile(1e5)),
+        Dict(co2 => FixedProfile(0)),
+        co2,
     )
     case = Case(T, resources, [nodes, links], [[get_nodes, get_links]])
     return create_model(case, model), case, model

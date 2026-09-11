@@ -109,3 +109,37 @@ function EMH.ramp_disjunct(m, n::Reformer, ref_pers::EMH.RefPeriods, modeltype::
     end
     return @expression(m, cap_val * (2 - m[:ref_on_b][n, t] - m[:ref_on_b][n, t_prev]))
 end
+
+"""
+    EMH.cap_deg_state_product(m, n, 𝒯ᴵⁿᵛ, j, modeltype)
+
+Investment-model override. When the node has investment data, linearizes
+`cap_inst[n, t_inv] * elect_deg_state_b[n, t_inv, j]` via McCormick envelopes.
+Falls back to the scalar product when no investment data is present.
+"""
+function EMH.cap_deg_state_product(
+    m,
+    n::EMH.StrategicDegradationElectrolyzer,
+    𝒯ᴵⁿᵛ,
+    j,
+    ::AbstractInvestmentModel,
+)
+    if EMI.has_investment(n)
+        cap_upper_bound = EMI.max_installed(EMI.investment_data(n, :cap))
+        cap_lower_bound = FixedProfile(0)
+        return EMH.linear_reformulation(
+            m,
+            𝒯ᴵⁿᵛ,
+            (@expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], m[:elect_deg_state_b][n, t_inv, j])),
+            (@expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], m[:cap_inst][n, first(t_inv)])),
+            cap_lower_bound,
+            cap_upper_bound,
+        )
+    else
+        return @expression(
+            m,
+            [t_inv ∈ 𝒯ᴵⁿᵛ],
+            capacity(n, t_inv) * m[:elect_deg_state_b][n, t_inv, j],
+        )
+    end
+end

@@ -23,6 +23,13 @@ Creates the following additional variables for **ALL** electrolyzer nodes:
   electrolyzer `n` in  operational period due to degradation in the electrolyzer.
   It starts at 1 and is reset to 1 at the beginning of the investment period with stack
   replacement
+
+For the `StrategicDegradationElectrolyzer` type, the following additional variables are created:
+- `elect_deg_state_b[n, t_inv, j]` is a binary variable which is 1 if electrolyzer `n` is in 
+  degradation state `j` in investment period `t_inv`.
+- `elect_cap_use_deg[n, t, j]` is the total time of usage of electrolyzer `n` in operational 
+  period `t` in degradation state `j`. The value is provided in 1000 operational periods duration 
+  to avoid a too large matrix range.
 """
 function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{<:AbstractElectrolyzer}, 𝒯, modeltype::EnergyModel)
 
@@ -40,6 +47,33 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{<:AbstractElectrolyzer}, 𝒯,
     end
     @variable(m, elect_stack_replace_b[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ], Bin)
     @variable(m, 0.0 ≤ elect_efficiency_penalty[𝒩ᴱᴸ, 𝒯] ≤ 1.0)
+end
+function EMB.variables_node(
+    m,
+    𝒩ᴱᴸ::Vector{<:StrategicDegradationElectrolyzer},
+    𝒯,
+    ::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    @variable(
+        m,
+        elect_deg_state_b[
+            n in 𝒩ᴱᴸ,
+            t_inv in 𝒯ᴵⁿᵛ,
+            j in degradation_states(n),
+        ],
+        Bin,
+    )
+    @variable(
+        m,
+        elect_cap_use_deg[
+            n in 𝒩ᴱᴸ,
+            t in 𝒯,
+            j in degradation_states(n),
+        ] >= 0,
+    )
 end
 
 """
@@ -83,15 +117,7 @@ function EMB.create_node(m, n::AbstractElectrolyzer, 𝒯, 𝒫, modeltype::Ener
     # Fix the variable `elect_on_b` for operational periods without capacity
     fix_elect_on_b(m, n, 𝒯, 𝒫, modeltype)
 
-    # Determine the efficiency penalty at current timestep due to degradation:
-    # Linearly decreasing to zero with increasing `degradation_rate(n)` and `elect_prev_use`.
-    # With `degradation_rate(n)` = 0, the degradation is disabled,
-    # Note that `degradation_rate(n)` is a percentage and is normalized to the
-    # interval [0, 1] in the constraint.
-    @constraint(m, [t ∈ 𝒯],
-        m[:elect_efficiency_penalty][n, t] ==
-            1 - (degradation_rate(n)/100) * m[:elect_prev_use][n, t]
-    )
+    constraints_degradation(m, n, 𝒯, 𝒯ᴵⁿᵛ)
 
     # Calculation of auxiliary variables used in the calculation of the usage bound and
     # stack replacement

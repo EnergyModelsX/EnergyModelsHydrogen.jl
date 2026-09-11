@@ -148,8 +148,8 @@ New fields compared to `NetworkNode`: `min_load`, `max_load`, `degradation_rate`
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
 - **`output::Dict{<:Resource, <:Real}`** are the produced
   [`Resource`](@extref EnergyModelsBase.Resource)s with conversion value `Real`.
-- **`data::Vector{<:ExtensionData}`** is the additional data (e.g. for investments).
-- **`load_limits::LoadLimits`** are limits on the utilization load of the electrolyser.
+- **`data::Array{ExtensionData}`** is the additional data (e.g. for investments).
+- **`load_limits::AbstractLoadLimits`** are limits on the utilization load of the electrolyser.
   [`LoadLimits`](@ref) can provide both lower and upper limits on the actual load.
 - **`degradation_rate::Real`** is the percentage drop in efficiency due to degradation in
   %/1000 h.
@@ -181,6 +181,47 @@ struct SimpleElectrolyzer <: AbstractElectrolyzer
 end
 
 """
+    StrategicDegradationElectrolyzer
+
+Electrolyzer with a degradation-dependent efficiency that is constant within
+each strategic period.
+
+The degradation state in a strategic period is selected from the accumulated
+usage at the beginning of that strategic period. The discretisation preserves
+a MILP formulation.
+
+# Fields
+
+- **`id`**: Identifier of the node.
+- **`cap::TimeProfile`**: Installed electrolyzer capacity.
+- **`opex_var::TimeProfile`**: Variable operating expenses.
+- **`opex_fixed::TimeProfile`**: Fixed operating expenses.
+- **`input::Dict{<:Resource,<:Real}`**: Input conversion factors.
+- **`output::Dict{<:Resource,<:Real}`**: Output conversion factors.
+- **`data::Array{ExtensionData}`**: Additional data (e.g. for investments).
+- **`load_limits::AbstractLoadLimits`**: Minimum and maximum operating load.
+- **`degradation_rate::Real`**: Percentage-point efficiency reduction per 1000 h.
+- **`degradation_usage_breakpoints::Vector{<:Real}`**: Accumulated-usage
+  breakpoints in units of 1000 h.
+- **`stack_replacement_cost::TimeProfile`**: Cost of stack replacement.
+- **`stack_lifetime::Real`**: Stack lifetime in operational-duration units.
+"""
+struct StrategicDegradationElectrolyzer <: AbstractElectrolyzer
+    id
+    cap::TimeProfile
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
+    data::Array{ExtensionData}
+    load_limits::AbstractLoadLimits
+    degradation_rate::Real
+    degradation_usage_breakpoints::Vector{<:Real} # Consider having this as fraction of lifetime instead of in 1000 h
+    stack_replacement_cost::TimeProfile
+    stack_lifetime::Real
+end
+
+"""
     degradation_rate(n::Electrolyzer)
 Returns the degradation rate of electrolyzer `n`.
 """
@@ -202,6 +243,42 @@ stack_replacement_cost(n::AbstractElectrolyzer, t_inv) = n.stack_replacement_cos
 Returns the stack lfetime of electrolyzer `n`.
 """
 stack_lifetime(n::AbstractElectrolyzer) = n.stack_lifetime
+
+"""
+    degradation_usage_breakpoints(n::StrategicDegradationElectrolyzer)
+
+Returns the accumulated-usage breakpoints in units of 1000 h.
+"""
+degradation_usage_breakpoints(n::StrategicDegradationElectrolyzer) =
+    n.degradation_usage_breakpoints
+
+"""
+    degradation_states(n::StrategicDegradationElectrolyzer)
+
+Returns the indices of the degradation intervals.
+"""
+degradation_states(n::StrategicDegradationElectrolyzer) =
+    1:(length(degradation_usage_breakpoints(n)) - 1)
+
+"""
+    degradation_state_efficiency(
+        n::StrategicDegradationElectrolyzer,
+        j,
+    )
+
+Returns the relative efficiency associated with degradation state `j`.
+
+The efficiency is evaluated at the upper usage breakpoint. This gives a
+conservative stepwise approximation of continuous linear degradation.
+"""
+function degradation_state_efficiency(
+    n::StrategicDegradationElectrolyzer,
+    j,
+)
+    usage = degradation_usage_breakpoints(n)[j + 1]
+
+    return 1 - degradation_rate(n) / 100 * usage
+end
 
 """
     struct CommitParameters
