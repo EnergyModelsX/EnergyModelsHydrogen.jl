@@ -5,6 +5,7 @@
 ### Enhancement
 
 * Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
+* Use `operational_type` from `TimeStruct` for dispatching on the operational time structure.
 
 ## Version 0.9.2 (2026-08-24)
 

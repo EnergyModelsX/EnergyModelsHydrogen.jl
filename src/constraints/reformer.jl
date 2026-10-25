@@ -4,7 +4,7 @@
         n::Reformer,
         per,
         t_last,
-        ts,
+        ::Type{<:TimeStructure},
         modeltype::EnergyModel,
     )
 
@@ -19,12 +19,12 @@ function constraints_rate_of_change_iterate(
     n::Reformer,
     per,
     _,
-    _::RepresentativePeriods,
+    ::Type{<:RepresentativePeriods},
     modeltype::EnergyModel,
 )
     for t_rp ∈ repr_periods(per)
         t_last = last(t_rp)
-        ts = t_rp.operational.operational
+        ts = operational_type(t_rp)
         constraints_rate_of_change_iterate(m, n, t_rp, t_last, ts, modeltype)
     end
 end
@@ -37,14 +37,14 @@ function constraints_rate_of_change_iterate(
     n::Reformer,
     per,
     _,
-    _::OperationalScenarios,
+    ::Type{<:OperationalScenarios},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
     𝒯ˢᶜ = opscenarios(per)
     for t_scp ∈ 𝒯ˢᶜ
         t_last = last(t_scp)
-        ts = t_scp.operational.operational
+        ts = operational_type(t_scp)
         constraints_rate_of_change_iterate(m, n, t_scp, t_last, ts, modeltype)
     end
 end
@@ -53,7 +53,7 @@ function constraints_rate_of_change_iterate(
     n::Reformer,
     per,
     t_last,
-    _::SimpleTimes,
+    ::Type{<:SimpleTimes},
     modeltype::EnergyModel
 )
     for (t_prev, t) ∈ withprev(per)
@@ -113,7 +113,7 @@ end
         n::Reformer,
         per,
         t_last,
-        ts,
+        ::Type{<:TimeStructure},
         modeltype::EnergyModel
     )
 
@@ -133,12 +133,12 @@ function constraints_state_seq_iter(
     n::Reformer,
     per,
     _,
-    _::RepresentativePeriods,
+    ::Type{<:RepresentativePeriods},
     modeltype::EnergyModel,
 )
     for t_rp ∈ repr_periods(per)
         t_last = last(t_rp)
-        ts = t_rp.operational.operational
+        ts = operational_type(t_rp)
         constraints_state_seq_iter(m, n, t_rp, t_last, ts, modeltype)
     end
 end
@@ -151,14 +151,14 @@ function constraints_state_seq_iter(
     n::Reformer,
     per,
     _,
-    _::OperationalScenarios,
+    ::Type{<:OperationalScenarios},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
     𝒯ˢᶜ = opscenarios(per)
     for t_scp ∈ 𝒯ˢᶜ
         t_last = last(t_scp)
-        ts = t_scp.operational.operational
+        ts = operational_type(t_scp)
         constraints_state_seq_iter(m, n, t_scp, t_last, ts, modeltype)
     end
 end
@@ -167,7 +167,7 @@ function constraints_state_seq_iter(
     n::Reformer,
     per,
     t_last,
-    _::SimpleTimes,
+    ::Type{<:SimpleTimes},
     modeltype::EnergyModel
 )
     for (t_prev, t) ∈ withprev(per)
@@ -214,7 +214,7 @@ end
         n::Reformer,
         per,
         t_last,
-        ts,
+        ::Type{<:TimeStructure},
         modeltype::EnergyModel
     )
 
@@ -229,12 +229,12 @@ function constraints_state_time_iter(
     n::Reformer,
     per,
     _,
-    _::RepresentativePeriods,
+    ::Type{<:RepresentativePeriods},
     modeltype::EnergyModel,
 )
     for t_rp ∈ repr_periods(per)
         t_last = last(t_rp)
-        ts = t_rp.operational.operational
+        ts = operational_type(t_rp)
         constraints_state_time_iter(m, n, t_rp, t_last, ts, modeltype)
     end
 end
@@ -247,12 +247,12 @@ function constraints_state_time_iter(
     n::Reformer,
     per,
     _,
-    _::OperationalScenarios,
+    ::Type{<:OperationalScenarios},
     modeltype::EnergyModel,
 )
     for t_scp ∈ opscenarios(per)
         t_last = last(t_scp)
-        ts = t_scp.operational.operational
+        ts = operational_type(t_scp)
         constraints_state_time_iter(m, n, t_scp, t_last, ts, modeltype)
     end
 end
@@ -261,7 +261,7 @@ function constraints_state_time_iter(
     n::Reformer,
     per,
     t_last,
-    _::SimpleTimes,
+    ::Type{<:SimpleTimes},
     modeltype::EnergyModel
 )
     it_tech = zip(
