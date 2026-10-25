@@ -34,7 +34,7 @@ function EMB.variables_node(m, 𝒩ᴱᴸ::Vector{<:AbstractElectrolyzer}, 𝒯,
     @variable(m, elect_prev_use[𝒩ᴱᴸ, 𝒯] ≥ 0)
     @variable(m, elect_prev_use_sp[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ] ≥ 0)
     @variable(m, elect_use_sp[𝒩ᴱᴸ, 𝒯ᴵⁿᵛ] ≥ 0)
-    if 𝒯 isa TwoLevel{S,T,U} where {S,T,U<:RepresentativePeriods}
+    if has_repr_periods(𝒯)
         𝒯ʳᵖ = repr_periods(𝒯)
         @variable(m, elect_use_rp[𝒩ᴱᴸ, 𝒯ʳᵖ])
     end

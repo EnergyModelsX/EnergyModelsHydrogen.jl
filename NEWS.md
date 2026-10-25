@@ -1,5 +1,11 @@
 # Release Notes
 
+## Unversioned
+
+### Enhancement
+
+* Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
+
 ## Version 0.9.2 (2026-08-24)
 
 ### Bug fixes
