@@ -32,7 +32,7 @@ function constraints_usage(m, n::AbstractElectrolyzer, 𝒯ᴵⁿᵛ, modeltype:
         # Creation of the iterator and call of the iterator function -
         # The representative period is initiated with the current investment period to allow
         # dispatching on it.
-        ts = t_inv.operational
+        ts = operational_type(t_inv)
         constraints_usage_iterate(m, n, prev_pers, elec_pers, t_inv, ts, modeltype)
     end
 end
@@ -98,7 +98,7 @@ end
         prev_pers::PreviousPeriods,
         elec_pers::ElecPeriods,
         per,
-        ts::RepresentativePeriods,
+        ::Type{<:TimeStructure},
         modeltype::EnergyModel,
     )
 
@@ -114,7 +114,7 @@ function constraints_usage_iterate(
     prev_pers::PreviousPeriods,
     elec_pers::ElecPeriods,
     per,
-    _::RepresentativePeriods,
+    ::Type{<:RepresentativePeriods},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
@@ -131,7 +131,7 @@ function constraints_usage_iterate(
     for (t_rp_prev, t_rp) ∈ withprev(𝒯ʳᵖ)
         prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), t_rp_prev, EMB.op_per(prev_pers));
         elec_pers.last = t_rp == last_rp
-        ts = t_rp.operational.operational
+        ts = operational_type(t_rp)
         constraints_usage_iterate(m, n, prev_pers, elec_pers, t_rp, ts, modeltype)
     end
 end
@@ -145,7 +145,7 @@ function constraints_usage_iterate(
     prev_pers::PreviousPeriods,
     elec_pers::ElecPeriods,
     per,
-    _::OperationalScenarios,
+    ::Type{<:OperationalScenarios},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
@@ -153,7 +153,7 @@ function constraints_usage_iterate(
 
     # Iterate through the operational structure
     for t_scp ∈ 𝒯ˢᶜ
-        ts = t_scp.operational.operational
+        ts = operational_type(t_scp)
         constraints_usage_iterate(m, n, prev_pers, elec_pers, t_scp, ts, modeltype)
     end
 end
@@ -171,7 +171,7 @@ function constraints_usage_iterate(
     prev_pers::PreviousPeriods,
     elec_pers::ElecPeriods,
     per,
-    _::SimpleTimes,
+    ::Type{<:SimpleTimes},
     modeltype::EnergyModel,
 )
     # Iterate through the operational structure
